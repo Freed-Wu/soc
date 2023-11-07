@@ -1,0 +1,9 @@
+[Unit]
+Description=Simple autostart application
+
+[Service]
+ExecStart=/usr/bin/main
+ExecReload=/bin/kill -SIGHUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

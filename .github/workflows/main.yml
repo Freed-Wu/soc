@@ -1,0 +1,50 @@
+---
+"on":
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+# https://github.com/softprops/action-gh-release/issues/236
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install rpm
+          # sudo apt-get -y install rpm check
+      - name: Build
+        # https://bugs.launchpad.net/ubuntu/+source/check/+bug/2019478
+        run: |
+          cd project-spec/meta-user/recipes-apps/autostart
+          cmake -Bbuild
+          cmake --build build
+          ctest --test-dir build
+          cd build
+          cpack -G DEB
+          cpack -G RPM
+      - uses: codecov/codecov-action@v3
+        with:
+          gcov: true
+      - uses: actions/upload-artifact@v3
+        if: "! startsWith(github.ref, 'refs/tags/')"
+        with:
+          path: |
+            build/*.deb
+            build/*.rpm
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          # body_path: build/CHANGELOG.md
+          files: |
+            build/*.deb
+            build/*.rpm
