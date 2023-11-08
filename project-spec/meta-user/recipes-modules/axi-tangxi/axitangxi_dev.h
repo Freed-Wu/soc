@@ -78,13 +78,13 @@
 
 // 4K字节对齐
 #define ADDR_ALIGN_BASE_4096 0x1000
-#define ADDR_ALIGN_BASE_4096_MASK 0x0FFF
+#define ADDR_ALIGN_BASE_4096_MASK (ADDR_ALIGN_BASE_4096 - 1)
 #define ADDR_ALIGNED_4096(addr)                                                \
   (UINTPTR)(((addr) + ADDR_ALIGN_BASE_4096_MASK) & (~ADDR_ALIGN_BASE_4096_MASK))
 
 // 16字节对齐
 #define ADDR_ALIGN_BASE_16 0x0010
-#define ADDR_ALIGN_BASE_16_MASK 0x000F
+#define ADDR_ALIGN_BASE_16_MASK (ADDR_ALIGN_BASE_16 - 1)
 #define ADDR_ALIGNED_16(addr)                                                  \
   (UINTPTR)(((addr) + ADDR_ALIGN_BASE_16_MASK) & (~ADDR_ALIGN_BASE_16_MASK))
 
@@ -208,22 +208,13 @@ void s2mm_ps_data_tangxi(uint32_t rx_data_ps_addr, uint32_t burst_size);
 void network_acc_config_dev(uint32_t weight_addr, uint32_t weight_size,
                             uint32_t quantify_addr, uint32_t quantify_size,
                             uint32_t picture_addr, uint32_t picture_size);
-// void network_acc_start_dev();
-
-// struct network_acc_args get_network_acc_args_dev();
-
-// void network_acc_config(struct network_acc_args *args);
-
-// void network_acc_start();
-
-// struct network_acc_args get_network_acc_args();
 
 int acc_config(struct axitangxi_device *dev, struct network_acc_reg *args);
 
 int acc_start(void);
 
 int acc_complete(void);
-// struct network_acc_args* acc_get(struct axitangxi_device *dev);
+
 uint32_t acc_get_trans_addr(struct axitangxi_device *dev);
 uint32_t acc_get_trans_size(struct axitangxi_device *dev);
 uint32_t acc_get_entropy_addr(struct axitangxi_device *dev);

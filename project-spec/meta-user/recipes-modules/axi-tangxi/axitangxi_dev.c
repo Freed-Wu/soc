@@ -262,6 +262,7 @@ static long axitangxi_ioctl(struct file *file, unsigned int cmd,
     rc = acc_start();
     break;
   case NETWORK_ACC_GET:
+    // wait NETWORK_ACC_DONE
     acc_complete();
     iargs.trans_addr = acc_get_trans_addr(dev);
     iargs.trans_size = acc_get_trans_size(dev);
@@ -410,7 +411,8 @@ static int axitangxi_mmap(struct file *file, struct vm_area_struct *vma) {
 
   axitangxi_alloc->user_addr = (void *)vma->vm_start;
 
-  // TODO: allocate list?
+  // FIXME: should be a bug
+  INIT_LIST_HEAD(&axitangxi_alloc->list);
   list_add(&axitangxi_alloc->list, &axi_dev->addr_list);
 
   return 0;
