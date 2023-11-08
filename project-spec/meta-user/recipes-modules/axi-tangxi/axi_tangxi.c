@@ -70,21 +70,6 @@ struct axitangxi_transfer {
   uint8_t node; // 芯片node节点
 };
 
-// 网络加速器寄存器配置
-struct network_acc_args {
-  uint32_t control;       // Control Register（不需要配置）
-  uint32_t weight_addr;   // PL端DRAM权重存储起始地址
-  uint32_t weight_size;   // PL端DRAM权重大小
-  uint32_t quantify_addr; // PL端DRAM量化因子存储起始地址
-  uint32_t quantify_size; // PL端DRAM量化因子大小
-  uint32_t picture_addr;  // PL端DRAM图像数据存储起始地址
-  uint32_t picture_size;  // PL端DRAM图像数据大小
-  uint32_t trans_addr;    // PL端DRAM变换系数存储起始地址
-  uint32_t trans_size;    // PL端DRAM变换系数大小（初始化为0）
-  uint32_t entropy_addr;  // PL端DRAM熵参数存储起始地址
-  uint32_t entropy_size;  // PL端DRAM熵参数大小（初始化为0）
-};
-
 // 初始化中断参数
 struct axitangxi_irq_data axitangxi_irq_data = {0};
 
@@ -136,6 +121,7 @@ void axitangxi_psddr_plddr(struct axitangxi_transfer *axitangxi_trans) {
         burst_size, data_remaining);
     // 等待一次传输完成
     timeout = msecs_to_jiffies(AXI_TANGXI_TIMEOUT);
+    // wait S2MM_PL_DONE
     time_remain = wait_for_completion_timeout(axitangxi_irq_data.comp, timeout);
     if (time_remain == 0) {
       axitangxi_err(
@@ -192,6 +178,7 @@ void axitangxi_plddr_psddr(struct axitangxi_transfer *axitangxi_trans) {
     axitangxi_info(
         "PL DDR --> PS DDR: 第 %d 次突发，突发长度：%d, 剩下数据：%d B\n",
         count, burst_size, data_remaining);
+    // wait S2MM_PS_DONE
     // 等待一次传输完成
     timeout = msecs_to_jiffies(AXI_TANGXI_TIMEOUT);
     time_remain = wait_for_completion_timeout(axitangxi_irq_data.comp, timeout);
