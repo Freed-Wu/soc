@@ -12,7 +12,6 @@ project(
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_subdirectory(src)
 
-configure_file(config.h.in src/config.h)
 find_package(PkgConfig REQUIRED)
 pkg_get_variable(SYSTEMD_SYSTEM_UNIT_DIR systemd systemd_system_unit_dir)
 pkg_get_variable(SYSTEMD_SYSTEM_PRESET_DIR systemd systemd_system_preset_dir)

@@ -88,12 +88,6 @@
 #define ADDR_ALIGNED_16(addr)                                                  \
   (UINTPTR)(((addr) + ADDR_ALIGN_BASE_16_MASK) & (~ADDR_ALIGN_BASE_16_MASK))
 
-/* 设备节点名称 */
-#define DEVICE_NAME "axi_tangxi"
-
-// The standard path to the AXI DMA device
-#define AXITX_DEV_PATH ("/dev/" DEVICE_NAME)
-
 // Default minor number for the device
 #define MINOR_NUMBER 0
 // The default number of character devices for DMA
