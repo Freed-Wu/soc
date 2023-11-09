@@ -20,8 +20,7 @@ platform generate
 app create -name $app -template {Empty Application (C++)} -lang c++
 # -soft-link break `sysproj build`
 # exec cmake -Bbuild
-# catch {importsources -name $app -path ../src}
-# importsources -name $app -path ../../src
+# importsources -name $app -path ../project-spec/meta-user/recipes-apps/autostart/src
 # build $app.elf, called by `sysproj build`
 # app build -name $app
 

@@ -1,3 +1,5 @@
+configure_file(config.h.in config.h)
+
 add_library(coding SHARED coding.cpp arithmetic_coding.cpp)
 install(TARGETS coding LIBRARY)
 add_library(crc SHARED crc.c)
