@@ -1,4 +1,6 @@
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <pthread.h>
@@ -176,83 +178,54 @@ static ssize_t dump_mem(char *filename, void *ps_addr, size_t size) {
 
 int main(int argc, char *argv[]) {
   opt_t opt;
-  if (parse(argc, argv, &opt) == -1) {
-    fprintf(stderr, "parse failure!\n");
-    return EXIT_FAILURE;
-  }
+  if (parse(argc, argv, &opt) == -1)
+    errx(EXIT_FAILURE, "parse failure!");
 
   int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
-  if (fd_dev == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
+  if (fd_dev == -1)
+    err(errno, AXITX_DEV_PATH);
 
   struct network_acc_reg reg;
   reg.picture_addr = PICTURE_BASE_ADDR;
 #define YUV_FILE "/root/test.yuv"
-  if (pl_config(fd_dev, YUV_FILE, reg.picture_addr, &reg.picture_size) == -1) {
-    perror(YUV_FILE);
-    return EXIT_FAILURE;
-  }
-  reg.weight_addr = WEIGHT_ADDR;
-  if (pl_config(fd_dev, opt.weight, reg.weight_addr, &reg.weight_size) == -1) {
-    perror(opt.weight);
-    return EXIT_FAILURE;
-  }
-  reg.quantify_addr = QUANTIFY_ADDR;
-  if (pl_config(fd_dev, opt.quantization_coefficience, reg.quantify_addr,
-                &reg.quantify_size) == -1) {
-    perror(opt.weight);
-    return EXIT_FAILURE;
-  }
+  if (pl_config(fd_dev, YUV_FILE, reg.picture_addr, &reg.picture_size) == -1)
+    err(errno, YUV_FILE);
+  if (pl_config(fd_dev, opt.weight, reg.weight_addr = WEIGHT_ADDR,
+                &reg.weight_size) == -1)
+    err(errno, "%s", opt.weight);
+  if (pl_config(fd_dev, opt.quantization_coefficience,
+                reg.quantify_addr = QUANTIFY_ADDR, &reg.quantify_size) == -1)
+    err(errno, "%s", opt.quantization_coefficience);
 
-  if (ioctl(fd_dev, NETWORK_ACC_CONFIG, &reg) == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
-  if (ioctl(fd_dev, NETWORK_ACC_START) == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
-  if (ioctl(fd_dev, NETWORK_ACC_GET, &reg) == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
+  if (ioctl(fd_dev, NETWORK_ACC_CONFIG, &reg) == -1)
+    err(errno, AXITX_DEV_PATH);
+  if (ioctl(fd_dev, NETWORK_ACC_START) == -1)
+    err(errno, AXITX_DEV_PATH);
+  if (ioctl(fd_dev, NETWORK_ACC_GET, &reg) == -1)
+    err(errno, AXITX_DEV_PATH);
 
   void *trans_addr;
-  if (pl_read(fd_dev, trans_addr, reg.trans_addr, reg.trans_size) == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
+  if (pl_read(fd_dev, trans_addr, reg.trans_addr, reg.trans_size) == -1)
+    err(errno, AXITX_DEV_PATH);
   void *entropy_addr;
-  if (pl_read(fd_dev, entropy_addr, reg.entropy_addr, reg.entropy_size) == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
+  if (pl_read(fd_dev, entropy_addr, reg.entropy_addr, reg.entropy_size) == -1)
+    err(errno, AXITX_DEV_PATH);
 
 #define TRANS_FILE "/tmp/trans.bin"
-  if (dump_mem(TRANS_FILE, trans_addr, reg.trans_size) == -1) {
-    perror(TRANS_FILE);
-    return EXIT_FAILURE;
-  }
+  if (dump_mem(TRANS_FILE, trans_addr, reg.trans_size) == -1)
+    err(errno, TRANS_FILE);
 #define ENTROPY_FILE "/tmp/entropy.bin"
-  if (dump_mem(ENTROPY_FILE, entropy_addr, reg.entropy_size) == -1) {
-    perror(TRANS_FILE);
-    return EXIT_FAILURE;
-  }
+  if (dump_mem(ENTROPY_FILE, entropy_addr, reg.entropy_size) == -1)
+    err(errno, ENTROPY_FILE);
 
-  if (close(fd_dev) == -1) {
-    perror(AXITX_DEV_PATH);
-    return EXIT_FAILURE;
-  }
+  if (close(fd_dev) == -1)
+    err(errno, AXITX_DEV_PATH);
 
-  // TODO: comment temporarily
+    // TODO: comment temporarily
 #if 0
   int fd = open(p_opt->tty, O_RDWR | O_NONBLOCK | O_NOCTTY);
-  if (fd == -1) {
-    perror(p_opt->tty);
-    return EXIT_FAILURE;
-  }
+  if (fd == -1)
+    err(errno, "%s", p_opt->tty);
   frame_t input_frame, output_frame = default_frame;
   send_frame(fd, &output_frame);
   printf("slave: request data: raw image 0\n");
@@ -280,21 +253,16 @@ int main(int argc, char *argv[]) {
       size_t len = strlen(p_opt->output_dir) + 4 + strlen("/.yuv");
       char *filename = malloc(len);
       if (sprintf(filename, "%s/%d.yuv", p_opt->output_dir,
-                  input_frame.n_file) != len) {
-        perror(p_opt->output_dir);
-        break;
-      }
+                  input_frame.n_file) != len)
+        err(errno, "%s", p_opt->output_dir);
       FILE *file = fopen(filename, "a");
-      if (file == NULL) {
-        perror(filename);
-        break;
-      }
+      if (file == NULL)
+        err(errno, "%s", filename);
       if (fwrite(input_frame.data, 1, input_frame.data_len, file) !=
-          input_frame.data_len) {
-        perror(filename);
-        break;
-      }
-      fclose(file);
+          input_frame.data_len)
+        err(errno, "%s", filename);
+      if (fclose(file))
+        err(errno, "%s", filename);
     }
     output_frame.n_frame++;
   }
