@@ -102,7 +102,7 @@ void axitangxi_psddr_plddr(struct axitangxi_transfer *axitangxi_trans) {
     if (time_remain == 0) {
       axitangxi_err(
           "axitangxi_psddr_plddr transaction 第 %d 次突发 timed out.\n", count);
-      // FIXME: should be a bug
+      // FIXME: should be a bug, shouldn't return any value
       // return -ETIME;
     }
     printk("time_remain_1: %ld\n", time_remain);
@@ -161,7 +161,7 @@ void axitangxi_plddr_psddr(struct axitangxi_transfer *axitangxi_trans) {
     if (time_remain == 0) {
       axitangxi_err(
           "axitangxi_psddr_plddr transaction 第 %d 次突发 timed out.\n", count);
-      // FIXME: should be a bug
+      // FIXME: should be a bug, shouldn't return any value
       // return -ETIME;
     }
     printk("time_remain_1: %ld\n", time_remain);

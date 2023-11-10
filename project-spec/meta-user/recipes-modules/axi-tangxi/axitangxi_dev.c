@@ -189,7 +189,7 @@ static int axitangxi_open(struct inode *inode_p, struct file *file_p) {
  * @return * int
  */
 static int axitangxi_release(struct inode *inode_p, struct file *file_p) {
-  // FIXME: should be a bug
+  // FIXME: should be a bug, must free a kmalloced memory
   // file_p->private_data = NULL;
   kfree(file_p->private_data);
   printk("axi tangxi module release\n");
@@ -320,7 +320,7 @@ uint32_t axitangxi_uservirt_to_phys(struct axitangxi_device *dev,
       return addr_alloc->phys_addr;
     }
   }
-  // FIXME: should be a bug
+  // FIXME: should be a bug, must return a value
   return 0;
 }
 
@@ -411,7 +411,7 @@ static int axitangxi_mmap(struct file *file, struct vm_area_struct *vma) {
 
   axitangxi_alloc->user_addr = (void *)vma->vm_start;
 
-  // FIXME: should be a bug
+  // FIXME: should be a bug, list should be inited
   INIT_LIST_HEAD(&axitangxi_alloc->list);
   list_add(&axitangxi_alloc->list, &axi_dev->addr_list);
 
