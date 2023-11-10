@@ -1,15 +1,14 @@
 # deep-space-detection
 
-The code is located in:
+The repository contains:
 
-- \<project-spec/meta-user/recipes-modules>: contains a Linux driver, which
-  support:
+- [A Linux driver](project-spec/meta-user/recipes-modules) which supports:
   - mmap: map a memory between user space and kernel space
   - ioctl:
     - copy a memory between kernel space (PS's storage) and a peripheral's
       storage (PL's storage)
     - write neural network accelerators' registers to drive it to process
-- \<project-spec/meta-user/recipes-apps>: contains a Linux application, which
+- [A Linux application](project-spec/meta-user/recipes-apps) which
   will be started automatically when OS booted.
   - communicate with center board to download images
   - call driver to process images to get the processed bit streams
