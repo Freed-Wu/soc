@@ -1,7 +1,7 @@
 # https://stackoverflow.com/a/73509979/16027269
 SRC := $(patsubst %/,%,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
-DRIVER_NAME := $(notdir $(SRC))
 ifneq ($(KERNELRELEASE),)
+	DRIVER_NAME := $(notdir $(SRC))
 	ccflags-y += -g -DDEBUG
 	obj-m := $(DRIVER_NAME).o
 	$(DRIVER_NAME)-objs := axi_tangxi_platform.o axitangxi_dev.o axi_tangxi.o
