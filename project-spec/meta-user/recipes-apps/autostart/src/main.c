@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <libgen.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,30 +33,28 @@ static struct option longopts[] = {
     {"quantization_coefficience", required_argument, NULL, 'q'},
     {NULL, 0, NULL, 0}};
 
-static int print_help(struct option *longopts, char *arg0) {
+static int print_help(const struct option *longopts, const char *arg0) {
   unsigned int i = 0;
+  char *base = strdup(arg0);
+  printf("%s", basename(base));
   struct option o = longopts[i];
-  char *name;
-  char *value;
-  char *meta;
-  char *str;
-  puts(arg0);
   while (o.name != NULL) {
-    name = malloc(strlen(o.name) + strlen("(|0)"));
-    value = malloc(strlen(o.name) + strlen("( )"));
-    meta = malloc(strlen(o.name));
+    char *name = malloc(strlen(o.name) + strlen("(|0)"));
+    char *value = malloc(strlen(o.name) + strlen("( )"));
+    char *meta = malloc(strlen(o.name));
+    char *str = meta;
     if (name == NULL || value == NULL || meta == NULL)
       return EXIT_FAILURE;
 
     if (isascii(o.val))
-      sprintf(name, "(%s|%c)", o.name, (char)o.val);
+      sprintf(name, "(--%s|-%c)", o.name, (char)o.val);
     else
-      sprintf(name, "%s", o.name);
+      sprintf(name, "--%s", o.name);
 
     sprintf(meta, "%s", o.name);
-    str = meta;
-    while (*str++)
+    do
       *str = (char)toupper(*str);
+    while (*str++);
 
     if (o.has_arg == required_argument)
       sprintf(value, " %s", meta);
@@ -70,8 +69,9 @@ static int print_help(struct option *longopts, char *arg0) {
     free(value);
     free(meta);
 
-    o = longopts[i++];
+    o = longopts[++i];
   }
+  puts("");
   return EXIT_SUCCESS;
 }
 
@@ -85,9 +85,10 @@ static int parse(int argc, char *argv[], opt_t *opt) {
              "Copyright (C) 2023\n"
              "Written by Wu Zhenyu <wuzhenyu@ustc.edu>\n",
              argv[0]);
-      exit(EXIT_SUCCESS);
+      return 2;
     case 'h':
-      exit(print_help(longopts, argv[0]));
+      if (print_help(longopts, argv[0]) == 0)
+        return 1;
     case 't':
       opt->tty = optarg;
       break;
@@ -178,8 +179,11 @@ static ssize_t dump_mem(char *filename, void *ps_addr, size_t size) {
 
 int main(int argc, char *argv[]) {
   opt_t opt;
-  if (parse(argc, argv, &opt) == -1)
+  int status = parse(argc, argv, &opt);
+  if (status == -1)
     errx(EXIT_FAILURE, "parse failure!");
+  else if (status > 0)
+    return EXIT_SUCCESS;
 
   int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
   if (fd_dev == -1)
@@ -204,10 +208,10 @@ int main(int argc, char *argv[]) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, &reg) == -1)
     err(errno, AXITX_DEV_PATH);
 
-  void *trans_addr;
+  void *trans_addr = NULL;
   if (pl_read(fd_dev, trans_addr, reg.trans_addr, reg.trans_size) == -1)
     err(errno, AXITX_DEV_PATH);
-  void *entropy_addr;
+  void *entropy_addr = NULL;
   if (pl_read(fd_dev, entropy_addr, reg.entropy_addr, reg.entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
 
@@ -233,36 +237,36 @@ int main(int argc, char *argv[]) {
     wait_frame(fd, &input_frame, &output_frame);
 
     switch (input_frame.frame_type) {
-    case TP_FRAME_TYPE_CONTROL:
-      /*! TODO: not implemented yet
+      case TP_FRAME_TYPE_CONTROL:
+        /*! TODO: not implemented yet
        *  \todo not implemented yet
        */
-      break;
-    case TP_FRAME_TYPE_REQUEST_DATA:
-      output_frame.frame_type = TP_FRAME_TYPE_TRANSPORT_DATA;
-      output_frame.n_file = input_frame.n_file;
-      output_frame.data_len = TP_FRAME_DATA_LEN_MAX;
-      /*! TODO: Create a thread to compress raw image and send a frame after
+        break;
+      case TP_FRAME_TYPE_REQUEST_DATA:
+        output_frame.frame_type = TP_FRAME_TYPE_TRANSPORT_DATA;
+        output_frame.n_file = input_frame.n_file;
+        output_frame.data_len = TP_FRAME_DATA_LEN_MAX;
+        /*! TODO: Create a thread to compress raw image and send a frame after
        * finishing \todo Create a thread to compress raw image and send a frame
        * after finishing
        */
-      break;
-    case TP_FRAME_TYPE_TRANSPORT_DATA:
-      output_frame.frame_type = TP_FRAME_TYPE_TRANSPORT_DATA;
-      printf("slave: receive data: raw image %d\n", input_frame.n_file);
-      size_t len = strlen(p_opt->output_dir) + 4 + strlen("/.yuv");
-      char *filename = malloc(len);
-      if (sprintf(filename, "%s/%d.yuv", p_opt->output_dir,
-                  input_frame.n_file) != len)
-        err(errno, "%s", p_opt->output_dir);
-      FILE *file = fopen(filename, "a");
-      if (file == NULL)
-        err(errno, "%s", filename);
-      if (fwrite(input_frame.data, 1, input_frame.data_len, file) !=
+        break;
+      case TP_FRAME_TYPE_TRANSPORT_DATA:
+        output_frame.frame_type = TP_FRAME_TYPE_TRANSPORT_DATA;
+        printf("slave: receive data: raw image %d\n", input_frame.n_file);
+        size_t len = strlen(p_opt->output_dir) + 4 + strlen("/.yuv");
+        char *filename = malloc(len);
+        if (sprintf(filename, "%s/%d.yuv", p_opt->output_dir,
+                    input_frame.n_file) != len)
+          err(errno, "%s", p_opt->output_dir);
+        FILE *file = fopen(filename, "a");
+        if (file == NULL)
+          err(errno, "%s", filename);
+        if (fwrite(input_frame.data, 1, input_frame.data_len, file) !=
           input_frame.data_len)
-        err(errno, "%s", filename);
-      if (fclose(file))
-        err(errno, "%s", filename);
+          err(errno, "%s", filename);
+        if (fclose(file))
+          err(errno, "%s", filename);
     }
     output_frame.n_frame++;
   }
