@@ -8,9 +8,9 @@ YUV 图片按 Y、U、V 的顺序分开存储为三个通道的图片。每次�
 
 **PS 端发送到 PL 端 DRAM 的每个通道图片数据需做如下处理：**
 
-![奇偶行分块](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/1d2b2f6d-d4ad-42e4-9fdf-a0c5b95110a8)
+![奇偶行分块](https://github.com/ustc-ivclab/.github/assets/32936898/6972fe62-9b38-4945-b0c8-c60f016d6e0c)
 
-![图片分块](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/302ae2be-f0b3-4127-a256-fa46e2dbd03c)
+![图片分块](https://github.com/ustc-ivclab/.github/assets/32936898/dc6d74c6-80c8-42ad-86cc-203a16d26e6c)
 
 1. 先对输入图片按照奇偶行分块，奇数行块在前，偶数行块在后。如图 1 所示，X 为原始图片（Y / U / V），Xe 是奇数块，Xo 是偶数块。
 2. 奇数块 Xe 和偶数块 Xo 按 8x8 的数据块存储。如图 2 表示奇偶行分块后的 Xe
@@ -32,11 +32,11 @@ DRAM 送 3x3 的卷积核权重**。如图 3、4 所示，W~i,j~表示一个 3x3
 ......W~13,1~、W~14,1~、W~13,2~、W~14,2~......W~13,16~、W~14,16~
 、W~15,1~、W~16,1~、W~15,2~、W~16,2~......W~15,16~、W~16,16~ 。**
 
-![输入通道1，输出通道16的卷积核](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/a157b645-7708-4ccf-beb4-15bb3463eaee)
+![输入通道1，输出通道16的卷积核](https://github.com/ustc-ivclab/.github/assets/32936898/58465805-26d3-416e-bab8-9f59f019cee9)
 
-![输入通道16，输出通道16的卷积核](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/e82478e0-a261-41df-baac-654892ef90af)
+![输入通道16，输出通道16的卷积核](https://github.com/ustc-ivclab/.github/assets/32936898/45ed66f4-da7c-49e9-89aa-1d33d1a3dacd)
 
-![多输入通道的卷积层权重数据排布顺序](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/24234444-272b-4181-b901-a17279b1e687)
+![多输入通道的卷积层权重数据排布顺序](https://github.com/ustc-ivclab/.github/assets/32936898/cfe28bbe-f633-406b-93e7-48c1580db842)
 
 ### 熵模型网络
 
@@ -59,7 +59,7 @@ DRAM 存放的起始地址及数据量大小。
 
 13 个子带的熵参数，也从熵参数起始地址开始，顺序存放。
 
-![w](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/20bb0139-9258-4f69-bd04-ed31fac2c6fc)
+![w](https://github.com/ustc-ivclab/.github/assets/32936898/f4d2aabb-a103-45d7-adea-9aaaae700304)
 
 ### 说明
 
