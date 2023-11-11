@@ -196,7 +196,7 @@ int axitangxi_psddr_plddr_loopback(struct axitangxi_device *dev,
   axitx_trans.node = trans->node;
 
   printk("tx_data_ps_ptr: %#x, rx_data_ps_ptr: %#x, tx_data_pl_ptr: %#x, "
-         "rx_data_pl_ptr: %#x, burst_size: %ld, burst_data: %ld\n",
+         "rx_data_pl_ptr: %#x, burst_size: %zd, burst_data: %zd\n",
          axitx_trans.tx_data_ps_ptr, axitx_trans.rx_data_ps_ptr,
          axitx_trans.tx_data_pl_ptr, axitx_trans.rx_data_pl_ptr,
          axitx_trans.burst_size, axitx_trans.burst_data);
@@ -554,8 +554,8 @@ int psddr_to_plddr(struct axitangxi_device *dev,
 
   axitangxi_psddr_plddr(&axitx_trans);
 
-  printk("tx_data_ps_ptr: %#x, rx_data_pl_ptr: %#x, burst_size: %ld, "
-         "burst_data: %ld \n",
+  printk("tx_data_ps_ptr: %#x, rx_data_pl_ptr: %#x, burst_size: %zd, "
+         "burst_data: %zd \n",
          axitx_trans.tx_data_ps_ptr, axitx_trans.rx_data_pl_ptr,
          axitx_trans.burst_size, axitx_trans.burst_data);
 
@@ -585,8 +585,8 @@ int plddr_to_psddr(struct axitangxi_device *dev,
 
   axitangxi_plddr_psddr(&axitx_trans);
 
-  printk("tx_data_pl_ptr: %#x, rx_data_ps_ptr: %#x, burst_size: %ld, "
-         "burst_data: %ld \n",
+  printk("tx_data_pl_ptr: %#x, rx_data_ps_ptr: %#x, burst_size: %zd, "
+         "burst_data: %zd \n",
          axitx_trans.tx_data_pl_ptr, axitx_trans.rx_data_ps_ptr,
          axitx_trans.burst_size, axitx_trans.burst_data);
 
