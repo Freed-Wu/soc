@@ -1,5 +1,7 @@
 configure_file(config.h.in config.h)
 
+add_library(axitangxi SHARED axitangxi.c)
+install(TARGETS axitangxi LIBRARY)
 add_library(coding SHARED coding.cpp arithmetic_coding.cpp)
 install(TARGETS coding LIBRARY)
 add_library(crc SHARED crc.c)
@@ -9,6 +11,7 @@ target_link_libraries(transmission_protocol crc)
 install(TARGETS transmission_protocol LIBRARY)
 
 add_executable(main main.c)
+target_link_libraries(main PRIVATE axitangxi)
 target_link_libraries(main PRIVATE transmission_protocol)
 find_package(Threads REQUIRED)
 target_link_libraries(main PRIVATE coding Threads::Threads)
