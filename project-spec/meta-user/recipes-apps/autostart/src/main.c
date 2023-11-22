@@ -1,9 +1,7 @@
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <libgen.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +11,7 @@
 #include "coding.h"
 #include "config.h"
 #include "main.h"
+#include "utils.h"
 
 static void init_opt(opt_t *opt) {
   opt->tty = "/tmp/ttyS1";
@@ -28,48 +27,6 @@ static struct option longopts[] = {
     {"weight", required_argument, NULL, 'w'},
     {"quantization_coefficience", required_argument, NULL, 'q'},
     {NULL, 0, NULL, 0}};
-
-static int print_help(const struct option *longopts, const char *arg0) {
-  unsigned int i = 0;
-  char *base = strdup(arg0);
-  printf("%s", basename(base));
-  struct option o = longopts[i];
-  while (o.name != NULL) {
-    char *name = malloc(strlen(o.name) + strlen("(|0)"));
-    char *value = malloc(strlen(o.name) + strlen("( )"));
-    char *meta = malloc(strlen(o.name));
-    char *str = meta;
-    if (name == NULL || value == NULL || meta == NULL)
-      return EXIT_FAILURE;
-
-    if (isascii(o.val))
-      sprintf(name, "(--%s|-%c)", o.name, (char)o.val);
-    else
-      sprintf(name, "--%s", o.name);
-
-    sprintf(meta, "%s", o.name);
-    do
-      *str = (char)toupper(*str);
-    while (*str++);
-
-    if (o.has_arg == required_argument)
-      sprintf(value, " %s", meta);
-    else if (o.has_arg == optional_argument)
-      sprintf(value, "( %s)", meta);
-    else
-      sprintf(value, "");
-
-    printf(" [%s%s]", name, value);
-
-    free(name);
-    free(value);
-    free(meta);
-
-    o = longopts[++i];
-  }
-  puts("");
-  return EXIT_SUCCESS;
-}
 
 static int parse(int argc, char *argv[], opt_t *opt) {
   int c;
