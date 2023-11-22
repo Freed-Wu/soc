@@ -10,7 +10,7 @@
 #include "axitangxi.h"
 #include "axitangxi_ioctl.h"
 
-void *ps_mmap(int fd_dev, size_t size) {
+static void *ps_mmap(int fd_dev, size_t size) {
   return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev, 0);
 }
 
@@ -73,11 +73,30 @@ ssize_t pl_config(int fd_dev, char *filename, uint32_t pl_addr,
 }
 
 void pl_run(int fd_dev, struct network_acc_reg *reg) {
-  if (ioctl(fd_dev, NETWORK_ACC_CONFIG, &reg) == -1)
+  if (ioctl(fd_dev, NETWORK_ACC_CONFIG, reg) == -1)
     err(errno, AXITX_DEV_PATH);
   if (ioctl(fd_dev, NETWORK_ACC_START) == -1)
     err(errno, AXITX_DEV_PATH);
-  if (ioctl(fd_dev, NETWORK_ACC_GET, &reg) == -1)
+}
+
+void pl_init(int fd_dev, struct network_acc_reg *reg, char *weight_filename,
+             uint32_t weight_addr, char *quantify_filename,
+             uint32_t quantify_addr) {
+  if (pl_config(fd_dev, weight_filename, reg->weight_addr = weight_addr,
+                &reg->weight_size) == -1)
+    err(errno, "%s", weight_filename);
+  if (pl_config(fd_dev, quantify_filename, reg->quantify_addr = quantify_addr,
+                &reg->quantify_size) == -1)
+    err(errno, "%s", quantify_filename);
+}
+
+void pl_get(int fd_dev, struct network_acc_reg *reg, void *trans_addr,
+            void *entropy_addr) {
+  if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
+    err(errno, AXITX_DEV_PATH);
+  if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
+    err(errno, AXITX_DEV_PATH);
+  if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
 }
 

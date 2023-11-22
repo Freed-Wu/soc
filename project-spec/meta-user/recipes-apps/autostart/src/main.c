@@ -66,30 +66,27 @@ int main(int argc, char *argv[]) {
   else if (status > 0)
     return EXIT_SUCCESS;
 
+  // configure device
   int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
   if (fd_dev == -1)
     err(errno, AXITX_DEV_PATH);
-
   struct network_acc_reg reg;
-  reg.picture_addr = PICTURE_BASE_ADDR;
+  pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR, opt.quantization_coefficience,
+          QUANTIFY_ADDR);
+  int fd = open(opt.tty, O_RDWR | O_NOCTTY);
+  if (fd == -1)
+    err(errno, "%s", opt.tty);
+
 #define YUV_FILE "/root/test.yuv"
+  // TODO: use UART to get yuv files
+  reg.picture_addr = PICTURE_BASE_ADDR;
   if (pl_config(fd_dev, YUV_FILE, reg.picture_addr, &reg.picture_size) == -1)
     err(errno, YUV_FILE);
-  if (pl_config(fd_dev, opt.weight, reg.weight_addr = WEIGHT_ADDR,
-                &reg.weight_size) == -1)
-    err(errno, "%s", opt.weight);
-  if (pl_config(fd_dev, opt.quantization_coefficience,
-                reg.quantify_addr = QUANTIFY_ADDR, &reg.quantify_size) == -1)
-    err(errno, "%s", opt.quantization_coefficience);
 
   pl_run(fd_dev, &reg);
 
-  void *trans_addr = NULL;
-  if (pl_read(fd_dev, trans_addr, reg.trans_addr, reg.trans_size) == -1)
-    err(errno, AXITX_DEV_PATH);
-  void *entropy_addr = NULL;
-  if (pl_read(fd_dev, entropy_addr, reg.entropy_addr, reg.entropy_size) == -1)
-    err(errno, AXITX_DEV_PATH);
+  void *trans_addr = NULL, *entropy_addr = NULL;
+  pl_get(fd_dev, &reg, trans_addr, entropy_addr);
 
 #define TRANS_FILE "/tmp/trans.bin"
   if (dump_mem(TRANS_FILE, trans_addr, reg.trans_size) == -1)
@@ -103,9 +100,6 @@ int main(int argc, char *argv[]) {
 
     // TODO: comment temporarily
 #if 0
-  int fd = open(p_opt->tty, O_RDWR | O_NONBLOCK | O_NOCTTY);
-  if (fd == -1)
-    err(errno, "%s", p_opt->tty);
   frame_t input_frame, output_frame = default_frame;
   send_frame(fd, &output_frame);
   printf("slave: request data: raw image 0\n");
