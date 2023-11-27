@@ -13,10 +13,15 @@
 #include "main.h"
 #include "utils.h"
 
+// 权重、因子、图片的地址大小
+#define WEIGHT_ADDR 0x10000000
+#define QUANTIFY_ADDR 0x10010000
+#define PICTURE_BASE_ADDR 0x20000000
+
 static void init_opt(opt_t *opt) {
   opt->tty = "/tmp/ttyS1";
-  opt->weight = "/root/weight.bin";
-  opt->quantization_coefficience = "/root/quantify.bin";
+  opt->weight = "/usr/share/autostart/weight.bin";
+  opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
 }
 
 static char shortopts[] = "t:w:q:hV";
@@ -84,16 +89,20 @@ int main(int argc, char *argv[]) {
     err(errno, YUV_FILE);
 
   pl_run(fd_dev, &reg);
-
   void *trans_addr = NULL, *entropy_addr = NULL;
   pl_get(fd_dev, &reg, trans_addr, entropy_addr);
 
-#define TRANS_FILE "/tmp/trans.bin"
-  if (dump_mem(TRANS_FILE, trans_addr, reg.trans_size) == -1)
-    err(errno, TRANS_FILE);
-#define ENTROPY_FILE "/tmp/entropy.bin"
-  if (dump_mem(ENTROPY_FILE, entropy_addr, reg.entropy_size) == -1)
-    err(errno, ENTROPY_FILE);
+  gmm_t gmm;
+  gmm.mean1 = ((double *)entropy_addr)[0];
+  gmm.mean2 = ((double *)entropy_addr)[1];
+  gmm.mean3 = ((double *)entropy_addr)[2];
+  gmm.std1 = ((double *)entropy_addr)[3];
+  gmm.std2 = ((double *)entropy_addr)[4];
+  gmm.std3 = ((double *)entropy_addr)[5];
+  gmm.prob1 = ((double *)entropy_addr)[3];
+  gmm.prob2 = ((double *)entropy_addr)[4];
+  gmm.prob3 = ((double *)entropy_addr)[5];
+  coding(gmm, trans_addr, reg.trans_size);
 
   if (close(fd_dev) == -1)
     err(errno, AXITX_DEV_PATH);

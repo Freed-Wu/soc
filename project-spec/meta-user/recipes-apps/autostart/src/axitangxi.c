@@ -90,6 +90,9 @@ void pl_init(int fd_dev, struct network_acc_reg *reg, char *weight_filename,
     err(errno, "%s", quantify_filename);
 }
 
+/**
+ * will block!
+ */
 void pl_get(int fd_dev, struct network_acc_reg *reg, void *trans_addr,
             void *entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
