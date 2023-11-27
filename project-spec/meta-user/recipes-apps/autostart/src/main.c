@@ -84,50 +84,79 @@ int main(int argc, char *argv[]) {
     err(errno, "%s", opt.tty);
   frame_t input_frame;
   ssize_t n;
-  do {
-    n = receive_frame(fd, &input_frame);
-  } while (n <= 0);
-  frame_t out_frame = {
-      .address = TP_ADDRESS_SLAVE,
-      .frame_type = TP_FRAME_TYPE_NACK,
-      .n_file = input_frame.n_file,
-      .n_frame = input_frame.n_frame,
-  };
-  send_frame(fd, &out_frame);
-  data_frame_t *input_data_frames =
-      malloc(input_frame.n_frame * sizeof(data_frame_t));
-  if (input_data_frames == NULL)
-    err(errno, NULL);
-  for (int i = 0; i < input_frame.n_frame; i++)
+  while (1) {
     do {
-      n = receive_data_frame(fd, &input_data_frames[i]);
+      n = receive_frame(fd, &input_frame);
     } while (n <= 0);
-  ssize_t yuv_len =
-      data_frame_to_data_len(input_data_frames, input_frame.n_frame);
-  // Y, U, V
-  data_t data[3] = {};
-  data[0].addr = ps_mmap(fd_dev, yuv_len);
-  data_frame_to_data(input_data_frames, input_frame.n_frame, data[0].addr,
-                     yuv_len);
-  data[2].len =
-      data_to_yuv420(data[0].addr, data[1].addr, data[2].addr, yuv_len);
-  data[1].len = data[2].addr - data[1].addr;
-  data[0].len = data[1].addr - data[0].addr;
-
-  for (int i = 0; i < 3; i++) {
-    if (pl_write(fd_dev, data[i].addr, reg.picture_addr = PICTURE_BASE_ADDR,
-                 reg.picture_size = data[i].len) == -1)
+    frame_t output_frame = {
+        .address = TP_ADDRESS_SLAVE,
+        .frame_type = TP_FRAME_TYPE_NACK,
+        .n_file = input_frame.n_file,
+        .n_frame = input_frame.n_frame,
+    };
+    send_frame(fd, &output_frame);
+    output_frame.frame_type = TP_FRAME_TYPE_ACK;
+    send_frame(fd, &output_frame);
+    data_frame_t *input_data_frames =
+        malloc(input_frame.n_frame * sizeof(data_frame_t));
+    if (input_data_frames == NULL)
       err(errno, NULL);
+    for (int i = 0; i < input_frame.n_frame; i++)
+      do {
+        n = receive_data_frame(fd, &input_data_frames[i]);
+      } while (n <= 0);
+    ssize_t yuv_len =
+        data_frame_to_data_len(input_data_frames, input_frame.n_frame);
+    data_t yuv[3] = {};
+    yuv[0].addr = ps_mmap(fd_dev, yuv_len);
+    data_frames_to_data(input_data_frames, input_frame.n_frame, yuv[0].addr,
+                        yuv_len);
+    free(input_data_frames);
+    yuv[2].len = data_to_yuv420(yuv[0].addr, yuv[1].addr, yuv[2].addr, yuv_len);
+    yuv[1].len = yuv[2].addr - yuv[1].addr;
+    yuv[0].len = yuv[1].addr - yuv[0].addr;
 
-    pl_run(fd_dev, &reg);
-    uint16_t *trans_addr = NULL, *entropy_addr = NULL;
-    pl_get(fd_dev, &reg, trans_addr, entropy_addr);
+    for (int k = 0; k < 3; k++) {
+      if (pl_write(fd_dev, yuv[k].addr, reg.picture_addr = PICTURE_BASE_ADDR,
+                   reg.picture_size = yuv[k].len) == -1)
+        err(errno, NULL);
 
-    gmm_t gmm;
-    entropy_to_gmm(entropy_addr, &gmm);
-    coding(gmm, trans_addr, reg.trans_size);
+      pl_run(fd_dev, &reg);
+      uint16_t *trans_addr = NULL, *entropy_addr = NULL;
+      pl_get(fd_dev, &reg, trans_addr, entropy_addr);
+
+      gmm_t gmm;
+      entropy_to_gmm(entropy_addr, &gmm);
+      uint8_t *bits = NULL;
+      size_t bits_len = coding(gmm, trans_addr, reg.trans_size, bits);
+      output_frame.frame_type = TP_FRAME_TYPE_REQUEST;
+      output_frame.n_frame = (bits_len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+      do {
+        n = receive_frame(fd, &input_frame);
+      } while (n <= 0);
+      send_frame(fd, &output_frame);
+      data_frame_t *output_data_frames =
+          malloc(output_frame.n_frame * sizeof(data_frame_t));
+      data_to_data_frames(bits, bits_len, output_data_frames,
+                          output_frame.n_frame);
+      for (int i = 0; i < output_frame.n_frame; i++)
+        send_data_frame(fd, &output_data_frames[i]);
+      while (1) {
+        do {
+          n = receive_frame(fd, &input_frame);
+        } while (n <= 0);
+        if (input_frame.frame_type == TP_FRAME_TYPE_NACK)
+          send_data_frame(fd, &output_data_frames[input_frame.n_frame]);
+        else if (input_frame.frame_type == TP_FRAME_TYPE_ACK) {
+          break;
+        }
+      }
+    }
   }
 
+  if (close(fd) == -1)
+    err(errno, "%s", opt.tty);
   if (close(fd_dev) == -1)
     err(errno, AXITX_DEV_PATH);
+  err(errno, NULL);
 }

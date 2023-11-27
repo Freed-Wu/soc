@@ -53,7 +53,8 @@ ssize_t receive_frame(int, frame_t *);
 ssize_t send_data_frame(int, data_frame_t *);
 ssize_t receive_data_frame(int, data_frame_t *);
 ssize_t data_frame_to_data_len(data_frame_t *, n_frame_t);
-void data_frame_to_data(data_frame_t *, n_frame_t, uint8_t *, size_t);
+void data_frames_to_data(data_frame_t *, n_frame_t, uint8_t *, size_t);
+void data_to_data_frames(data_frame_t *, n_frame_t, uint8_t *, size_t);
 ssize_t data_to_yuv420(uint8_t *, uint8_t *, uint8_t *, size_t);
 void entropy_to_gmm(uint16_t *, gmm_t *);
 
