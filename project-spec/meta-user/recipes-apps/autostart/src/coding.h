@@ -1,12 +1,25 @@
 #ifndef CODING_H
 #define CODING_H 1
-#include <sys/cdefs.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 __BEGIN_DECLS
 
-#define OUTPUT "/tmp/output.bin"
+#define LOW_BOUND 0
+#define HIGH_BOUND (1 << 16) - 1
 
-double normal_cdf(double index, double mean, double std);
-void *coding();
+typedef double prob_t;
+typedef double mean_t;
+typedef mean_t std_t;
+
+typedef struct {
+  prob_t prob1, prob2, prob3;
+  mean_t mean1, mean2, mean3;
+  std_t std1, std2, std3;
+} gmm_t;
+
+double normal_cdf(double index, mean_t mean, std_t std);
+void coding(gmm_t gmm, uint16_t *symbol, size_t len);
 
 __END_DECLS
 #endif /* coding.h */

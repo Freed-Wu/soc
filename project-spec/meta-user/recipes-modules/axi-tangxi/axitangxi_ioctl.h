@@ -29,11 +29,6 @@
 // 突发长度默认最大 1024*1024 /16
 #define BURST_SIZE 65536
 
-// 权重、因子、图片的地址大小
-#define WEIGHT_ADDR 0x10000000
-#define QUANTIFY_ADDR 0x10010000
-#define PICTURE_BASE_ADDR 0x20000000
-
 /* 设备节点名称 */
 #define DEVICE_NAME "axi_tangxi"
 
