@@ -10,7 +10,7 @@
 #include "axitangxi.h"
 #include "axitangxi_ioctl.h"
 
-static void *ps_mmap(int fd_dev, size_t size) {
+void *ps_mmap(int fd_dev, size_t size) {
   return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev, 0);
 }
 
