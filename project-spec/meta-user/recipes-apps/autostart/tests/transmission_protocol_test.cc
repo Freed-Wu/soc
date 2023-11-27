@@ -1,4 +1,3 @@
-#include "../src/transmission_protocol.h"
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
@@ -6,30 +5,23 @@
 #include <string.h>
 #include <vector>
 
+#include "../src/transmission_protocol.h"
+
 /*
  * check_sum doesn't need to be asserted.
  */
 void is_same_frame(frame_t frame1, frame_t frame2) {
-  EXPECT_EQ(std::vector<uint8_t>(frame1.header,
-                                 frame1.header + sizeof(frame1.header)),
-            std::vector<uint8_t>(frame2.header,
-                                 frame2.header + sizeof(frame2.header)));
   EXPECT_EQ(frame1.address, frame2.address);
   EXPECT_EQ(frame1.frame_type, frame2.frame_type);
   EXPECT_EQ(frame1.n_file, frame2.n_file);
-  EXPECT_EQ(frame1.cmd_id, frame2.cmd_id);
   EXPECT_EQ(frame1.n_frame, frame2.n_frame);
-  EXPECT_EQ(frame1.data_len, frame2.data_len);
-  EXPECT_EQ(std::vector<uint8_t>(frame1.data, frame1.data + frame1.data_len),
-            std::vector<uint8_t>(frame2.data, frame2.data + frame2.data_len));
 }
 
 TEST(transmission_protocol, frame2bit_stream) {
   uint8_t expected[] = "\xEB\x90\xEB\x90\x1\0\x3\0\x1\0\0\0*\0\x14\xFD";
   frame_t frame;
-  memcpy(frame.header, tp_header, sizeof(tp_header));
   frame.address = TP_ADDRESS_SLAVE;
-  frame.frame_type = TP_FRAME_TYPE_REQUEST_DATA;
+  frame.frame_type = TP_FRAME_TYPE_REQUEST;
   frame.n_file = 1;
   frame.n_frame = 42;
   uint8_t *bit_stream = (uint8_t *)malloc(sizeof(expected) - 1);
@@ -49,9 +41,8 @@ TEST(transmission_protocol, send_frame) {
   }
   int fd = open("/tmp/ttyS0", O_RDWR | O_NONBLOCK | O_NOCTTY);
   frame_t frame;
-  memcpy(frame.header, tp_header, sizeof(tp_header));
   frame.address = TP_ADDRESS_SLAVE;
-  frame.frame_type = TP_FRAME_TYPE_REQUEST_DATA;
+  frame.frame_type = TP_FRAME_TYPE_REQUEST;
   frame.n_file = 1;
   frame.n_frame = 42;
   EXPECT_NE(send_frame(fd, &frame), -1);

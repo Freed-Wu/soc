@@ -4,6 +4,7 @@
 
 __BEGIN_DECLS
 
+void *ps_mmap(int fd_dev, size_t size);
 ssize_t ps_read_file(int fd_dev, char *filename, void *addr);
 
 ssize_t pl_write(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size);
