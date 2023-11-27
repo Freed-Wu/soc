@@ -19,7 +19,7 @@ typedef struct {
 } gmm_t;
 
 double normal_cdf(double index, mean_t mean, std_t std);
-void coding(gmm_t gmm, uint16_t *symbol, size_t len);
+size_t coding(gmm_t gmm, uint16_t *symbol, size_t len, uint8_t *bits);
 
 __END_DECLS
 #endif /* coding.h */

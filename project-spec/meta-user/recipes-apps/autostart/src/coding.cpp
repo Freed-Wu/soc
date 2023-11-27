@@ -15,7 +15,8 @@ double normal_cdf(double index, mean_t mean, std_t std) {
   return 1.0 / 2 * (1 + erf((index - mean) / std / sqrt(2)));
 }
 
-extern "C" void coding(gmm_t gmm, uint16_t *symbol, size_t len) {
+extern "C" size_t coding(gmm_t gmm, uint16_t *symbol, size_t len,
+                         uint8_t *bits) {
   double prob1 = gmm.prob1, prob2 = gmm.prob2, prob3 = gmm.prob3;
   double mean1 = gmm.mean1, mean2 = gmm.mean2, mean3 = gmm.mean3;
   double std1 = gmm.std1, std2 = gmm.std2, std3 = gmm.std3;
@@ -59,6 +60,7 @@ extern "C" void coding(gmm_t gmm, uint16_t *symbol, size_t len) {
   // 所有符号结束后，调用下面的两句话
   enc.finish();
   c_bit_out.close();
+  return 0;
 
   // TODO: 解码端还没写（解码端需要频率表）
   // std::fstream file_bin_read("tmp.bin", std::ios::in | std::ios::binary);

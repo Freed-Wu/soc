@@ -90,17 +90,30 @@ void pl_init(int fd_dev, struct network_acc_reg *reg, char *weight_filename,
     err(errno, "%s", quantify_filename);
 }
 
+uint16_t complete_to_original16(uint16_t code) {
+  if ((code >> 15) & 1)
+    code = ~(code & 0x7FFF) + 1;
+  return code;
+}
+
+void complete_to_original16s(uint16_t *code, size_t len) {
+  for (uint16_t *p_code = code; p_code < code + len; p_code++)
+    *p_code = complete_to_original16(*p_code);
+}
+
 /**
  * will block!
  */
-void pl_get(int fd_dev, struct network_acc_reg *reg, void *trans_addr,
-            void *entropy_addr) {
+void pl_get(int fd_dev, struct network_acc_reg *reg, uint16_t *trans_addr,
+            uint16_t *entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
     err(errno, AXITX_DEV_PATH);
   if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
     err(errno, AXITX_DEV_PATH);
   if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
+  complete_to_original16s(trans_addr, reg->trans_size);
+  complete_to_original16s(entropy_addr, reg->entropy_size);
 }
 
 ssize_t dump_mem(char *filename, void *ps_addr, size_t size) {

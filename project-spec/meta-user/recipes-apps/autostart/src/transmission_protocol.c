@@ -91,8 +91,11 @@ ssize_t data_frame_to_data_len(data_frame_t *data_frames, n_frame_t n_frame) {
   return 0;
 };
 
-void data_frame_to_data(data_frame_t *data_frames, n_frame_t n_frame,
-                        uint8_t *addr, size_t len){};
+void data_frames_to_data(data_frame_t *data_frames, n_frame_t n_frame,
+                         uint8_t *addr, size_t len){};
+
+void data_to_data_frames(data_frame_t *data_frames, n_frame_t n_frame,
+                         uint8_t *addr, size_t len){};
 
 ssize_t data_to_yuv420(uint8_t *y, uint8_t *u, uint8_t *v, size_t yuv_len) {
   return 0;
