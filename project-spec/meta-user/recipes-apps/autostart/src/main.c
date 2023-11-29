@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "axitangxi.h"
@@ -15,7 +16,8 @@
 #include "main.h"
 #include "utils.h"
 
-#define PICTURES_NUMBER_MAX 8
+// usecond / frame
+#define TIMEOUT 3000
 // 权重、因子、图片的地址
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
@@ -24,7 +26,9 @@
 // request status will return it.
 status_t status;
 // picture number
-size_t number;
+n_file_t number;
+// maximum of n_file_t
+#define PICTURES_NUMBER_MAX 8
 data_t bit_streams[PICTURES_NUMBER_MAX];
 
 static void init_opt(opt_t *opt) {
@@ -133,6 +137,12 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   return len;
 }
 
+static inline __suseconds_t tvdiff(struct timeval new_tv,
+                                   struct timeval old_tv) {
+  return (new_tv.tv_sec - old_tv.tv_sec) * 1000000 + new_tv.tv_usec -
+         old_tv.tv_usec;
+}
+
 int main(int argc, char *argv[]) {
   opt_t opt;
   int ret = parse(argc, argv, &opt);
@@ -166,35 +176,51 @@ int main(int argc, char *argv[]) {
       break;
 
     case TP_FRAME_TYPE_SEND:
+      if (input_frame.n_file >= PICTURES_NUMBER_MAX) {
+        fprintf(stderr, "picture number exceeds maximum: %d\n",
+                PICTURES_NUMBER_MAX);
+        break;
+      }
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
       send_frame(fd, &output_frame);
+      // receive data frames
       data_frame_t *input_data_frames =
-          malloc(input_frame.n_frame * sizeof(data_frame_t));
+          calloc(input_frame.n_frame, sizeof(data_frame_t));
       if (input_data_frames == NULL)
         err(errno, NULL);
       data_frame_t data_frame;
-      // TODO: timeout
-      do {
-        n = receive_data_frame(fd, &data_frame);
-      } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
-               data_frame.n_frame >= input_frame.n_frame);
-      memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
-             sizeof(data_frame));
-      for (int i = 0; i < input_frame.n_frame; i++)
-        // TODO: resend
-
-        if (number >= PICTURES_NUMBER_MAX)
-          fprintf(stderr, "picture number exceeds maximum: %d\n",
-                  PICTURES_NUMBER_MAX);
-        else {
-          // TODO: multithread
-          bit_streams[number].len = process_data_frames(
-              fd_dev, input_data_frames, input_frame.n_frame, reg,
-              bit_streams[number].addr);
-          number++;
+      struct timeval tv0, tv;
+      gettimeofday(&tv0, NULL);
+      tv = tv0;
+      while (tvdiff(tv, tv0) < input_frame.n_frame * TIMEOUT) {
+        do {
+          n = receive_data_frame(fd, &data_frame);
+        } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
+                 data_frame.n_frame >= input_frame.n_frame);
+        memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
+               sizeof(data_frame));
+        gettimeofday(&tv, NULL);
+      }
+      // request to resend data frames
+      output_frame.frame_type = TP_FRAME_TYPE_NACK;
+      for (int i = 0; i < input_frame.n_frame; i++) {
+        if (input_data_frames[i].data_len == 0) {
+          send_frame(fd, &output_frame);
+          do {
+            n = receive_data_frame(fd, &data_frame);
+          } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
+                   data_frame.n_frame != i);
         }
+      }
+      output_frame.frame_type = TP_FRAME_TYPE_ACK;
+      send_frame(fd, &output_frame);
+      // TODO: multithread
+      bit_streams[number].len =
+          process_data_frames(fd_dev, input_data_frames, input_frame.n_frame,
+                              reg, bit_streams[number].addr);
+      number++;
       free(input_data_frames);
       break;
 
