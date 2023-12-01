@@ -15,11 +15,11 @@ double normal_cdf(double index, mean_t mean, std_t std) {
   return 1.0 / 2 * (1 + erf((index - mean) / std / sqrt(2)));
 }
 
-extern "C" size_t coding(gmm_t gmm, uint16_t *symbol, size_t len,
+extern "C" size_t coding(gmm_t *gmm, uint16_t *symbol, size_t len,
                          uint8_t *bits) {
-  double prob1 = gmm.prob1, prob2 = gmm.prob2, prob3 = gmm.prob3;
-  double mean1 = gmm.mean1, mean2 = gmm.mean2, mean3 = gmm.mean3;
-  double std1 = gmm.std1, std2 = gmm.std2, std3 = gmm.std3;
+  double prob1 = gmm->prob1, prob2 = gmm->prob2, prob3 = gmm->prob3;
+  double mean1 = gmm->mean1, mean2 = gmm->mean2, mean3 = gmm->mean3;
+  double std1 = gmm->std1, std2 = gmm->std2, std3 = gmm->std3;
 
   double prob_all = exp(prob1) + exp(prob2) + exp(prob3);
   prob1 = exp(prob1) / prob_all;
