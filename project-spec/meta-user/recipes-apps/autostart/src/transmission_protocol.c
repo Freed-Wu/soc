@@ -82,17 +82,36 @@ ssize_t data_to_yuv420(uint8_t *y, uint8_t **u, uint8_t **v, size_t yuv_len) {
   return v_len;
 };
 
-void entropy_to_gmm(uint16_t *entropy_addr, gmm_t *gmm) {
-  // TODO: scale and bias are known by Yu Yue
-#define scale 1.0
-#define bias 0
-  gmm->mean1 = entropy_addr[1] / scale + bias;
-  gmm->mean2 = entropy_addr[2] / scale + bias;
-  gmm->mean3 = entropy_addr[3] / scale + bias;
-  gmm->std1 = entropy_addr[4] / scale + bias;
-  gmm->std2 = entropy_addr[5] / scale + bias;
-  gmm->std3 = entropy_addr[6] / scale + bias;
-  gmm->prob1 = entropy_addr[7] / scale + bias;
-  gmm->prob2 = entropy_addr[8] / scale + bias;
-  gmm->prob3 = entropy_addr[9] / scale + bias;
+/**
+ * dequantize:
+ *  output = input * scale
+ *  bias = 0
+ */
+void entropy_to_gmm(uint16_t *entropy_addr, gmm_t *gmm, size_t len) {
+  // TODO: 9 channels in 13 subbands use same scale
+#define LL 0.00940390583127737
+#define HL0 0.00012030187644995749
+#define HL1 0.0006082353065721691
+#define HL2 0.0009562921477481723
+#define HL3 0.001880464842543006
+#define LH0 0.00022100130445323884
+#define LH1 0.00040055729914456606
+#define LH2 0.0015174609143286943
+#define LH3 0.002205430995672941
+#define HH0 0.0002125250466633588
+#define HH1 0.0003605725651141256
+#define HH2 0.000580432009883225
+#define HH3 0.0031505702063441277
+  double scale = 1.0;
+  for (gmm_t *p = gmm; gmm + len - p >= 0; p++) {
+    p->mean1 = entropy_addr[1] * scale;
+    p->mean2 = entropy_addr[2] * scale;
+    p->mean3 = entropy_addr[3] * scale;
+    p->std1 = entropy_addr[4] * scale;
+    p->std2 = entropy_addr[5] * scale;
+    p->std3 = entropy_addr[6] * scale;
+    p->prob1 = entropy_addr[7] * scale;
+    p->prob2 = entropy_addr[8] * scale;
+    p->prob3 = entropy_addr[9] * scale;
+  }
 }

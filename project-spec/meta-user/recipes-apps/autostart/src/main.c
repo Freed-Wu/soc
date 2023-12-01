@@ -115,8 +115,9 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   size_t len = 0;
   status |= TP_STATUS_ENTROPY_ENCODING;
   for (int k = 0; k < 3; k++) {
-    gmm_t gmm;
-    entropy_to_gmm((uint16_t *)entropy[k].addr, &gmm);
+    size_t gmm_len = reg.entropy_size / 9;
+    gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
+    entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
     // TODO: multithread
     data[k].len =
