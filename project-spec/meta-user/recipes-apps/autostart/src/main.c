@@ -35,12 +35,14 @@ static void init_opt(opt_t *opt) {
   opt->tty = "/tmp/ttyS1";
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
+  opt->dry_run = false;
 }
 
-static char shortopts[] = "t:w:q:hV";
+static char shortopts[] = "t:w:q:hVd";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
+    {"dry-run", no_argument, NULL, 'd'},
     {"tty", required_argument, NULL, 't'},
     {"weight", required_argument, NULL, 'w'},
     {"quantization_coefficience", required_argument, NULL, 'q'},
@@ -58,6 +60,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       if (print_help(longopts, argv[0]) == 0)
         puts("");
       return 1;
+    case 'd':
+      opt->dry_run = true;
+      break;
     case 't':
       opt->tty = optarg;
       break;
@@ -145,12 +150,15 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 
   // configure device
-  int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
-  if (fd_dev == -1)
-    err(errno, AXITX_DEV_PATH);
+  int fd_dev;
   struct network_acc_reg reg;
-  pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR, opt.quantization_coefficience,
-          QUANTIFY_ADDR);
+  if (!opt.dry_run) {
+    fd_dev = open(AXITX_DEV_PATH, O_RDWR);
+    if (fd_dev == -1)
+      err(errno, AXITX_DEV_PATH);
+    pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR,
+            opt.quantization_coefficience, QUANTIFY_ADDR);
+  }
   int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
   if (fd == -1)
     err(errno, "%s", opt.tty);
@@ -207,9 +215,18 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = TP_FRAME_TYPE_ACK;
       send_frame(send_fd, &output_frame, -1);
       // TODO: multithread
-      bit_streams[number].len =
-          process_data_frames(fd_dev, input_data_frames, input_frame.n_frame,
-                              reg, bit_streams[number].addr);
+      if (!opt.dry_run)
+        bit_streams[number].len =
+            process_data_frames(fd_dev, input_data_frames, input_frame.n_frame,
+                                reg, bit_streams[number].addr);
+      else {
+        ssize_t yuv_len =
+            data_frame_to_data_len(input_data_frames, input_frame.n_frame);
+        bit_streams[number].addr = malloc(yuv_len * sizeof(uint8_t));
+        for (n_frame_t i = 0; i < input_frame.n_frame; i++)
+          memcpy(bit_streams[number].addr, input_data_frames[i].data,
+                 input_data_frames[i].data_len);
+      }
       number++;
       free(input_data_frames);
       break;
