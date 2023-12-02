@@ -127,7 +127,7 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     double means[]={0,10000,16384,32768,43690,65536};
     double stds[] ={5000,15000,20000,40000,15000,5000};
     uint32_t freqs_resolution = 1e9;
-    // 数组长度，GMM里面有几个高斯
+    // 数组长度，GMM里面有gmm_len个高斯
     int gmm_len=6; 
     // 构造一个Gmm结构体
     Gmm gmm =initGmm(probs,means,stds,gmm_len,freqs_resolution);
