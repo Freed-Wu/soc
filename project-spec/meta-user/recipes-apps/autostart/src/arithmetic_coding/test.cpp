@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 #include "ArithmeticCoder.hpp"
-#include "BitIoStream.hpp"
 #include "GmmTable.h"
 #include <stddef.h> 
 
