@@ -14,7 +14,7 @@
 #include "utils.h"
 
 #define TIMEOUT 3
-#define LOOP_PERIOD 1000
+#define LOOP_PERIOD 10000
 
 extern const uint8_t tp_header[4];
 
@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
   if (fd == -1)
     err(errno, "%s", opt.tty);
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
+  print_log("%s: initial finished!", opt.tty);
   frame_t input_frame, output_frame = {
                            .address = TP_ADDRESS_MASTER,
                            .frame_type = TP_FRAME_TYPE_QUERY,
@@ -102,6 +103,7 @@ int main(int argc, char *argv[]) {
   // query status to make sure idle
   do {
     send_frame(send_fd, &output_frame, -1);
+    print_log("query status!");
     n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
   } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
            input_frame.frame_type != output_frame.frame_type);
