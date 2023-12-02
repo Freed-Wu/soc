@@ -3,7 +3,7 @@
  */
 #ifndef MAIN_H
 #define MAIN_H 1
-#include <sys/cdefs.h>
+#include <stdbool.h>
 
 #include "transmission_protocol.h"
 __BEGIN_DECLS
@@ -12,6 +12,7 @@ typedef struct {
   char *tty;
   char *weight;
   char *quantization_coefficience;
+  bool dry_run;
 } opt_t;
 typedef struct {
   uint8_t *addr;
