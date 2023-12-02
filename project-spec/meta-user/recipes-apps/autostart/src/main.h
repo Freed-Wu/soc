@@ -1,3 +1,6 @@
+/**
+ * slave's private header
+ */
 #ifndef MAIN_H
 #define MAIN_H 1
 #include <sys/cdefs.h>

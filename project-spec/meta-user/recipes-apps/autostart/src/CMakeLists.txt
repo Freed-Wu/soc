@@ -21,8 +21,8 @@ find_package(Threads REQUIRED)
 target_link_libraries(main PRIVATE Threads::Threads)
 install(TARGETS main RUNTIME)
 
-# add_executable(master master.c)
-# target_link_libraries(master PRIVATE utils)
-# target_link_libraries(master PRIVATE transmission_protocol)
+add_executable(master master.c)
+target_link_libraries(master PRIVATE utils)
+target_link_libraries(master PRIVATE transmission_protocol)
 # master don't need to be installed
 # install(TARGETS main RUNTIME)
