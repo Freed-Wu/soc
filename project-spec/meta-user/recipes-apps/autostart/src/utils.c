@@ -12,7 +12,7 @@
 
 #include "utils.h"
 
-enum LOG_LEVEL log_level = LOG_INFO;
+enum LOG_LEVEL log_level = _LOG_INFO;
 
 int print_help(const struct option *longopts, const char *arg0) {
   unsigned int i = 0;
@@ -69,7 +69,7 @@ ssize_t dump_mem(char *filename, void *addr, size_t size) {
 }
 
 void print_log(char *format, ...) {
-  enum LOG_LEVEL level = LOG_INFO;
+  enum LOG_LEVEL level = _LOG_INFO;
   size_t offset = 0;
   if (!isprint(format[0])) {
     level = format[0];
@@ -78,7 +78,7 @@ void print_log(char *format, ...) {
   if (level < log_level)
     return;
   FILE *fp = stdout;
-  if (level >= LOG_WARNING)
+  if (level >= _LOG_WARNING)
     fp = stderr;
   time_t t;
   time(&t);
