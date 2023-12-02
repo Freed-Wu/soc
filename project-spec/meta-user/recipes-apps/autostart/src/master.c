@@ -9,6 +9,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <wordexp.h>
+// https://stackoverflow.com/a/48521433/16027269
+#define termios asmtermios
+#include <asm/termios.h>
+#undef termios
+#include <termios.h>
 
 #include "master.h"
 #include "utils.h"
@@ -93,6 +98,13 @@ int main(int argc, char *argv[]) {
   int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
   if (fd == -1)
     err(errno, "%s", opt.tty);
+  struct termios newattr, oldattr;
+  tcgetattr(fd, &oldattr);
+  newattr = oldattr;
+  cfsetispeed(&newattr, B1152000);
+  cfsetospeed(&newattr, B1152000);
+  tcsetattr(fd, TCSANOW, &newattr);
+
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
   print_log("%s: initial finished!", opt.tty);
   frame_t input_frame, output_frame = {
@@ -210,6 +222,7 @@ int main(int argc, char *argv[]) {
     free(filename);
   }
 
+  tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
     err(errno, "%s", opt.tty);
   return EXIT_SUCCESS;

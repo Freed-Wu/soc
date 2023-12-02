@@ -8,6 +8,11 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
+// https://stackoverflow.com/a/48521433/16027269
+#define termios asmtermios
+#include <asm/termios.h>
+#undef termios
+#include <termios.h>
 
 #include "axitangxi.h"
 #include "coding.h"
@@ -160,9 +165,17 @@ int main(int argc, char *argv[]) {
     pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR,
             opt.quantization_coefficience, QUANTIFY_ADDR);
   }
+
   int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
   if (fd == -1)
     err(errno, "%s", opt.tty);
+  struct termios newattr, oldattr;
+  tcgetattr(fd, &oldattr);
+  newattr = oldattr;
+  cfsetispeed(&newattr, B1152000);
+  cfsetospeed(&newattr, B1152000);
+  tcsetattr(fd, TCSANOW, &newattr);
+
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
   print_log("%s: initial finished!", opt.tty);
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
@@ -290,6 +303,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
     err(errno, "%s", opt.tty);
   if (close(fd_dev) == -1)

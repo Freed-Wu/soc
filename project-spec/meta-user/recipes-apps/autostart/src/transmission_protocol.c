@@ -36,6 +36,8 @@ ssize_t send_data_frame(int fd, data_frame_t *frame, int timeout) {
  * However, master sends a request and waits slave's response. If not received,
  * it shouldn't wait forever! it should resend a request. So a timeout is
  * necessary.
+ *
+ * https://stackoverflow.com/questions/32537792/why-i-only-get-one-character-at-one-time-when-i-use-read
  */
 ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   __typeof__(frame) temp = malloc(sizeof(*frame));
