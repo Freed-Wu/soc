@@ -1,11 +1,14 @@
 #include <err.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "crc.h"
 #include "transmission_protocol.h"
+
+const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
 
 ssize_t send_frame(int fd, frame_t *frame) {
   frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
@@ -18,7 +21,7 @@ ssize_t send_data_frame(int fd, data_frame_t *frame) {
 }
 
 ssize_t receive_frame(int fd, frame_t *frame) {
-  __typeof__(frame) temp;
+  __typeof__(frame) temp = malloc(sizeof(*frame));
   ssize_t n = read(fd, temp, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
@@ -29,7 +32,7 @@ ssize_t receive_frame(int fd, frame_t *frame) {
 }
 
 ssize_t receive_data_frame(int fd, data_frame_t *frame) {
-  __typeof__(frame) temp;
+  __typeof__(frame) temp = malloc(sizeof(*frame));
   ssize_t n = read(fd, temp, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
@@ -57,20 +60,41 @@ void data_frames_to_data(data_frame_t *data_frames, n_frame_t n_frame,
 };
 
 void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
+  n_frame_t i = 0;
+  if (addr == NULL) {
+    ssize_t size;
+    while (true) {
+      size = read(len, data_frames[i].data, TP_FRAME_DATA_LEN_MAX);
+      if (size != TP_FRAME_DATA_LEN_MAX)
+        break;
+      data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
+      data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
+                                       sizeof(data_frame_t) - sizeof(uint16_t));
+      i++;
+    }
+    if (size == -1) {
+      perror(NULL);
+      return;
+    }
+    data_frames[i].data_len = size;
+    memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
+    data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
+                                     sizeof(data_frame_t) - sizeof(uint16_t));
+    return;
+  }
   uint8_t *p = addr;
   size_t n_frame = (len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
-  int i;
-  for (i = 0; i < n_frame - 1; i++) {
+  for (; i < n_frame - 1; i++) {
     memcpy(p, data_frames[i].data, TP_FRAME_DATA_LEN_MAX);
     data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
     data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
                                      sizeof(data_frame_t) - sizeof(uint16_t));
     p += TP_FRAME_DATA_LEN_MAX;
   }
-  size_t last_len = len - i * TP_FRAME_DATA_LEN_MAX;
-  memcpy(p, data_frames[i].data, last_len);
-  data_frames[i].data_len = last_len;
-  memset(data_frames[i].data + last_len, 0, TP_FRAME_DATA_LEN_MAX - last_len);
+  data_frames[i].data_len = len - i * TP_FRAME_DATA_LEN_MAX;
+  memcpy(p, data_frames[i].data, data_frames[i].data_len);
+  memset(data_frames[i].data + data_frames[i].data_len, 0,
+         TP_FRAME_DATA_LEN_MAX - data_frames[i].data_len);
   data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
                                    sizeof(data_frame_t) - sizeof(uint16_t));
 };
@@ -114,4 +138,29 @@ void entropy_to_gmm(uint16_t *entropy_addr, gmm_t *gmm, size_t len) {
     p->prob2 = entropy_addr[8] * scale;
     p->prob3 = entropy_addr[9] * scale;
   }
+}
+
+/**
+ * data, data_len and check_sum should be set in data_to_data_frames()
+ */
+void init_data_frames(data_frame_t *data_frames, n_frame_t n_frame,
+                      n_file_t n_file) {
+  for (int i = 0; i < n_frame; i++) {
+    memcpy(data_frames[i].header, tp_header, sizeof(tp_header));
+    data_frames[i].n_file = n_file;
+    data_frames[i].n_frame = i;
+  }
+}
+
+/**
+ * if addr is NULL, len is fd
+ */
+data_frame_t *alloc_data_frames(n_frame_t n_frame, n_file_t n_file,
+                                uint8_t *addr, size_t len) {
+  data_frame_t *data_frames = malloc(n_frame * sizeof(data_frame_t));
+  if (data_frames == NULL)
+    return NULL;
+  init_data_frames(data_frames, n_frame, n_file);
+  data_to_data_frames(addr, len, data_frames);
+  return data_frames;
 }

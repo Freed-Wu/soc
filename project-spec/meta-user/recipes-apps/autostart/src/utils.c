@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 int print_help(const struct option *longopts, const char *arg0) {
   unsigned int i = 0;
@@ -43,6 +45,19 @@ int print_help(const struct option *longopts, const char *arg0) {
 
     o = longopts[++i];
   }
-  puts("");
   return EXIT_SUCCESS;
+}
+
+
+/**
+ * for debug
+ */
+ssize_t dump_mem(char *filename, void *addr, size_t size) {
+  int fd = open(filename, O_RDWR);
+  if (fd == -1)
+    return -1;
+  ssize_t _size = write(fd, addr, size);
+  if (close(fd) == -1)
+    return -1;
+  return _size;
 }

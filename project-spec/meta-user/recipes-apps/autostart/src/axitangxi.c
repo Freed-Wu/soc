@@ -115,13 +115,3 @@ void pl_get(int fd_dev, struct network_acc_reg *reg, uint16_t *trans_addr,
   complete_to_original16s(trans_addr, reg->trans_size);
   complete_to_original16s(entropy_addr, reg->entropy_size);
 }
-
-ssize_t dump_mem(char *filename, void *ps_addr, size_t size) {
-  int fd = open(filename, O_RDWR);
-  if (fd == -1)
-    return -1;
-  ssize_t _size = write(fd, ps_addr, size);
-  if (close(fd) == -1)
-    return -1;
-  return _size;
-}
