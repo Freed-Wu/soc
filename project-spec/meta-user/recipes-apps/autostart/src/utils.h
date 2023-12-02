@@ -12,6 +12,7 @@ __BEGIN_DECLS
 
 int print_help(const struct option *longopts, const char *arg0);
 ssize_t dump_mem(char *filename, void *addr, size_t size);
+void fd_to_epoll_fds(int fd, int *send_fd, int *recv_fd);
 
 __END_DECLS
 #endif /* utils.h */
