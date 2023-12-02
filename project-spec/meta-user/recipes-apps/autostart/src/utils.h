@@ -1,5 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H 1
+#include <getopt.h>
 #include <stdlib.h>
 
 #include "config.h"
@@ -11,11 +12,16 @@ __BEGIN_DECLS
                   "Written by Wu Zhenyu <wuzhenyu@ustc.edu>\n"
 
 enum LOG_LEVEL {
-  LOG_VERBOSE,
-  LOG_INFO,
-  LOG_WARNING,
-  LOG_ERROR,
-  LOG_FATAL,
+#define LOG_VERBOSE "\0"
+  _LOG_VERBOSE,
+#define LOG_INFO "\1"
+  _LOG_INFO,
+#define LOG_WARNING "\2"
+  _LOG_WARNING,
+#define LOG_ERROR "\3"
+  _LOG_ERROR,
+#define LOG_FATAL "\4"
+  _LOG_FATAL,
 };
 
 void print_log(char *, ...);
