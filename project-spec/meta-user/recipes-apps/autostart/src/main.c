@@ -23,6 +23,7 @@
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
 
+extern const uint8_t tp_header[4];
 // request status will return it.
 status_t status;
 // picture number
@@ -52,14 +53,12 @@ static int parse(int argc, char *argv[], opt_t *opt) {
   while ((c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
     switch (c) {
     case 'V':
-      printf("%s " PROJECT_VERSION "\n"
-             "Copyright (C) 2023\n"
-             "Written by Wu Zhenyu <wuzhenyu@ustc.edu>\n",
-             argv[0]);
+      printf("%s " VERSION, argv[0]);
       return 2;
     case 'h':
       if (print_help(longopts, argv[0]) == 0)
-        return 1;
+        puts("");
+      return 1;
     case 't':
       opt->tty = optarg;
       break;
@@ -231,20 +230,22 @@ int main(int argc, char *argv[]) {
                 PICTURES_NUMBER_MAX);
         break;
       }
+      // haven't encoded pictures
+      if (bit_streams[number].len == 0)
+        break;
       output_frame.frame_type = input_frame.frame_type;
+      output_frame.n_file = input_frame.n_file;
       output_frame.n_frame =
           (bit_streams[number].len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
-      send_frame(fd, &output_frame);
+      // send data frames
       data_frame_t *output_data_frames =
-          malloc(output_frame.n_frame * sizeof(data_frame_t));
-      // data, data_len and check_sum should be set in data_to_data_frames()
-      for (int i = 0; i < output_frame.n_frame; i++) {
-        memcpy(output_data_frames[i].header, tp_header, sizeof(tp_header));
-        output_data_frames[i].n_file = input_frame.n_file;
-        output_data_frames[i].n_frame = i;
+          alloc_data_frames(output_frame.n_frame, output_frame.n_file,
+                            bit_streams[number].addr, bit_streams[number].len);
+      if (output_data_frames == NULL) {
+        perror(NULL);
+        break;
       }
-      data_to_data_frames(bit_streams[number].addr, bit_streams[number].len,
-                          output_data_frames);
+      send_frame(fd, &output_frame);
       for (int i = 0; i < output_frame.n_frame; i++)
         send_data_frame(fd, &output_data_frames[i]);
       bool cont = true;

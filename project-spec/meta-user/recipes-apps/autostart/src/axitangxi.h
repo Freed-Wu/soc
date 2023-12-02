@@ -21,7 +21,5 @@ void pl_get(int fd_dev, struct network_acc_reg *reg, uint16_t *trans_addr,
 uint16_t complete_to_original16(uint16_t code);
 void complete_to_original16s(uint16_t *code, size_t len);
 
-ssize_t dump_mem(char *filename, void *ps_addr, size_t size);
-
 __END_DECLS
 #endif /* axitangxi.h */
