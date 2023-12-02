@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <sys/time.h>
 #include <unistd.h>
 
 #include "axitangxi.h"
@@ -16,8 +15,8 @@
 #include "main.h"
 #include "utils.h"
 
-// usecond / frame
-#define TIMEOUT 3000
+// millisecond / frame
+#define TIMEOUT 3
 // 权重、因子、图片的地址
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
@@ -137,12 +136,6 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   return len;
 }
 
-static inline __suseconds_t tvdiff(struct timeval new_tv,
-                                   struct timeval old_tv) {
-  return (new_tv.tv_sec - old_tv.tv_sec) * 1000000 + new_tv.tv_usec -
-         old_tv.tv_usec;
-}
-
 int main(int argc, char *argv[]) {
   opt_t opt;
   int ret = parse(argc, argv, &opt);
@@ -192,17 +185,13 @@ int main(int argc, char *argv[]) {
       if (input_data_frames == NULL)
         err(errno, NULL);
       data_frame_t data_frame;
-      struct timeval tv0, tv;
-      gettimeofday(&tv0, NULL);
-      tv = tv0;
-      while (tvdiff(tv, tv0) < input_frame.n_frame * TIMEOUT) {
-        do {
-          n = receive_data_frame(recv_fd, &data_frame, -1);
-        } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
-                 data_frame.n_frame >= input_frame.n_frame);
+      for (int i = 0; i < input_frame.n_frame; i++) {
+        n = receive_data_frame(recv_fd, &data_frame, TIMEOUT);
+        if (n <= 0 || data_frame.n_file != input_frame.n_file ||
+            data_frame.n_frame >= input_frame.n_frame)
+          continue;
         memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
                sizeof(data_frame));
-        gettimeofday(&tv, NULL);
       }
       // request to resend data frames
       output_frame.frame_type = TP_FRAME_TYPE_NACK;
