@@ -41,7 +41,7 @@ typedef struct {
     };
   };
   uint16_t check_sum;
-} frame_t;
+} __attribute__((packed)) frame_t;
 typedef struct {
   uint8_t header[4];
   n_file_t n_file;
@@ -49,7 +49,7 @@ typedef struct {
   data_len_t data_len;
   uint8_t data[TP_FRAME_DATA_LEN_MAX];
   uint16_t check_sum;
-} data_frame_t;
+} __attribute__((packed)) data_frame_t;
 
 ssize_t send_frame(int, frame_t *, int);
 ssize_t receive_frame(int, frame_t *, int);
