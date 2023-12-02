@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -159,14 +158,10 @@ int main(int argc, char *argv[]) {
   struct network_acc_reg reg;
   pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR, opt.quantization_coefficience,
           QUANTIFY_ADDR);
-  int fd = open(opt.tty, O_RDWR | O_NOCTTY);
+  int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
   if (fd == -1)
     err(errno, "%s", opt.tty);
-  int send_fd = epoll_create(1), recv_fd = epoll_create(1);
-  struct epoll_event send_event = {.events = EPOLLOUT, .data.fd = fd},
-                     recv_event = {.events = EPOLLIN, .data.fd = fd};
-  epoll_ctl(send_fd, EPOLL_CTL_ADD, fd, &send_event);
-  epoll_ctl(recv_fd, EPOLL_CTL_ADD, fd, &recv_event);
+  fd_to_epoll_fds(fd, &send_fd, &recv_fd);
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
@@ -266,7 +261,8 @@ int main(int argc, char *argv[]) {
           break;
 
         case TP_FRAME_TYPE_NACK:
-          send_data_frame(send_fd, &output_data_frames[input_frame.n_frame], -1);
+          send_data_frame(send_fd, &output_data_frames[input_frame.n_frame],
+                          -1);
           break;
 
         default:
