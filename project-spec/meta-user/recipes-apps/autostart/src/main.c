@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -161,18 +162,23 @@ int main(int argc, char *argv[]) {
   int fd = open(opt.tty, O_RDWR | O_NOCTTY);
   if (fd == -1)
     err(errno, "%s", opt.tty);
+  int send_fd = epoll_create(1), recv_fd = epoll_create(1);
+  struct epoll_event send_event = {.events = EPOLLOUT, .data.fd = fd},
+                     recv_event = {.events = EPOLLIN, .data.fd = fd};
+  epoll_ctl(send_fd, EPOLL_CTL_ADD, fd, &send_event);
+  epoll_ctl(recv_fd, EPOLL_CTL_ADD, fd, &recv_event);
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
     do {
-      n = receive_frame(fd, &input_frame);
+      n = receive_frame(recv_fd, &input_frame, -1);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
 
     switch (input_frame.frame_type) {
     case TP_FRAME_TYPE_QUERY:
       output_frame.frame_type = input_frame.frame_type;
       output_frame.status = status;
-      send_frame(fd, &output_frame);
+      send_frame(send_fd, &output_frame, -1);
       break;
 
     case TP_FRAME_TYPE_SEND:
@@ -184,7 +190,7 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
-      send_frame(fd, &output_frame);
+      send_frame(send_fd, &output_frame, -1);
       // receive data frames
       data_frame_t *input_data_frames =
           calloc(input_frame.n_frame, sizeof(data_frame_t));
@@ -196,7 +202,7 @@ int main(int argc, char *argv[]) {
       tv = tv0;
       while (tvdiff(tv, tv0) < input_frame.n_frame * TIMEOUT) {
         do {
-          n = receive_data_frame(fd, &data_frame);
+          n = receive_data_frame(recv_fd, &data_frame, -1);
         } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
                  data_frame.n_frame >= input_frame.n_frame);
         memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
@@ -207,15 +213,15 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = TP_FRAME_TYPE_NACK;
       for (int i = 0; i < input_frame.n_frame; i++) {
         if (input_data_frames[i].data_len == 0) {
-          send_frame(fd, &output_frame);
+          send_frame(send_fd, &output_frame, -1);
           do {
-            n = receive_data_frame(fd, &data_frame);
+            n = receive_data_frame(recv_fd, &data_frame, -1);
           } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
                    data_frame.n_frame != i);
         }
       }
       output_frame.frame_type = TP_FRAME_TYPE_ACK;
-      send_frame(fd, &output_frame);
+      send_frame(send_fd, &output_frame, -1);
       // TODO: multithread
       bit_streams[number].len =
           process_data_frames(fd_dev, input_data_frames, input_frame.n_frame,
@@ -245,13 +251,13 @@ int main(int argc, char *argv[]) {
         perror(NULL);
         break;
       }
-      send_frame(fd, &output_frame);
+      send_frame(send_fd, &output_frame, -1);
       for (int i = 0; i < output_frame.n_frame; i++)
-        send_data_frame(fd, &output_data_frames[i]);
+        send_data_frame(send_fd, &output_data_frames[i], -1);
       bool cont = true;
       while (cont) {
         do {
-          n = receive_frame(fd, &input_frame);
+          n = receive_frame(recv_fd, &input_frame, -1);
         } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
         switch (input_frame.frame_type) {
         case TP_FRAME_TYPE_ACK:
@@ -260,7 +266,7 @@ int main(int argc, char *argv[]) {
           break;
 
         case TP_FRAME_TYPE_NACK:
-          send_data_frame(fd, &output_data_frames[input_frame.n_frame]);
+          send_data_frame(send_fd, &output_data_frames[input_frame.n_frame], -1);
           break;
 
         default:

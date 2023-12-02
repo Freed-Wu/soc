@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/epoll.h>
 #include <unistd.h>
 
 #include "crc.h"
@@ -10,19 +11,40 @@
 
 const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
 
-ssize_t send_frame(int fd, frame_t *frame) {
+ssize_t send_frame(int fd, frame_t *frame, int timeout) {
   frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
-  return write(fd, frame, sizeof(*frame));
+
+  struct epoll_event event;
+  int num = epoll_wait(fd, &event, 1, timeout);
+  if (num < 1)
+    return -1;
+  return write(event.data.fd, frame, sizeof(*frame));
 }
 
-ssize_t send_data_frame(int fd, data_frame_t *frame) {
+ssize_t send_data_frame(int fd, data_frame_t *frame, int timeout) {
   frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
-  return write(fd, frame, sizeof(*frame));
+
+  struct epoll_event event;
+  int num = epoll_wait(fd, &event, 1, timeout);
+  if (num < 1)
+    return -1;
+  return write(event.data.fd, frame, sizeof(*frame));
 }
 
-ssize_t receive_frame(int fd, frame_t *frame) {
+/**
+ * Slave waits master's request. If not received, just wait forever.
+ * However, master sends a request and waits slave's response. If not received,
+ * it shouldn't wait forever! it should resend a request. So a timeout is
+ * necessary.
+ */
+ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   __typeof__(frame) temp = malloc(sizeof(*frame));
-  ssize_t n = read(fd, temp, sizeof(*frame));
+
+  struct epoll_event event;
+  int num = epoll_wait(fd, &event, 1, timeout);
+  if (num < 1)
+    return -1;
+  ssize_t n = read(event.data.fd, temp, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
           temp->check_sum)
@@ -31,9 +53,14 @@ ssize_t receive_frame(int fd, frame_t *frame) {
   return n;
 }
 
-ssize_t receive_data_frame(int fd, data_frame_t *frame) {
+ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   __typeof__(frame) temp = malloc(sizeof(*frame));
-  ssize_t n = read(fd, temp, sizeof(*frame));
+
+  struct epoll_event event;
+  int num = epoll_wait(fd, &event, 1, timeout);
+  if (num < 1)
+    return -1;
+  ssize_t n = read(event.data.fd, temp, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
           temp->check_sum ||
