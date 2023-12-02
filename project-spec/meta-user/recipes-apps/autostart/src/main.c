@@ -11,7 +11,6 @@
 
 #include "axitangxi.h"
 #include "coding.h"
-#include "config.h"
 #include "main.h"
 #include "utils.h"
 
@@ -143,6 +142,8 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
 
 int main(int argc, char *argv[]) {
   opt_t opt;
+  setbuf(stdout, NULL);
+  setbuf(stderr, NULL);
   int ret = parse(argc, argv, &opt);
   if (ret == -1)
     errx(EXIT_FAILURE, "parse failure!");
@@ -163,6 +164,7 @@ int main(int argc, char *argv[]) {
   if (fd == -1)
     err(errno, "%s", opt.tty);
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
+  print_log("%s: initial finished!", opt.tty);
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
@@ -170,6 +172,7 @@ int main(int argc, char *argv[]) {
       n = receive_frame(recv_fd, &input_frame, -1);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
 
+    print_log("receive a frame!");
     switch (input_frame.frame_type) {
     case TP_FRAME_TYPE_QUERY:
       output_frame.frame_type = input_frame.frame_type;
