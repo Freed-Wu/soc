@@ -50,6 +50,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
           temp->check_sum)
     return -1;
   memcpy(frame, temp, sizeof(*frame));
+  free(temp);
   return n;
 }
 
@@ -67,6 +68,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
       memcmp(temp->header, tp_header, sizeof(tp_header)))
     return -1;
   memcpy(frame, temp, sizeof(*frame));
+  free(temp);
   return n;
 }
 
