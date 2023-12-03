@@ -4,8 +4,7 @@
 #include <stdlib.h>
 
 //增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
-#include "arithmetic_coding/ArithmeticCoder.hpp"
-#include "arithmetic_coding/GmmTable.h"
+#include "GmmTable.h"
 
 __BEGIN_DECLS
 

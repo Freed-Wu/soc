@@ -22,7 +22,7 @@ int BitInputStream::read() {
 	if (currentByte == std::char_traits<char>::eof())
 		return -1;
 	if (numBitsRemaining == 0) {
-		currentByte = input.get();  // Note: istream.get() returns int, not char
+		currentByte = input.get();  
 		if (currentByte == std::char_traits<char>::eof())
 			return -1;
 		if (!(0 <= currentByte && currentByte <= 255))
@@ -45,7 +45,6 @@ int BitInputStream::readNoEof() {
 }
 
 
-
 BitOutputStream::BitOutputStream(uint8_t* _addr) :
 	currentByte(0),
 	numBitsFilled(0) ,
@@ -57,7 +56,6 @@ void BitOutputStream::write(int b) {
 	currentByte = (currentByte << 1) | b;
 	numBitsFilled++;
 	if (numBitsFilled == 8) {
-		// Note: ostream.put() takes char, which may be signed/unsigned
 		if (std::numeric_limits<char>::is_signed)
 			currentByte -= (currentByte >> 7) << 8;
 		data_addr[size++]=static_cast<uint8_t>(currentByte);
@@ -71,7 +69,6 @@ void BitOutputStream::finish() {
 	while (numBitsFilled != 0)
 		write(0);
 }
-
 
 ArithmeticCoderBase::ArithmeticCoderBase(int numBits) {
 	if (!(1 <= numBits && numBits <= 63))
@@ -240,7 +237,7 @@ bool write_bin(uint8_t* data_addr,size_t size,char file[]){
     return true;
 }
 
-extern "C" size_t coding(Gmm gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound){
+extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound){
 	//根据GMM得到对应的频率表
     GmmTable freqs(gmm,low_bound,high_bound);
 	
@@ -267,13 +264,13 @@ extern "C" size_t coding(Gmm gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* 
 
 	//下面两行代码是将字符数组转换为bin文件。
 	// 实际中并不需要下面代码，这里得到bin文件，只是为了解码，从而验证编解码的正确性
-	// char outputFile[255]="IO/enc.bin";
-	// write_bin(data_addr,size,outputFile);
+	char outputFile[255]="IO/enc.bin";
+	write_bin(data_addr,size,outputFile);
 
 	return size;
 }
 
-extern "C" bool decoding(Gmm gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]){
+extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]){
 	//根据GMM得到对应的频率表
 	GmmTable freqs(gmm,low_bound,high_bound);
 

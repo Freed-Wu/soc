@@ -2,44 +2,24 @@
 #include <iostream>
 #include <math.h>
 
-Gmm initGmm(double* _probs, double* _means, double* _stds,int _len, uint32_t _freqs_resolution) {
-    Gmm gmm;
-    gmm.probs = _probs;
-    gmm.means = _means;
-    gmm.stds = _stds;
-    gmm.freqs_resolution = _freqs_resolution;
-    gmm.len = _len;
-   
-    double prob_all=0.0;
-
-    for(int i=0;i<_len;i++)
-        prob_all+= exp(gmm.probs[i]);
-    
-    for(int i=0;i<_len;i++)
-        gmm.probs[i]/=prob_all;
-
-    return gmm;
-}
-
 
 double GmmTable::normal_cdf(double index, double mean, double std) {
     return 1.0 / 2 * (1 + erf((index - mean) / std / sqrt(2)));
 }
 
 
-GmmTable::GmmTable (Gmm _gmm,uint32_t _low_bound,uint32_t _high_bound){
-    gmm=_gmm;
+GmmTable::GmmTable (gmm_t* gmm,uint32_t _low_bound,uint32_t _high_bound){
     low_bound=_low_bound;
     high_bound=_high_bound;//左闭右闭
-    uint32_t freqs_resolution = gmm.freqs_resolution; 
+    uint32_t freqs_resolution = gmm->freqs_resolution; 
 
     symlow.resize(high_bound + 2);
     symhigh.resize(high_bound + 2);
-    
-    double* m_probs=gmm.probs;
-    double* m_means=gmm.means;
-    double* m_stds=gmm.stds;
-    int n_gauss=gmm.len;
+
+    double m_probs[3]={gmm->prob1, gmm->prob2,  gmm->prob3};
+    double m_means[3]={gmm->mean1, gmm->mean2, gmm->mean3};
+    double m_stds[3]={gmm->std1, gmm->std2, gmm->std3};
+    int n_gauss=3;
 
     for(int i=low_bound;i<=high_bound+1;i++){
         double lowboundlow=0.,highboundhigh=0.;

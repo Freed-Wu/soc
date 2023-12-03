@@ -16,8 +16,8 @@
 #include "utils.h"
 
 //增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
-#include "arithmetic_coding/ArithmeticCoder.hpp"
-#include "arithmetic_coding/GmmTable.h"
+#include "ArithmeticCoder.hpp"
+#include "GmmTable.h"
 
 // usecond / frame
 #define TIMEOUT 3000
@@ -122,20 +122,13 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
-    // 重写了Gmm了结构体，声明在"arithmetic_coding/GmmTable.h"
-    double probs[]={0.1,0.15,0.25,0.25,0.15,0.1};
-    double means[]={0,10000,16384,32768,43690,65536};
-    double stds[] ={5000,15000,20000,40000,15000,5000};
-    uint32_t freqs_resolution = 1e9;
-    // 数组长度，GMM里面有gmm_len个高斯
-    int gmm_len=6; 
-    // 构造一个Gmm结构体
-    Gmm gmm =initGmm(probs,means,stds,gmm_len,freqs_resolution);
 
     // TODO: multithread
     //*****新增上下边界，是要传入的参数****
     uint32_t low_bound=10000;
     uint32_t high_bound=50000;
+    gmm->freqs_resolution=1e6;//存辉师兄代码里默认的
+
     data[k].len =
         coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr,low_bound,high_bound);
 
