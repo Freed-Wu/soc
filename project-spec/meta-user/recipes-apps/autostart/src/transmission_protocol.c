@@ -9,6 +9,39 @@
 #include "crc.h"
 #include "transmission_protocol.h"
 
+<<<<<<< HEAD ssize_t send_frame(int fd, frame_t *frame) { frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
+return write(fd, frame, sizeof(*frame));
+}
+
+ssize_t send_data_frame(int fd, data_frame_t *frame) {
+  frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
+  return write(fd, frame, sizeof(*frame));
+}
+
+ssize_t receive_frame(int fd, frame_t *frame) {
+  __typeof__(frame) temp;
+  ssize_t n = read(fd, temp, sizeof(*frame));
+  if (n < sizeof(*frame) ||
+      crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
+          temp->check_sum)
+    return -1;
+  memcpy(frame, temp, sizeof(*frame));
+  return n;
+}
+
+ssize_t receive_data_frame(int fd, data_frame_t *frame) {
+  __typeof__(frame) temp;
+  ssize_t n = read(fd, temp, sizeof(*frame));
+  if (n < sizeof(*frame) ||
+      crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
+          temp->check_sum ||
+      memcmp(temp->header, tp_header, sizeof(tp_header)))
+    return -1;
+  memcpy(frame, temp, sizeof(*frame));
+  return n;
+}
+
+=======
 const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
 
 ssize_t send_frame(int fd, frame_t *frame, int timeout) {
@@ -74,6 +107,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   return n;
 }
 
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 size_t data_frame_to_data_len(data_frame_t *data_frames, n_frame_t n_frame) {
   size_t len = 0;
   for (int i = 0; i < n_frame; i++)
@@ -91,6 +125,12 @@ void data_frames_to_data(data_frame_t *data_frames, n_frame_t n_frame,
 };
 
 void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
+<<<<<<< HEAD
+  uint8_t *p = addr;
+  size_t n_frame = (len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+  int i;
+  for (i = 0; i < n_frame - 1; i++) {
+=======
   n_frame_t i = 0;
   if (addr == NULL) {
     ssize_t size;
@@ -116,16 +156,24 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
   uint8_t *p = addr;
   size_t n_frame = (len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
   for (; i < n_frame - 1; i++) {
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
     memcpy(p, data_frames[i].data, TP_FRAME_DATA_LEN_MAX);
     data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
     data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
                                      sizeof(data_frame_t) - sizeof(uint16_t));
     p += TP_FRAME_DATA_LEN_MAX;
   }
+<<<<<<< HEAD
+  size_t last_len = len - i * TP_FRAME_DATA_LEN_MAX;
+  memcpy(p, data_frames[i].data, last_len);
+  data_frames[i].data_len = last_len;
+  memset(data_frames[i].data + last_len, 0, TP_FRAME_DATA_LEN_MAX - last_len);
+=======
   data_frames[i].data_len = len - i * TP_FRAME_DATA_LEN_MAX;
   memcpy(p, data_frames[i].data, data_frames[i].data_len);
   memset(data_frames[i].data + data_frames[i].data_len, 0,
          TP_FRAME_DATA_LEN_MAX - data_frames[i].data_len);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
   data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
                                    sizeof(data_frame_t) - sizeof(uint16_t));
 };
@@ -169,6 +217,8 @@ void entropy_to_gmm(uint16_t *entropy_addr, gmm_t *gmm, size_t len) {
     p->prob2 = entropy_addr[8] * scale;
     p->prob3 = entropy_addr[9] * scale;
   }
+<<<<<<< HEAD
+=======
 }
 
 /**
@@ -194,4 +244,5 @@ data_frame_t *alloc_data_frames(n_frame_t n_frame, n_file_t n_file,
   init_data_frames(data_frames, n_frame, n_file);
   data_to_data_frames(addr, len, data_frames);
   return data_frames;
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 }
