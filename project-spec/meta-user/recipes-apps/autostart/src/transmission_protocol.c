@@ -9,9 +9,8 @@
 #include "crc.h"
 #include "transmission_protocol.h"
 
-<<<<<<< HEAD ssize_t send_frame(int fd, frame_t *frame) {
-  frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
-  return write(fd, frame, sizeof(*frame));
+<<<<<<< HEAD ssize_t send_frame(int fd, frame_t *frame) { frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
+return write(fd, frame, sizeof(*frame));
 }
 
 ssize_t send_data_frame(int fd, data_frame_t *frame) {

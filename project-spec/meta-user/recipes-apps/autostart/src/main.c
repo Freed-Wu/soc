@@ -9,7 +9,8 @@
 #include <sys/mman.h>
 <<<<<<< HEAD
 #include <sys/time.h>
-    =======
+    == == ==
+    =
 >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 #include <unistd.h>
 // https://stackoverflow.com/a/48521433/16027269
@@ -19,7 +20,7 @@
 #include <termios.h>
 
 #include "axitangxi.h"
-    <<<<<<< HEAD
+        <<<<<<<HEAD
 #include "config.h"
 #include "main.h"
 #include "utils.h"
@@ -30,7 +31,8 @@
 
 // usecond / frame
 #define TIMEOUT 3000
-    =======
+                   == == ==
+               =
 
 #include "main.h"
 #include "utils.h"
@@ -41,15 +43,16 @@
 
 // millisecond / frame
 #define TIMEOUT 3
-    >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
+                   >>>>>>>
+            be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 // 权重、因子、图片的地址
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
 
-    <<<<<<< HEAD
+        < < < < < < < HEAD
 =======
-    extern const uint8_t tp_header[4];
+        extern const uint8_t tp_header[4];
 >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 // request status will return it.
 status_t status;
