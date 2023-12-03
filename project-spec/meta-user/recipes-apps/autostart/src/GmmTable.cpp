@@ -12,7 +12,7 @@ double GmmTable::normal_cdf(double index, double mean, double std) {
 GmmTable::GmmTable (gmm_t* gmm,uint32_t _low_bound,uint32_t _high_bound){
     low_bound=_low_bound;
     high_bound=_high_bound;//左闭右闭
-    uint32_t freqs_resolution = gmm->freqs_resolution; 
+    uint32_t freqs_resolution = gmm->freqs_resolution;
 
     symlow.resize(high_bound + 2);
     symhigh.resize(high_bound + 2);
@@ -28,11 +28,11 @@ GmmTable::GmmTable (gmm_t* gmm,uint32_t _low_bound,uint32_t _high_bound){
 
     double m_means[3]={gmm->mean1,gmm->mean2,gmm->mean3};
     double m_stds[3]={gmm->std1,gmm->std2,gmm->std3};
-    
+
 
     for(int i=low_bound;i<=high_bound+1;i++){
         double lowboundlow=0.,highboundhigh=0.;
-        
+
         for(int j=0;j<n_gauss;j++){
             lowboundlow+= m_probs[j]*normal_cdf(-0.5+i,m_means[j],m_stds[j]);
             highboundhigh+= m_probs[j]*normal_cdf(0.5+i,m_means[j],m_stds[j]);

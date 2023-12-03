@@ -9,7 +9,7 @@
 #include <sys/mman.h>
 <<<<<<< HEAD
 #include <sys/time.h>
-=======
+    =======
 >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 #include <unistd.h>
 // https://stackoverflow.com/a/48521433/16027269
@@ -19,18 +19,18 @@
 #include <termios.h>
 
 #include "axitangxi.h"
-<<<<<<< HEAD
+    <<<<<<< HEAD
 #include "config.h"
 #include "main.h"
 #include "utils.h"
 
-//增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
+// 增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
 #include "ArithmeticCoder.hpp"
 #include "GmmTable.h"
 
 // usecond / frame
 #define TIMEOUT 3000
-=======
+    =======
 
 #include "main.h"
 #include "utils.h"
@@ -41,15 +41,15 @@
 
 // millisecond / frame
 #define TIMEOUT 3
->>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
+    >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 // 权重、因子、图片的地址
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
 
-<<<<<<< HEAD
+    <<<<<<< HEAD
 =======
-extern const uint8_t tp_header[4];
+    extern const uint8_t tp_header[4];
 >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 // request status will return it.
 status_t status;
@@ -151,14 +151,14 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
 <<<<<<< HEAD
-    gmm->freqs_resolution=1e6;
+    gmm->freqs_resolution = 1e6;
 
     // TODO: multithread
     //*****新增上下边界，是要传入的参数****
-    uint32_t low_bound=0;
-    uint32_t high_bound=(1<<16)-1;
-    data[k].len =
-        coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr,low_bound,high_bound);
+    uint32_t low_bound = 0;
+    uint32_t high_bound = (1 << 16) - 1;
+    data[k].len = coding(gmm, (uint16_t *)trans[k].addr, trans[k].len,
+                         data[k].addr, low_bound, high_bound);
 =======
     // TODO: multithread
     // TODO: multithread

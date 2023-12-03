@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 #include "GmmTable.h"
-#include <stddef.h> 
+#include <stddef.h>
 using std::uint32_t;
 using std::uint64_t;
 
@@ -22,8 +22,8 @@ BitInputStream::BitInputStream(std::istream &in) :
 	input(in),
 	currentByte(0),
 	numBitsRemaining(0) {}
-	
-	
+
+
 int BitInputStream::read() {
 	if (currentByte == std::char_traits<char>::eof())
 		return -1;
@@ -104,7 +104,7 @@ void ArithmeticCoderBase::update(const GmmTable &freqs, uint32_t symbol) {
 	uint64_t range = high - low + 1;
 	if (!(minimumRange <= range && range <= fullRange))
 		throw std::logic_error("Assertion error: Range out of range");
-	
+
 	// Frequency table values check
 	uint32_t total = freqs.total_freqs;
 	uint32_t symLow = freqs.symlow[symbol];
@@ -113,13 +113,13 @@ void ArithmeticCoderBase::update(const GmmTable &freqs, uint32_t symbol) {
 		throw std::invalid_argument("Symbol has zero frequency");
 	if (total > maximumTotal)
 		throw std::invalid_argument("Cannot code symbol because total is too large");
-	
+
 	// Update range
 	uint64_t newLow  = low + symLow  * range / total;
 	uint64_t newHigh = low + symHigh * range / total - 1;
 	low = newLow;
 	high = newHigh;
-	
+
 	// While low and high have the same top bit value, shift them out
 	while (((low ^ high) & halfRange) == 0) {
 		shift();
@@ -127,7 +127,7 @@ void ArithmeticCoderBase::update(const GmmTable &freqs, uint32_t symbol) {
 		high = ((high << 1) & stateMask) | 1;
 	}
 	// Now low's top bit must be 0 and high's top bit must be 1
-	
+
 	// While low's top two bits are 01 and high's are 10, delete the second highest bit of both
 	while ((low & ~high & quarterRange) != 0) {
 		underflow();
@@ -158,7 +158,7 @@ uint32_t ArithmeticDecoder::read(const GmmTable &freqs) {
 		throw std::logic_error("Assertion error");
 	if (value >= total)
 		throw std::logic_error("Assertion error");
-	
+
 	// A kind of binary search. Find highest symbol such that freqs.getLow(symbol) <= value.
 	uint32_t start = 0;
 	uint32_t end = freqs.getSymbolLimit();
@@ -171,7 +171,7 @@ uint32_t ArithmeticDecoder::read(const GmmTable &freqs) {
 	}
 	if (start + 1 != end)
 		throw std::logic_error("Assertion error");
-	
+
 	uint32_t symbol = start;
 	if (!(freqs.symlow[symbol] * range / total <= offset && offset < freqs.symhigh[symbol] * range / total))
 		throw std::logic_error("Assertion error");
@@ -219,7 +219,7 @@ void ArithmeticEncoder::finish() {
 void ArithmeticEncoder::shift() {
 	int bit = static_cast<int>(low >> (numStateBits - 1));
 	output.write(bit);
-	
+
 	// Write out the saved underflow bits
 	for (; numUnderflow > 0; numUnderflow--)
 		output.write(bit ^ 1);
@@ -249,8 +249,8 @@ bool write_bin(uint8_t* data_addr,size_t size,char file[]){
 extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound){
 	//根据GMM得到对应的频率表
     GmmTable freqs(gmm,low_bound,high_bound);
-	
-	BitOutputStream bout(data_addr);	
+
+	BitOutputStream bout(data_addr);
 
 	//读取数据。根据频率表进行算术编码
 	ArithmeticEncoder enc(32, bout);
@@ -264,8 +264,8 @@ extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_
 		enc.write(freqs, static_cast<uint32_t>(symbol));
 	}
 
-	// EOF，值域属于low_bound-high_bound，故而high_bound+1是终止符号	
-	enc.write(freqs, high_bound+1);  
+	// EOF，值域属于low_bound-high_bound，故而high_bound+1是终止符号
+	enc.write(freqs, high_bound+1);
 	enc.finish();
 	bout.finish();
 	size_t size=bout.size;
@@ -296,7 +296,7 @@ extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char 
 			out << b << ' ';
 		}
 		return EXIT_SUCCESS;
-		
+
 	} catch (const char *msg) {
 		std::cerr << msg << std::endl;
 		return EXIT_FAILURE;

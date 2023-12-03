@@ -5,14 +5,14 @@
 #define MAIN_H 1
 <<<<<<< HEAD
 #include <sys/cdefs.h>
-=======
+    =======
 #include <stdbool.h>
->>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
+    >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 
 #include "transmission_protocol.h"
-__BEGIN_DECLS
+    __BEGIN_DECLS
 
-typedef struct {
+    typedef struct {
   char *tty;
   char *weight;
   char *quantization_coefficience;

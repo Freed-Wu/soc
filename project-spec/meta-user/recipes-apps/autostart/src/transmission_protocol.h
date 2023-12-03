@@ -9,19 +9,18 @@
 #include "GmmTable.h"
 >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 
-__BEGIN_DECLS
+    __BEGIN_DECLS
 
 #define TP_FRAME_DATA_LEN_MAX 512
 
-<<<<<<< HEAD
-const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
+    <<<<<<< HEAD const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
 
 =======
 >>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
-enum {
-  TP_STATUS_NETWORK_ENCODING = 0x01,
-  TP_STATUS_ENTROPY_ENCODING = 0x02,
-};
+    enum {
+      TP_STATUS_NETWORK_ENCODING = 0x01,
+      TP_STATUS_ENTROPY_ENCODING = 0x02,
+    };
 enum {
   TP_ADDRESS_MASTER,
   TP_ADDRESS_SLAVE,

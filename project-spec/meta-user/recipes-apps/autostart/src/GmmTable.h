@@ -2,11 +2,11 @@
 
 #include <cstdint>
 <<<<<<< HEAD
-#include <vector>
-#include<math.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
-using namespace std;
+#include <vector>
+    using namespace std;
 
 
 =======
@@ -27,16 +27,16 @@ typedef struct {
   uint32_t freqs_resolution = 1e6;
 } gmm_t;
 
+class GmmTable {
+public:
+  vector<uint32_t> symlow, symhigh;
+  uint64_t total_freqs = 0;
+  uint32_t low_bound = 0, high_bound = 65536;
 
-class GmmTable{
 public:
-    vector<uint32_t> symlow,symhigh;
-    uint64_t total_freqs=0;
-    uint32_t low_bound=0,high_bound=65536;
-public:
-    double normal_cdf(double index, double mean, double std);
-    GmmTable (gmm_t* _gmm,uint32_t _low_bound=0,uint32_t _high_bound=65536);
-    std::uint32_t getSymbolLimit() const;
+  double normal_cdf(double index, double mean, double std);
+  GmmTable(gmm_t *_gmm, uint32_t _low_bound = 0, uint32_t _high_bound = 65536);
+  std::uint32_t getSymbolLimit() const;
 };
 
 =======
