@@ -2,9 +2,10 @@
 
 #### 1. Gmm结构体
 
-  混合高斯模型。
+混合高斯模型。
 
-  来自文件“coding.h"，现在搬到”GmmTable.h"
+来自文件“coding.h"，现在搬到”GmmTable.h"
+
 ```
 
 typedef double prob_t;
@@ -21,8 +22,9 @@ typedef struct {
 
 #### 2. GmmTable
 
-  **由构造和函数GmmTable可知，gmm和上下边界得到频率表**
-  频率表：编解码都需要频率表，特别是解码
+**由构造和函数GmmTable可知，gmm和上下边界得到频率表**
+频率表：编解码都需要频率表，特别是解码
+
 ```
 class GmmTable{
 public:
@@ -35,7 +37,9 @@ public:
     std::uint32_t getSymbolLimit() const;
 };
 ```
+
 ### ArithmeticCoder.hpp
+
 #### 1. 编码器ArithmeticCoder
 
 #### 2. 解码器ArithmeticDecoder

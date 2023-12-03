@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-//增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
+// 增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
 #include "GmmTable.h"
 
 __BEGIN_DECLS
@@ -58,7 +58,7 @@ ssize_t send_data_frame(int, data_frame_t *, int);
 ssize_t receive_data_frame(int, data_frame_t *, int);
 
 void init_data_frames(data_frame_t *, n_frame_t, n_file_t);
-data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t*, size_t);
+data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t);
 size_t data_frame_to_data_len(data_frame_t *, n_frame_t);
 void data_frames_to_data(data_frame_t *, n_frame_t, uint8_t *);
 void data_to_data_frames(uint8_t *, size_t, data_frame_t *);
