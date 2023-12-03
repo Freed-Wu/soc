@@ -26,6 +26,7 @@
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
 
+extern enum LOG_LEVEL log_level;
 extern const uint8_t tp_header[4];
 // request status will return it.
 status_t status;
@@ -40,16 +41,19 @@ static void init_opt(opt_t *opt) {
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
   opt->dry_run = false;
+  opt->level = _LOG_INFO;
 }
 
-static char shortopts[] = "t:w:q:hVd";
+static char shortopts[] = "hVvqdt:w:c:";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
+    {"verbose", no_argument, NULL, 'v'},
+    {"quiet", no_argument, NULL, 'q'},
     {"dry-run", no_argument, NULL, 'd'},
     {"tty", required_argument, NULL, 't'},
     {"weight", required_argument, NULL, 'w'},
-    {"quantization_coefficience", required_argument, NULL, 'q'},
+    {"quantization_coefficience", required_argument, NULL, 'c'},
     {NULL, 0, NULL, 0}};
 
 static int parse(int argc, char *argv[], opt_t *opt) {
@@ -67,19 +71,26 @@ static int parse(int argc, char *argv[], opt_t *opt) {
     case 'd':
       opt->dry_run = true;
       break;
+    case 'v':
+      opt->level--;
+      break;
+    case 'q':
+      opt->level++;
+      break;
     case 't':
       opt->tty = optarg;
       break;
     case 'w':
       opt->weight = optarg;
       break;
-    case 'q':
+    case 'c':
       opt->quantization_coefficience = optarg;
       break;
     default:
       return -1;
     }
   }
+  log_level = opt->level;
   return 0;
 }
 
@@ -185,7 +196,6 @@ int main(int argc, char *argv[]) {
       n = receive_frame(recv_fd, &input_frame, -1);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
 
-    print_log("receive a frame!");
     switch (input_frame.frame_type) {
     case TP_FRAME_TYPE_QUERY:
       output_frame.frame_type = input_frame.frame_type;

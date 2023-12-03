@@ -1,5 +1,6 @@
 #include <err.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,8 +9,19 @@
 
 #include "crc.h"
 #include "transmission_protocol.h"
+#include "utils.h"
 
 const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
+
+char *bin_to_str(uint8_t const *bin, size_t size) {
+  char *str = malloc(size * 2 + 1);
+  char *p = str;
+  for (int i = 0; i < size; i++) {
+    sprintf(p, "%02x", bin[i]);
+    p += 2;
+  }
+  return str;
+}
 
 ssize_t send_frame(int fd, frame_t *frame, int timeout) {
   frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
@@ -47,6 +59,9 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   if (num < 1)
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
+  char *str = bin_to_str((uint8_t *)frame, sizeof(*frame));
+  print_log("receive: %s", str);
+  free(str);
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
           temp->check_sum)
