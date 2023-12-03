@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 #include <sys/mman.h>
 #include <unistd.h>
 // https://stackoverflow.com/a/48521433/16027269
@@ -26,7 +27,6 @@
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
 
-extern enum LOG_LEVEL log_level;
 extern const uint8_t tp_header[4];
 // request status will return it.
 status_t status;
@@ -41,7 +41,7 @@ static void init_opt(opt_t *opt) {
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
   opt->dry_run = false;
-  opt->level = _LOG_INFO;
+  opt->level = LOG_NOTICE;
 }
 
 static char shortopts[] = "hVvqdt:w:c:";
@@ -72,10 +72,10 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       opt->dry_run = true;
       break;
     case 'v':
-      opt->level--;
+      opt->level++;
       break;
     case 'q':
-      opt->level++;
+      opt->level--;
       break;
     case 't':
       opt->tty = optarg;
@@ -90,7 +90,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       return -1;
     }
   }
-  log_level = opt->level;
+  setlogmask(LOG_UPTO(opt->level));
   return 0;
 }
 
@@ -158,8 +158,7 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
 
 int main(int argc, char *argv[]) {
   opt_t opt;
-  setbuf(stdout, NULL);
-  setbuf(stderr, NULL);
+  openlog(NULL, LOG_CONS | LOG_PERROR, 0);
   int ret = parse(argc, argv, &opt);
   if (ret == -1)
     errx(EXIT_FAILURE, "parse failure!");
@@ -188,7 +187,7 @@ int main(int argc, char *argv[]) {
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  print_log("%s: initial finished!", opt.tty);
+  syslog(LOG_NOTICE, "%s: initial finished!", opt.tty);
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
