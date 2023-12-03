@@ -5,7 +5,6 @@
 #define MAIN_H 1
 #include <stdbool.h>
 
-#include "utils.h"
 #include "transmission_protocol.h"
 __BEGIN_DECLS
 
@@ -14,7 +13,7 @@ typedef struct {
   char *weight;
   char *quantization_coefficience;
   bool dry_run;
-  enum LOG_LEVEL level;
+  unsigned int level : 3;
 } opt_t;
 typedef struct {
   uint8_t *addr;

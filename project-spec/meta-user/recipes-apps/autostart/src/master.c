@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <wordexp.h>
 // https://stackoverflow.com/a/48521433/16027269
@@ -21,7 +22,6 @@
 #define TIMEOUT 3
 #define LOOP_PERIOD 10000
 
-extern enum LOG_LEVEL log_level;
 extern const uint8_t tp_header[4];
 
 static void init_opt(opt_t *opt) {
@@ -35,7 +35,7 @@ static void init_opt(opt_t *opt) {
     wordfree(&exp);
   }
   opt->tty = "/tmp/ttyS0";
-  opt->level = _LOG_INFO;
+  opt->level = LOG_NOTICE;
 }
 
 static char shortopts[] = "hVvqt:o:";
@@ -60,10 +60,10 @@ static int parse(int argc, char *argv[], opt_t *opt) {
         puts(" [yuv_file] ...");
       return 1;
     case 'v':
-      opt->level--;
+      opt->level++;
       break;
     case 'q':
-      opt->level++;
+      opt->level--;
       break;
     case 't':
       opt->tty = optarg;
@@ -75,7 +75,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       return -1;
     }
   }
-  log_level = opt->level;
+  setlogmask(LOG_UPTO(opt->level));
   opt->number = argc - optind + 1;
   opt->files = malloc(opt->number * sizeof(char *));
   for (int i = 0; i < opt->number; i++)
@@ -99,6 +99,7 @@ ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
 
 int main(int argc, char *argv[]) {
   opt_t opt;
+  openlog(NULL, LOG_CONS | LOG_PERROR, 0);
   int ret = parse(argc, argv, &opt);
   if (ret == -1)
     errx(EXIT_FAILURE, "parse failure!");
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  print_log("%s: initial finished!", opt.tty);
+  syslog(LOG_NOTICE, "%s: initial finished!", opt.tty);
   frame_t input_frame, output_frame = {
                            .address = TP_ADDRESS_MASTER,
                            .frame_type = TP_FRAME_TYPE_QUERY,

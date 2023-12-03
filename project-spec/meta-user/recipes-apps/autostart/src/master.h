@@ -5,7 +5,6 @@
 #define MASTER_H 1
 #include <sys/cdefs.h>
 
-#include "utils.h"
 #include "transmission_protocol.h"
 __BEGIN_DECLS
 
@@ -14,7 +13,7 @@ typedef struct {
   char *out_dir;
   char **files;
   n_file_t number;
-  enum LOG_LEVEL level;
+  unsigned int level : 3;
 } opt_t;
 
 ssize_t dump_data_frames(data_frame_t *, n_frame_t, char *);

@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "crc.h"
 #include "transmission_protocol.h"
-#include "utils.h"
 
 const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
 
@@ -60,7 +60,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)frame, sizeof(*frame));
-  print_log("receive: %s", str);
+  syslog(LOG_INFO, "receive: %s", str);
   free(str);
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
