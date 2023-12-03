@@ -6,8 +6,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 #include <sys/mman.h>
+#include <syslog.h>
 #include <unistd.h>
 // https://stackoverflow.com/a/48521433/16027269
 #define termios asmtermios
@@ -158,7 +158,7 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
 
 int main(int argc, char *argv[]) {
   opt_t opt;
-  openlog(NULL, LOG_CONS | LOG_PERROR, 0);
+  openlog("slave0", LOG_CONS | LOG_PERROR, 0);
   int ret = parse(argc, argv, &opt);
   if (ret == -1)
     errx(EXIT_FAILURE, "parse failure!");
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  syslog(LOG_NOTICE, "%s: initial finished!", opt.tty);
+  syslog(LOG_NOTICE, "%s: initial successfully", opt.tty);
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
@@ -199,6 +199,7 @@ int main(int argc, char *argv[]) {
     case TP_FRAME_TYPE_QUERY:
       output_frame.frame_type = input_frame.frame_type;
       output_frame.status = status;
+      syslog(LOG_NOTICE, "response query");
       send_frame(send_fd, &output_frame, -1);
       break;
 
@@ -211,6 +212,7 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
+      syslog(LOG_NOTICE, "response to send file");
       send_frame(send_fd, &output_frame, -1);
       // receive data frames
       data_frame_t *input_data_frames =
