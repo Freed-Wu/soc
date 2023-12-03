@@ -21,6 +21,7 @@
 #define TIMEOUT 3
 #define LOOP_PERIOD 10000
 
+extern enum LOG_LEVEL log_level;
 extern const uint8_t tp_header[4];
 
 static void init_opt(opt_t *opt) {
@@ -34,11 +35,14 @@ static void init_opt(opt_t *opt) {
     wordfree(&exp);
   }
   opt->tty = "/tmp/ttyS0";
+  opt->level = _LOG_INFO;
 }
 
-static char shortopts[] = "t:o:hV";
+static char shortopts[] = "hVvqt:o:";
 static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"version", no_argument, NULL, 'V'},
+                                   {"verbose", no_argument, NULL, 'v'},
+                                   {"quiet", no_argument, NULL, 'q'},
                                    {"tty", required_argument, NULL, 't'},
                                    {"out_dir", required_argument, NULL, 'w'},
                                    {NULL, 0, NULL, 0}};
@@ -55,6 +59,12 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       if (print_help(longopts, argv[0]) == 0)
         puts(" [yuv_file] ...");
       return 1;
+    case 'v':
+      opt->level--;
+      break;
+    case 'q':
+      opt->level++;
+      break;
     case 't':
       opt->tty = optarg;
       break;
@@ -65,6 +75,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       return -1;
     }
   }
+  log_level = opt->level;
   opt->number = argc - optind + 1;
   opt->files = malloc(opt->number * sizeof(char *));
   for (int i = 0; i < opt->number; i++)
@@ -115,7 +126,6 @@ int main(int argc, char *argv[]) {
   // query status to make sure idle
   do {
     send_frame(send_fd, &output_frame, -1);
-    print_log("query status!");
     n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
   } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
            input_frame.frame_type != output_frame.frame_type);

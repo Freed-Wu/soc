@@ -51,6 +51,8 @@ typedef struct {
   uint16_t check_sum;
 } __attribute__((packed)) data_frame_t;
 
+char *bin_to_str(uint8_t const *bin, size_t size);
+
 ssize_t send_frame(int, frame_t *, int);
 ssize_t receive_frame(int, frame_t *, int);
 ssize_t send_data_frame(int, data_frame_t *, int);
