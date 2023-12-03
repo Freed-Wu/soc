@@ -7,10 +7,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+<<<<<<< HEAD
 #include <sys/time.h>
+=======
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 #include <unistd.h>
+// https://stackoverflow.com/a/48521433/16027269
+#define termios asmtermios
+#include <asm/termios.h>
+#undef termios
+#include <termios.h>
 
 #include "axitangxi.h"
+<<<<<<< HEAD
 #include "config.h"
 #include "main.h"
 #include "utils.h"
@@ -21,11 +30,27 @@
 
 // usecond / frame
 #define TIMEOUT 3000
+=======
+
+#include "main.h"
+#include "utils.h"
+
+// 增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
+#include "ArithmeticCoder.hpp"
+#include "GmmTable.h"
+
+// millisecond / frame
+#define TIMEOUT 3
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 // 权重、因子、图片的地址
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
 
+<<<<<<< HEAD
+=======
+extern const uint8_t tp_header[4];
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 // request status will return it.
 status_t status;
 // picture number
@@ -38,12 +63,14 @@ static void init_opt(opt_t *opt) {
   opt->tty = "/tmp/ttyS1";
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
+  opt->dry_run = false;
 }
 
-static char shortopts[] = "t:w:q:hV";
+static char shortopts[] = "t:w:q:hVd";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
+    {"dry-run", no_argument, NULL, 'd'},
     {"tty", required_argument, NULL, 't'},
     {"weight", required_argument, NULL, 'w'},
     {"quantization_coefficience", required_argument, NULL, 'q'},
@@ -55,14 +82,15 @@ static int parse(int argc, char *argv[], opt_t *opt) {
   while ((c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
     switch (c) {
     case 'V':
-      printf("%s " PROJECT_VERSION "\n"
-             "Copyright (C) 2023\n"
-             "Written by Wu Zhenyu <wuzhenyu@ustc.edu>\n",
-             argv[0]);
+      printf("%s " VERSION, argv[0]);
       return 2;
     case 'h':
       if (print_help(longopts, argv[0]) == 0)
-        return 1;
+        puts("");
+      return 1;
+    case 'd':
+      opt->dry_run = true;
+      break;
     case 't':
       opt->tty = optarg;
       break;
@@ -122,6 +150,7 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
+<<<<<<< HEAD
     gmm->freqs_resolution=1e6;
 
     // TODO: multithread
@@ -130,6 +159,17 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     uint32_t high_bound=(1<<16)-1;
     data[k].len =
         coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr,low_bound,high_bound);
+=======
+    // TODO: multithread
+    // TODO: multithread
+    //*****新增上下边界，是要传入的参数 ****
+    uint32_t low_bound = 10000;
+    uint32_t high_bound = 50000;
+    gmm->freqs_resolution = 1e6; // 存辉师兄代码里默认的，
+
+    data[k].len = coding(gmm, (uint16_t *)trans[k].addr, trans[k].len,
+                         data[k].addr, low_bound, high_bound);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 
     len += data[k].len;
   }
@@ -146,6 +186,7 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   return len;
 }
 
+<<<<<<< HEAD
 static inline __suseconds_t tvdiff(struct timeval new_tv,
                                    struct timeval old_tv) {
   return (new_tv.tv_sec - old_tv.tv_sec) * 1000000 + new_tv.tv_usec -
@@ -154,6 +195,12 @@ static inline __suseconds_t tvdiff(struct timeval new_tv,
 
 int main(int argc, char *argv[]) {
   opt_t opt;
+=======
+int main(int argc, char *argv[]) {
+  opt_t opt;
+  setbuf(stdout, NULL);
+  setbuf(stderr, NULL);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
   int ret = parse(argc, argv, &opt);
   if (ret == -1)
     errx(EXIT_FAILURE, "parse failure!");
@@ -161,27 +208,54 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 
   // configure device
-  int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
-  if (fd_dev == -1)
-    err(errno, AXITX_DEV_PATH);
+  int fd_dev;
   struct network_acc_reg reg;
-  pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR, opt.quantization_coefficience,
-          QUANTIFY_ADDR);
-  int fd = open(opt.tty, O_RDWR | O_NOCTTY);
+  if (!opt.dry_run) {
+    fd_dev = open(AXITX_DEV_PATH, O_RDWR);
+    if (fd_dev == -1)
+      err(errno, AXITX_DEV_PATH);
+    pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR,
+            opt.quantization_coefficience, QUANTIFY_ADDR);
+  }
+
+  int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
   if (fd == -1)
     err(errno, "%s", opt.tty);
+<<<<<<< HEAD
+=======
+  struct termios newattr, oldattr;
+  tcgetattr(fd, &oldattr);
+  newattr = oldattr;
+  cfsetispeed(&newattr, B1152000);
+  cfsetospeed(&newattr, B1152000);
+  tcsetattr(fd, TCSANOW, &newattr);
+
+  fd_to_epoll_fds(fd, &send_fd, &recv_fd);
+  print_log("%s: initial finished!", opt.tty);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
     do {
+<<<<<<< HEAD
       n = receive_frame(fd, &input_frame);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
 
+=======
+      n = receive_frame(recv_fd, &input_frame, -1);
+    } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
+
+    print_log("receive a frame!");
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
     switch (input_frame.frame_type) {
     case TP_FRAME_TYPE_QUERY:
       output_frame.frame_type = input_frame.frame_type;
       output_frame.status = status;
+<<<<<<< HEAD
       send_frame(fd, &output_frame);
+=======
+      send_frame(send_fd, &output_frame, -1);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
       break;
 
     case TP_FRAME_TYPE_SEND:
@@ -193,13 +267,18 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
+<<<<<<< HEAD
       send_frame(fd, &output_frame);
+=======
+      send_frame(send_fd, &output_frame, -1);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
       // receive data frames
       data_frame_t *input_data_frames =
           calloc(input_frame.n_frame, sizeof(data_frame_t));
       if (input_data_frames == NULL)
         err(errno, NULL);
       data_frame_t data_frame;
+<<<<<<< HEAD
       struct timeval tv0, tv;
       gettimeofday(&tv0, NULL);
       tv = tv0;
@@ -211,11 +290,21 @@ int main(int argc, char *argv[]) {
         memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
                sizeof(data_frame));
         gettimeofday(&tv, NULL);
+=======
+      for (int i = 0; i < input_frame.n_frame; i++) {
+        n = receive_data_frame(recv_fd, &data_frame, TIMEOUT);
+        if (n <= 0 || data_frame.n_file != input_frame.n_file ||
+            data_frame.n_frame >= input_frame.n_frame)
+          continue;
+        memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
+               sizeof(data_frame));
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
       }
       // request to resend data frames
       output_frame.frame_type = TP_FRAME_TYPE_NACK;
       for (int i = 0; i < input_frame.n_frame; i++) {
         if (input_data_frames[i].data_len == 0) {
+<<<<<<< HEAD
           send_frame(fd, &output_frame);
           do {
             n = receive_data_frame(fd, &data_frame);
@@ -272,9 +361,83 @@ int main(int argc, char *argv[]) {
 
         default:
           fputs("Send ACK/NACK type frame, please!", stderr);
+=======
+          send_frame(send_fd, &output_frame, -1);
+          do {
+            n = receive_data_frame(recv_fd, &data_frame, -1);
+          } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
+                   data_frame.n_frame != i);
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
         }
         break;
       }
+<<<<<<< HEAD
+=======
+      output_frame.frame_type = TP_FRAME_TYPE_ACK;
+      send_frame(send_fd, &output_frame, -1);
+      // TODO: multithread
+      if (!opt.dry_run)
+        bit_streams[number].len =
+            process_data_frames(fd_dev, input_data_frames, input_frame.n_frame,
+                                reg, bit_streams[number].addr);
+      else {
+        ssize_t yuv_len =
+            data_frame_to_data_len(input_data_frames, input_frame.n_frame);
+        bit_streams[number].addr = malloc(yuv_len * sizeof(uint8_t));
+        for (n_frame_t i = 0; i < input_frame.n_frame; i++)
+          memcpy(bit_streams[number].addr, input_data_frames[i].data,
+                 input_data_frames[i].data_len);
+      }
+      number++;
+      free(input_data_frames);
+      break;
+
+    case TP_FRAME_TYPE_RECV:
+      if (input_frame.n_file >= PICTURES_NUMBER_MAX) {
+        fprintf(stderr, "picture number exceeds maximum: %d\n",
+                PICTURES_NUMBER_MAX);
+        break;
+      }
+      // haven't encoded pictures
+      if (bit_streams[number].len == 0)
+        break;
+      output_frame.frame_type = input_frame.frame_type;
+      output_frame.n_file = input_frame.n_file;
+      output_frame.n_frame =
+          (bit_streams[number].len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+      // send data frames
+      data_frame_t *output_data_frames =
+          alloc_data_frames(output_frame.n_frame, output_frame.n_file,
+                            bit_streams[number].addr, bit_streams[number].len);
+      if (output_data_frames == NULL) {
+        perror(NULL);
+        break;
+      }
+      send_frame(send_fd, &output_frame, -1);
+      for (int i = 0; i < output_frame.n_frame; i++)
+        send_data_frame(send_fd, &output_data_frames[i], -1);
+      bool cont = true;
+      while (cont) {
+        do {
+          n = receive_frame(recv_fd, &input_frame, -1);
+        } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
+        switch (input_frame.frame_type) {
+        case TP_FRAME_TYPE_ACK:
+          cont = false;
+          free(output_data_frames);
+          break;
+
+        case TP_FRAME_TYPE_NACK:
+          send_data_frame(send_fd, &output_data_frames[input_frame.n_frame],
+                          -1);
+          break;
+
+        default:
+          fputs("Send ACK/NACK type frame, please!", stderr);
+        }
+        break;
+      }
+>>>>>>> be19f6e4c39d9cd7312f25b2c2d291aea1a494f1
 
     case TP_FRAME_TYPE_ACK:
     case TP_FRAME_TYPE_NACK:
@@ -286,6 +449,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
     err(errno, "%s", opt.tty);
   if (close(fd_dev) == -1)

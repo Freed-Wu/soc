@@ -1,9 +1,18 @@
 #include <ctype.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/epoll.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "utils.h"
+
+enum LOG_LEVEL log_level = _LOG_INFO;
 
 int print_help(const struct option *longopts, const char *arg0) {
   unsigned int i = 0;
@@ -43,6 +52,52 @@ int print_help(const struct option *longopts, const char *arg0) {
 
     o = longopts[++i];
   }
-  puts("");
   return EXIT_SUCCESS;
+}
+
+/**
+ * for debug
+ */
+ssize_t dump_mem(char *filename, void *addr, size_t size) {
+  int fd = open(filename, O_RDWR);
+  if (fd == -1)
+    return -1;
+  ssize_t _size = write(fd, addr, size);
+  if (close(fd) == -1)
+    return -1;
+  return _size;
+}
+
+void print_log(char *format, ...) {
+  enum LOG_LEVEL level = _LOG_INFO;
+  size_t offset = 0;
+  if (!isprint(format[0])) {
+    level = format[0];
+    offset = 1;
+  }
+  if (level < log_level)
+    return;
+  FILE *fp = stdout;
+  if (level >= _LOG_WARNING)
+    fp = stderr;
+  time_t t;
+  time(&t);
+  struct tm *tm = localtime(&t);
+  char str[] = "HH:MM:SS";
+  strftime(str, sizeof(str), "%T", tm);
+  fprintf(fp, "%s: ", str);
+  va_list args;
+  va_start(args, format);
+  vfprintf(fp, format + offset, args);
+  va_end(args);
+  puts("");
+}
+
+void fd_to_epoll_fds(int fd, int *send_fd, int *recv_fd) {
+  *send_fd = epoll_create(1);
+  *recv_fd = epoll_create(1);
+  struct epoll_event send_event = {.events = EPOLLOUT, .data.fd = fd},
+                     recv_event = {.events = EPOLLIN, .data.fd = fd};
+  epoll_ctl(*send_fd, EPOLL_CTL_ADD, fd, &send_event);
+  epoll_ctl(*recv_fd, EPOLL_CTL_ADD, fd, &recv_event);
 }

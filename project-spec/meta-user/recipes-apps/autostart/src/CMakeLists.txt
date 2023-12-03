@@ -1,5 +1,6 @@
 configure_file(config.h.in config.h)
 
+set(CMAKE_BUILD_TYPE Debug)
 add_library(axitangxi SHARED axitangxi.c)
 install(TARGETS axitangxi LIBRARY)
 add_library(utils SHARED utils.c)
@@ -16,8 +17,13 @@ add_executable(main main.c)
 target_link_libraries(main PRIVATE axitangxi)
 target_link_libraries(main PRIVATE utils)
 target_link_libraries(main PRIVATE transmission_protocol)
+target_link_libraries(main PRIVATE coding)
 find_package(Threads REQUIRED)
-target_link_libraries(main PRIVATE coding Threads::Threads)
+target_link_libraries(main PRIVATE Threads::Threads)
 install(TARGETS main RUNTIME)
-# add_executable(master master.c)
-# target_link_libraries(master PRIVATE transmission_protocol)
+
+add_executable(master master.c)
+target_link_libraries(master PRIVATE utils)
+target_link_libraries(master PRIVATE transmission_protocol)
+# master don't need to be installed
+# install(TARGETS main RUNTIME)
