@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "coding.h"
+//增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
+#include "GmmTable.h"
 
 __BEGIN_DECLS
 

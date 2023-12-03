@@ -15,9 +15,13 @@
 #include <termios.h>
 
 #include "axitangxi.h"
-#include "coding.h"
+
 #include "main.h"
 #include "utils.h"
+
+//增加算术编码涉及到的头文件： "编解码器"，"GMM和频率表"
+#include "ArithmeticCoder.hpp"
+#include "GmmTable.h"
 
 // millisecond / frame
 #define TIMEOUT 3
@@ -127,8 +131,15 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
     // TODO: multithread
+  // TODO: multithread
+    //*****新增上下边界，是要传入的参数 ****
+    uint32_t low_bound=10000;
+    uint32_t high_bound=50000;
+    gmm->freqs_resolution=1e6;//存辉师兄代码里默认的，
+
     data[k].len =
-        coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr);
+        coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr,low_bound,high_bound);
+
 
     len += data[k].len;
   }
