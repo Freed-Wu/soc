@@ -16,6 +16,7 @@ typedef struct {
   prob_t prob1, prob2, prob3;
   mean_t mean1, mean2, mean3;
   std_t std1, std2, std3;
+  uint32_t freqs_resolution = 1e6;
 } gmm_t;
 
 double normal_cdf(double index, mean_t mean, std_t std);

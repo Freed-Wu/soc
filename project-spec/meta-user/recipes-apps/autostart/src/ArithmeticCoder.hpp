@@ -89,6 +89,6 @@ class ArithmeticEncoder final : private ArithmeticCoderBase {
 
 bool write_bin(uint8_t* data_addr,size_t size,char file[]);
 
-extern "C" size_t coding(Gmm gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound);
+extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound);
 
-extern "C" bool decoding(Gmm gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]);
+extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]);

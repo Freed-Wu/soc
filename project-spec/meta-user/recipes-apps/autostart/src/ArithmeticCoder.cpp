@@ -240,7 +240,7 @@ bool write_bin(uint8_t* data_addr,size_t size,char file[]){
     return true;
 }
 
-extern "C" size_t coding(Gmm gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound){
+extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound){
 	//根据GMM得到对应的频率表
     GmmTable freqs(gmm,low_bound,high_bound);
 	
@@ -273,7 +273,7 @@ extern "C" size_t coding(Gmm gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* 
 	return size;
 }
 
-extern "C" bool decoding(Gmm gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]){
+extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]){
 	//根据GMM得到对应的频率表
 	GmmTable freqs(gmm,low_bound,high_bound);
 
