@@ -14,11 +14,11 @@
 const uint8_t tp_header[] = {0xEB, 0x90, 0xEB, 0x90};
 
 char *bin_to_str(uint8_t const *bin, size_t size) {
-  char *str = malloc(size * 2 + 1);
+  char *str = malloc(size * 3 + 1);
   char *p = str;
   for (int i = 0; i < size; i++) {
-    sprintf(p, "%02x", bin[i]);
-    p += 2;
+    sprintf(p, "%02x ", bin[i]);
+    p += 3;
   }
   return str;
 }
@@ -60,12 +60,16 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)frame, sizeof(*frame));
-  syslog(LOG_INFO, "receive: %s", str);
-  free(str);
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
-          temp->check_sum)
+          temp->check_sum) {
+    syslog(LOG_WARNING, "receive: %s", str);
+    free(str);
+    free(temp);
     return -1;
+  }
+  syslog(LOG_INFO, "receive: %s", str);
+  free(str);
   memcpy(frame, temp, sizeof(*frame));
   free(temp);
   return n;
@@ -79,11 +83,17 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   if (num < 1)
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
+  char *str = bin_to_str((uint8_t *)frame, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
-          temp->check_sum ||
-      memcmp(temp->header, tp_header, sizeof(tp_header)))
+          temp->check_sum) {
+    syslog(LOG_WARNING, "receive: %s", str);
+    free(str);
+    free(temp);
     return -1;
+  }
+  syslog(LOG_INFO, "receive: %s", str);
+  free(str);
   memcpy(frame, temp, sizeof(*frame));
   free(temp);
   return n;

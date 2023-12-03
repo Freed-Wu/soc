@@ -1,3 +1,7 @@
+/**
+ * socat pty,rawer,link=/tmp/ttyS0 pty,rawer,link=/tmp/ttyS1
+ * journalctl -tslave -tmaster -fn0
+ */
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -118,7 +122,7 @@ int main(int argc, char *argv[]) {
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  syslog(LOG_NOTICE, "%s: initial finished!", opt.tty);
+  syslog(LOG_NOTICE, "%s: initial successfully", opt.tty);
   frame_t input_frame, output_frame = {
                            .address = TP_ADDRESS_MASTER,
                            .frame_type = TP_FRAME_TYPE_QUERY,
@@ -126,6 +130,7 @@ int main(int argc, char *argv[]) {
   ssize_t n;
   // query status to make sure idle
   do {
+    syslog(LOG_NOTICE, "request query");
     send_frame(send_fd, &output_frame, -1);
     n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
   } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
@@ -147,6 +152,7 @@ int main(int argc, char *argv[]) {
       goto error;
     output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
     do {
+      syslog(LOG_NOTICE, "request to send file");
       send_frame(send_fd, &output_frame, -1);
       n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
