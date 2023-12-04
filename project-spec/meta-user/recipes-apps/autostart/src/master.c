@@ -227,7 +227,9 @@ int main(int argc, char *argv[]) {
     }
     // request to resend data frames
     output_frame.frame_type = TP_FRAME_TYPE_NACK;
+    int sum = 0;
     for (int i = 0; i < input_frame.n_frame; i++) {
+      sum++;
       if (input_data_frames[i].data_len > 0)
         continue;
       send_frame(send_fd, &output_frame, -1);
@@ -238,6 +240,7 @@ int main(int argc, char *argv[]) {
       memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
              sizeof(data_frame));
     }
+    syslog(LOG_NOTICE, "correct %d incorrect frames", sum);
     output_frame.frame_type = TP_FRAME_TYPE_ACK;
     send_frame(send_fd, &output_frame, -1);
     // TODO: multithread
