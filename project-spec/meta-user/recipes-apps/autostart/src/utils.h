@@ -6,6 +6,9 @@
 #include "config.h"
 __BEGIN_DECLS
 
+// every send SAFE_FRAMES frames, halt SAFE_TIME microseconds
+#define SAFE_FRAMES 1
+#define SAFE_TIME 3
 #define VERSION                                                                \
   PROJECT_VERSION "\n"                                                         \
                   "Copyright (C) 2023\n"                                       \
