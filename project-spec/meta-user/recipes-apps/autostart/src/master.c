@@ -167,8 +167,11 @@ int main(int argc, char *argv[]) {
         output_frame.n_frame, output_frame.n_file, NULL, fd_file);
     if (close(fd_file) == -1)
       syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
-    for (int i = 0; i < output_frame.n_frame; i++)
+    for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
+      if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
+        usleep(SAFE_TIME);
       send_data_frame(send_fd, &output_data_frames[i], -1);
+    }
     bool cont = true;
     while (cont) {
       do {

@@ -296,8 +296,11 @@ int main(int argc, char *argv[]) {
       syslog(LOG_NOTICE, "response to send data %d with %d frames",
              output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
-      for (int i = 0; i < output_frame.n_frame; i++)
+      for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
+        if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
+          usleep(SAFE_TIME);
         send_data_frame(send_fd, &output_data_frames[i], -1);
+      }
       bool cont = true;
       while (cont) {
         do {
