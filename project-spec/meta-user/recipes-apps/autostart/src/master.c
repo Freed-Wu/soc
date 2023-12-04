@@ -1,6 +1,6 @@
 /**
  * socat pty,rawer,link=/tmp/ttyS0 pty,rawer,link=/tmp/ttyS1
- * journalctl -tslave -tmaster -fn0
+ * journalctl -tslave0 -tmaster -fn0
  */
 #include <err.h>
 #include <errno.h>
@@ -32,10 +32,10 @@ static void init_opt(opt_t *opt) {
   wordexp_t exp;
   char out_dir[] = "~/Downloads";
   if (wordexp(out_dir, &exp, 0) != 0) {
-    fprintf(stderr, "%s expand failure. use . as fallback.", out_dir);
+    syslog(LOG_ERR, "%s expand failure. use . as fallback.", out_dir);
     opt->out_dir = ".";
   } else {
-    opt->out_dir = exp.we_wordv[0];
+    opt->out_dir = strdup(exp.we_wordv[0]);
     wordfree(&exp);
   }
   opt->tty = "/tmp/ttyS0";
@@ -80,7 +80,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
     }
   }
   setlogmask(LOG_UPTO(opt->level));
-  opt->number = argc - optind + 1;
+  opt->number = argc - optind;
   opt->files = malloc(opt->number * sizeof(char *));
   for (int i = 0; i < opt->number; i++)
     opt->files[i] = argv[optind + i];
@@ -89,7 +89,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
 
 ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
                          char *filename) {
-  int fd = open(filename, O_RDWR);
+  int fd = open(filename, O_RDWR | O_CREAT);
   if (fd == -1)
     return -1;
   ssize_t size = 0;
@@ -122,7 +122,8 @@ int main(int argc, char *argv[]) {
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  syslog(LOG_NOTICE, "%s: initial successfully", opt.tty);
+  syslog(LOG_NOTICE, "%s: initial successfully, data will be saved to %s",
+         opt.tty, opt.out_dir);
   frame_t input_frame, output_frame = {
                            .address = TP_ADDRESS_MASTER,
                            .frame_type = TP_FRAME_TYPE_QUERY,
@@ -144,7 +145,7 @@ int main(int argc, char *argv[]) {
     int fd_file = open(opt.files[n_file], O_RDONLY);
     if (fd_file == -1) {
     error:
-      perror(opt.files[n_file]);
+      syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
       continue;
     }
     struct stat status;
@@ -152,8 +153,8 @@ int main(int argc, char *argv[]) {
       goto error;
     output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
     do {
-      syslog(LOG_NOTICE, "request to send yuv %d with %d frames", output_frame.n_file,
-             output_frame.n_frame);
+      syslog(LOG_NOTICE, "request to send yuv %d with %d frames",
+             output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
       n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
@@ -164,7 +165,7 @@ int main(int argc, char *argv[]) {
     data_frame_t *output_data_frames = alloc_data_frames(
         output_frame.n_frame, output_frame.n_file, NULL, fd_file);
     if (close(fd_file) == -1)
-      perror(opt.files[n_file]);
+      syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
     for (int i = 0; i < output_frame.n_frame; i++)
       send_data_frame(send_fd, &output_data_frames[i], -1);
     bool cont = true;
@@ -183,7 +184,7 @@ int main(int argc, char *argv[]) {
         break;
 
       default:
-        fputs("Send ACK/NACK type frame, please!", stderr);
+        syslog(LOG_ERR, "Send ACK/NACK type frame, please!");
       }
     }
   }
@@ -201,13 +202,14 @@ int main(int argc, char *argv[]) {
       n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
              input_frame.frame_type != output_frame.frame_type ||
-             input_frame.n_file != output_frame.n_file);
+             input_frame.n_file != output_frame.n_file ||
+             input_frame.n_frame == 0);
 
     // receive data frames
     data_frame_t *input_data_frames =
         calloc(input_frame.n_frame, sizeof(data_frame_t));
     if (input_data_frames == NULL) {
-      perror(opt.files[n_file]);
+      syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
       continue;
     }
     data_frame_t data_frame;
@@ -222,13 +224,15 @@ int main(int argc, char *argv[]) {
     // request to resend data frames
     output_frame.frame_type = TP_FRAME_TYPE_NACK;
     for (int i = 0; i < input_frame.n_frame; i++) {
-      if (input_data_frames[i].data_len == 0) {
-        send_frame(send_fd, &output_frame, -1);
-        do {
-          n = receive_data_frame(recv_fd, &data_frame, -1);
-        } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
-                 data_frame.n_frame != i);
-      }
+      if (input_data_frames[i].data_len > 0)
+        continue;
+      send_frame(send_fd, &output_frame, -1);
+      do {
+        n = receive_data_frame(recv_fd, &data_frame, -1);
+      } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
+               data_frame.n_frame != i);
+      memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
+             sizeof(data_frame));
     }
     output_frame.frame_type = TP_FRAME_TYPE_ACK;
     send_frame(send_fd, &output_frame, -1);
@@ -238,7 +242,10 @@ int main(int argc, char *argv[]) {
     sprintf(filename, "%s/%d.bin", opt.out_dir, n_file);
     if (dump_data_frames(input_data_frames, input_frame.n_frame, filename) ==
         -1)
-      perror(opt.files[n_file]);
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
+    else
+      syslog(LOG_NOTICE, "%s has been encoded to %s", opt.files[n_file],
+             filename);
     free(filename);
   }
 

@@ -59,7 +59,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   if (num < 1)
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
-  char *str = bin_to_str((uint8_t *)frame, sizeof(*frame));
+  char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
           temp->check_sum) {
@@ -83,7 +83,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   if (num < 1)
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
-  char *str = bin_to_str((uint8_t *)frame, sizeof(*frame));
+  char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (n < sizeof(*frame) ||
       crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
           temp->check_sum) {
@@ -148,7 +148,7 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
     p += TP_FRAME_DATA_LEN_MAX;
   }
   data_frames[i].data_len = len - i * TP_FRAME_DATA_LEN_MAX;
-  memcpy(p, data_frames[i].data, data_frames[i].data_len);
+  memcpy(data_frames[i].data, p, data_frames[i].data_len);
   memset(data_frames[i].data + data_frames[i].data_len, 0,
          TP_FRAME_DATA_LEN_MAX - data_frames[i].data_len);
   data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
