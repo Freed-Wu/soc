@@ -152,7 +152,8 @@ int main(int argc, char *argv[]) {
       goto error;
     output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
     do {
-      syslog(LOG_NOTICE, "request to send file");
+      syslog(LOG_NOTICE, "request to send yuv %d with %d frames", output_frame.n_file,
+             output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
       n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
@@ -194,6 +195,8 @@ int main(int argc, char *argv[]) {
     output_frame.n_file = n_file;
     output_frame.n_frame = 0;
     do {
+      syslog(LOG_NOTICE, "request to receive data %d with %d frames",
+             output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
       n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||

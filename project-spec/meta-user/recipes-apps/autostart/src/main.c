@@ -212,7 +212,8 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
-      syslog(LOG_NOTICE, "response to send file");
+      syslog(LOG_NOTICE, "response to receive yuv %d with %d frames",
+             output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
       // receive data frames
       data_frame_t *input_data_frames =
@@ -279,6 +280,8 @@ int main(int argc, char *argv[]) {
         perror(NULL);
         break;
       }
+      syslog(LOG_NOTICE, "response to send data %d with %d frames",
+             output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
       for (int i = 0; i < output_frame.n_frame; i++)
         send_data_frame(send_fd, &output_data_frames[i], -1);
