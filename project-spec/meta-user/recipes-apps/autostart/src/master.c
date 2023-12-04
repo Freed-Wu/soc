@@ -89,13 +89,14 @@ static int parse(int argc, char *argv[], opt_t *opt) {
 
 ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
                          char *filename) {
+  if (unlink(filename) == -1)
+    return -1;
   int fd = open(filename, O_RDWR | O_CREAT);
   if (fd == -1)
     return -1;
   ssize_t size = 0;
-  for (n_frame_t i = 0; i < n_frame; i++) {
+  for (n_frame_t i = 0; i < n_frame; i++)
     size += write(fd, input_data_frames[i].data, input_data_frames[i].data_len);
-  }
   if (close(fd) == -1)
     return -1;
   return size;
