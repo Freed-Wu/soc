@@ -230,9 +230,11 @@ int main(int argc, char *argv[]) {
       }
       // request to resend data frames
       output_frame.frame_type = TP_FRAME_TYPE_NACK;
+      int sum = 0;
       for (int i = 0; i < input_frame.n_frame; i++) {
         if (input_data_frames[i].data_len > 0)
           continue;
+        sum++;
         send_frame(send_fd, &output_frame, -1);
         do {
           n = receive_data_frame(recv_fd, &data_frame, -1);
@@ -241,6 +243,7 @@ int main(int argc, char *argv[]) {
         memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
                sizeof(data_frame));
       }
+      syslog(LOG_NOTICE, "correct %d incorrect frames", sum);
       output_frame.frame_type = TP_FRAME_TYPE_ACK;
       send_frame(send_fd, &output_frame, -1);
       // TODO: multithread
@@ -253,9 +256,11 @@ int main(int argc, char *argv[]) {
             data_frame_to_data_len(input_data_frames, input_frame.n_frame);
         bit_streams[input_frame.n_file].addr =
             malloc(bit_streams[input_frame.n_file].len * sizeof(uint8_t));
-        for (n_frame_t i = 0; i < input_frame.n_frame; i++)
-          memcpy(bit_streams[input_frame.n_file].addr,
-                 input_data_frames[i].data, input_data_frames[i].data_len);
+        uint8_t *p = bit_streams[input_frame.n_file].addr;
+        for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
+          memcpy(p, input_data_frames[i].data, input_data_frames[i].data_len);
+          p += input_data_frames[i].data_len;
+        }
       }
       free(input_data_frames);
       break;
