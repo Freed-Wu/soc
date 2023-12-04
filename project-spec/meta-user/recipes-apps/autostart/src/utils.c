@@ -56,7 +56,7 @@ int print_help(const struct option *longopts, const char *arg0) {
  * for debug
  */
 ssize_t dump_mem(char *filename, void *addr, size_t size) {
-  int fd = open(filename, O_RDWR);
+  int fd = open(filename, O_RDWR | O_CREAT);
   if (fd == -1)
     return -1;
   ssize_t _size = write(fd, addr, size);
