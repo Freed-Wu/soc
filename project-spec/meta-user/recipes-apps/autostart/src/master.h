@@ -14,6 +14,7 @@ typedef struct {
   char **files;
   n_file_t number;
   unsigned int level : 3;
+  bool binary;
 } opt_t;
 
 ssize_t dump_data_frames(data_frame_t *, n_frame_t, char *);

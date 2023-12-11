@@ -28,11 +28,24 @@
 #define PICTURE_BASE_ADDR 0x20000000
 
 extern const uint8_t tp_header[4];
-// request status will return it.
+// status of program, not the status of every picture
 status_t status;
 // maximum of n_file_t
 #define PICTURES_NUMBER_MAX 8
+// picture status: unreceived -> received (processing) -> processed
+// look up len to see if a picture have been processed
 data_t bit_streams[PICTURES_NUMBER_MAX];
+// look up len == total_len to see if a picture have been received
+data_frame_info_t data_frame_infos[PICTURES_NUMBER_MAX];
+
+static status_t get_status(n_file_t number) {
+  if (bit_streams[number].len > 0)
+    return TP_STATUS_PROCESSED;
+  if (data_frame_infos[number].len == data_frame_infos[number].total_len &&
+      data_frame_infos[number].total_len)
+    return TP_STATUS_PROCESSING;
+  return TP_STATUS_UNRECEIVED;
+}
 
 static void init_opt(opt_t *opt) {
   opt->tty = "/tmp/ttyS1";
@@ -196,137 +209,129 @@ int main(int argc, char *argv[]) {
     switch (input_frame.frame_type) {
     case TP_FRAME_TYPE_QUERY:
       output_frame.frame_type = input_frame.frame_type;
-      output_frame.status = status;
+      output_frame.n_file = input_frame.n_file;
+      output_frame.status = get_status(input_frame.n_file);
+      output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
       syslog(LOG_NOTICE, "response query");
       send_frame(send_fd, &output_frame, -1);
       break;
 
     case TP_FRAME_TYPE_SEND:
+      // check
       if (input_frame.n_file >= PICTURES_NUMBER_MAX) {
         syslog(LOG_ERR, "picture number exceeds maximum: %d\n",
                PICTURES_NUMBER_MAX);
         break;
       }
+
+      // response to send data
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
       syslog(LOG_NOTICE, "response to receive yuv %d with %d frames",
              output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
-      // receive data frames
+
+      // prepare to receive data frames, set data_frame_infos
+      // every picture only malloc once!
+      if (data_frame_infos[input_frame.n_file].addr == NULL) {
+        data_frame_infos[input_frame.n_file].addr =
+            calloc(input_frame.n_frame, sizeof(data_frame_t));
+        if (data_frame_infos[input_frame.n_file].addr == NULL)
+          err(errno, NULL);
+      }
+      data_frame_infos[input_frame.n_file].total_len = input_frame.n_frame;
       data_frame_t *input_data_frames =
-          calloc(input_frame.n_frame, sizeof(data_frame_t));
-      if (input_data_frames == NULL)
-        err(errno, NULL);
+          data_frame_infos[input_frame.n_file].addr;
+
+      // receive data frames
       data_frame_t data_frame;
-      for (int i = 0; i < input_frame.n_frame; i++) {
+      for (n_frame_t _ = 0; _ < input_frame.n_frame; _++) {
         n = receive_data_frame(recv_fd, &data_frame, TIMEOUT);
+        n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
         if (n <= 0 || data_frame.n_file != input_frame.n_file ||
-            data_frame.n_frame >= input_frame.n_frame ||
-            data_frame.data_len == 0)
+            id >= input_frame.n_frame || data_frame.data_len == 0 ||
+            // if input_data_frames have this frame, skip it
+            input_data_frames[id].data_len > 0 ||
+            (data_frame.flag != TP_FLAG_1_YUV420 &&
+             data_frame.flag != TP_FLAG_2_YUV420) ||
+            memcmp(data_frame.header, tp_header, sizeof(tp_header)))
           continue;
-        memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
-               sizeof(data_frame));
+        memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
       }
-      // request to resend data frames
-      output_frame.frame_type = TP_FRAME_TYPE_NACK;
-      int sum = 0;
-      for (int i = 0; i < input_frame.n_frame; i++) {
-        if (input_data_frames[i].data_len > 0)
-          continue;
-        sum++;
-        send_frame(send_fd, &output_frame, -1);
-        do {
-          n = receive_data_frame(recv_fd, &data_frame, -1);
-        } while (n <= 0 || data_frame.n_file != input_frame.n_file ||
-                 data_frame.n_frame != i || data_frame.data_len == 0);
-        memcpy(&input_data_frames[data_frame.n_frame], &data_frame,
-               sizeof(data_frame));
-      }
-      syslog(LOG_NOTICE, "correct %d incorrect frames", sum);
-      output_frame.frame_type = TP_FRAME_TYPE_ACK;
-      send_frame(send_fd, &output_frame, -1);
-      // TODO: multithread
-      if (!opt.dry_run)
-        bit_streams[input_frame.n_file].len =
-            process_data_frames(fd_dev, input_data_frames, input_frame.n_frame,
-                                reg, bit_streams[input_frame.n_file].addr);
-      else {
-        bit_streams[input_frame.n_file].len =
-            data_frame_to_data_len(input_data_frames, input_frame.n_frame);
-        bit_streams[input_frame.n_file].addr =
-            malloc(bit_streams[input_frame.n_file].len * sizeof(uint8_t));
-        uint8_t *p = bit_streams[input_frame.n_file].addr;
-        for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
-          memcpy(p, input_data_frames[i].data, input_data_frames[i].data_len);
-          p += input_data_frames[i].data_len;
-        }
-      }
-      free(input_data_frames);
+
+      // statistic unreceived data frames
+      n_frame_t sum = 0;
+      for (n_frame_t i = 0; i < input_frame.n_frame; i++)
+        if (input_data_frames[i].data_len == 0)
+          sum++;
+      data_frame_infos[input_frame.n_file].len =
+          data_frame_infos[input_frame.n_file].total_len - sum;
+      syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", sum);
+
+      // process data frames
+      if (sum == 0)
+        if (opt.dry_run) {
+          bit_streams[input_frame.n_file].len =
+              data_frame_to_data_len(input_data_frames, input_frame.n_frame);
+          bit_streams[input_frame.n_file].addr =
+              malloc(bit_streams[input_frame.n_file].len * sizeof(uint8_t));
+          uint8_t *p = bit_streams[input_frame.n_file].addr;
+          for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
+            memcpy(p, input_data_frames[i].data, input_data_frames[i].data_len);
+            p += input_data_frames[i].data_len;
+          }
+        } else
+          // TODO: multithread
+          bit_streams[input_frame.n_file].len = process_data_frames(
+              fd_dev, input_data_frames, input_frame.n_frame, reg,
+              bit_streams[input_frame.n_file].addr);
       break;
 
     case TP_FRAME_TYPE_RECV:
-      output_frame.frame_type = input_frame.frame_type;
-      output_frame.n_file = input_frame.n_file;
+      // check
       if (input_frame.n_file >= PICTURES_NUMBER_MAX) {
         syslog(LOG_ERR, "picture %d exceeds maximum: %d\n", input_frame.n_file,
                PICTURES_NUMBER_MAX);
-      error:
-        output_frame.n_frame = 0;
-        send_frame(fd, &output_frame, -1);
         break;
       }
-      // haven't encoded pictures
+      // pictures haven't been encoded
       if (bit_streams[input_frame.n_file].len == 0) {
         syslog(LOG_ERR, "picture %d haven't been encoded\n",
                input_frame.n_file);
-        goto error;
+        break;
       }
+      // alloc output_data_frames
+      output_frame.frame_type = input_frame.frame_type;
+      output_frame.n_file = input_frame.n_file;
       output_frame.n_frame =
           (bit_streams[input_frame.n_file].len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
-      // send data frames
       data_frame_t *output_data_frames =
           alloc_data_frames(output_frame.n_frame, output_frame.n_file,
                             bit_streams[input_frame.n_file].addr,
-                            bit_streams[input_frame.n_file].len);
+                            bit_streams[input_frame.n_file].len, TP_FLAG_DATA);
       if (output_data_frames == NULL) {
         syslog(LOG_ERR, "%s", strerror(errno));
         break;
       }
+
+      // response to receive data
       syslog(LOG_NOTICE, "response to send data %d with %d frames",
              output_frame.n_file, output_frame.n_frame);
       send_frame(send_fd, &output_frame, -1);
+
+      // send data
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
+        // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
           usleep(SAFE_TIME);
         send_data_frame(send_fd, &output_data_frames[i], -1);
       }
-      bool cont = true;
-      while (cont) {
-        do {
-          n = receive_frame(recv_fd, &input_frame, -1);
-        } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
-        switch (input_frame.frame_type) {
-        case TP_FRAME_TYPE_ACK:
-          cont = false;
-          free(output_data_frames);
-          break;
+      syslog(LOG_NOTICE, "send data %d with %d frames", output_frame.n_file,
+             output_frame.n_frame);
 
-        case TP_FRAME_TYPE_NACK:
-          send_data_frame(send_fd, &output_data_frames[input_frame.n_frame],
-                          -1);
-          break;
-
-        default:
-          syslog(LOG_ERR, "Send ACK/NACK type frame, please!");
-        }
-        break;
-      }
-      break;
-
-    case TP_FRAME_TYPE_ACK:
-    case TP_FRAME_TYPE_NACK:
-      syslog(LOG_ERR, "Send receive type frame firstly!");
+      // complete
+      free(output_data_frames);
       break;
 
     default:
@@ -334,6 +339,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  for (n_file_t i = 0; i < PICTURES_NUMBER_MAX; i++) {
+    free(bit_streams[i].addr);
+    free(data_frame_infos[i].addr);
+  }
   tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
     err(errno, "%s", opt.tty);
