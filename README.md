@@ -54,6 +54,7 @@ Dependencies:
 make
 # apps
 cmake -Bbuild/cmake
+# cmake -Bbuild/cmake -DCMAKE_BUILD_TYPE=Debug -DDRY_RUN=ON
 cmake --build build/cmake
 ```
 

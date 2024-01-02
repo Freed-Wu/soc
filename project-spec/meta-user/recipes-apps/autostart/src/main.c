@@ -51,7 +51,11 @@ static void init_opt(opt_t *opt) {
   opt->tty = "/tmp/ttyS1";
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
+#ifdef DRY_RUN
+  opt->dry_run = true;
+#else
   opt->dry_run = false;
+#endif
   opt->level = LOG_NOTICE;
 }
 
@@ -198,7 +202,8 @@ int main(int argc, char *argv[]) {
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  syslog(LOG_NOTICE, "%s: initial successfully", opt.tty);
+  syslog(LOG_NOTICE, "%s: initial successfully%s", opt.tty,
+         opt.dry_run ? " (dry run)" : "");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
   while (true) {
