@@ -49,7 +49,6 @@ ssize_t send_frame(int fd, frame_t *frame, int timeout) {
   frame->n_file = htole32(frame->n_file);
   frame->n_frame = htole16(frame->n_frame);
   frame->status = htole16(frame->status);
-  frame->check_sum = htole16(frame->check_sum);
   return write(event.data.fd, frame, sizeof(*frame));
 }
 
@@ -66,7 +65,6 @@ ssize_t send_data_frame(int fd, data_frame_t *frame, int timeout) {
   frame->n_frame = htole16(frame->n_frame);
   frame->total_data_len = htole32(frame->total_data_len);
   frame->data_len = htole16(frame->data_len);
-  frame->check_sum = htole16(frame->check_sum);
   return write(event.data.fd, frame, sizeof(*frame));
 }
 
@@ -102,7 +100,6 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   frame->n_file = le32toh(frame->n_file);
   frame->n_frame = le16toh(frame->n_frame);
   frame->status = le16toh(frame->status);
-  frame->check_sum = le16toh(frame->check_sum);
   return n;
 }
 
@@ -133,7 +130,6 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   frame->n_frame = le16toh(frame->n_frame);
   frame->total_data_len = le32toh(frame->total_data_len);
   frame->data_len = le16toh(frame->data_len);
-  frame->check_sum = le16toh(frame->check_sum);
   return n;
 }
 

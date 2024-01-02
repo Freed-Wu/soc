@@ -3,7 +3,7 @@
 uint16_t crc16(const uint8_t *buffer, size_t count) {
     // x^16 + x^12 + x^5 + 1
     // reflected input: False
-    // reflected output: False
+    // reflected output: True
     // init crc: 0xffff
     // xor out: 0x0
 
@@ -80,6 +80,8 @@ uint16_t crc16(const uint8_t *buffer, size_t count) {
         buffer++;
         count--;
     }
+
+    r = (r >> 8) | ((r & 0xff) << 8);
 
     return r;
 }
