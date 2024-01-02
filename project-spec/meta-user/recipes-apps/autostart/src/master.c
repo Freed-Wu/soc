@@ -156,8 +156,8 @@ int main(int argc, char *argv[]) {
   struct termios newattr, oldattr;
   tcgetattr(fd, &oldattr);
   newattr = oldattr;
-  cfsetispeed(&newattr, B1152000);
-  cfsetospeed(&newattr, B1152000);
+  cfsetispeed(&newattr, B500000);
+  cfsetospeed(&newattr, B500000);
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
