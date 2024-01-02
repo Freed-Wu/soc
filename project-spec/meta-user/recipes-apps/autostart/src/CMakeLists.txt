@@ -1,6 +1,6 @@
+option(DRY_RUN "--dry-run by default")
 configure_file(config.h.in config.h)
 
-set(CMAKE_BUILD_TYPE Debug)
 add_library(axitangxi SHARED axitangxi.c)
 install(TARGETS axitangxi LIBRARY)
 add_library(utils SHARED utils.c)
