@@ -1,5 +1,5 @@
 /**
- * ./crc_c_generator.py --fn=crc16 --iv=0xffff 16 12 5 0 crc.h crc.c
+ * ./crc_c_generator.py --fn=crc16 --ro --iv=0xffff 16 12 5 0 crc.h crc.c
  */
 #pragma once
 
