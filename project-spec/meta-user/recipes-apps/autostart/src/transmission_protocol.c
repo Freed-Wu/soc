@@ -1,3 +1,4 @@
+#include <endian.h>
 #include <err.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -25,14 +26,14 @@ char *bin_to_str(uint8_t const *bin, size_t size) {
 
 n_frame_t id_to_n_frame(n_frame_t id, n_frame_t len) {
   if (len == 1)
-    return 0;
+    return id;
   // count n_frame from 1 not 0
   return id++;
 }
 
 n_frame_t n_frame_to_id(n_frame_t n_frame, n_frame_t len) {
   if (len == 1)
-    return 0;
+    return n_frame;
   // count id from 0 not 1
   return n_frame--;
 }
@@ -44,6 +45,11 @@ ssize_t send_frame(int fd, frame_t *frame, int timeout) {
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1)
     return -1;
+
+  frame->n_file = htole32(frame->n_file);
+  frame->n_frame = htole16(frame->n_frame);
+  frame->status = htole16(frame->status);
+  frame->check_sum = htole16(frame->check_sum);
   return write(event.data.fd, frame, sizeof(*frame));
 }
 
@@ -54,6 +60,13 @@ ssize_t send_data_frame(int fd, data_frame_t *frame, int timeout) {
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1)
     return -1;
+
+  frame->n_total_frame.uint24 = htole32(frame->n_total_frame.uint24) >> 8;
+  frame->n_file = htole32(frame->n_file);
+  frame->n_frame = htole16(frame->n_frame);
+  frame->total_data_len = htole32(frame->total_data_len);
+  frame->data_len = htole16(frame->data_len);
+  frame->check_sum = htole16(frame->check_sum);
   return write(event.data.fd, frame, sizeof(*frame));
 }
 
@@ -85,6 +98,11 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   free(str);
   memcpy(frame, temp, sizeof(*frame));
   free(temp);
+
+  frame->n_file = le32toh(frame->n_file);
+  frame->n_frame = le16toh(frame->n_frame);
+  frame->status = le16toh(frame->status);
+  frame->check_sum = le16toh(frame->check_sum);
   return n;
 }
 
@@ -109,6 +127,13 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   free(str);
   memcpy(frame, temp, sizeof(*frame));
   free(temp);
+
+  frame->n_total_frame.uint24 = le32toh(frame->n_total_frame.uint24) >> 8;
+  frame->n_file = le32toh(frame->n_file);
+  frame->n_frame = le16toh(frame->n_frame);
+  frame->total_data_len = le32toh(frame->total_data_len);
+  frame->data_len = le16toh(frame->data_len);
+  frame->check_sum = le16toh(frame->check_sum);
   return n;
 }
 
