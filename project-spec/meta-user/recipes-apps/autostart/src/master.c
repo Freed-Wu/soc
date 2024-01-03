@@ -289,10 +289,8 @@ int main(int argc, char *argv[]) {
       }
 
       // statistic unreceived data frames
-      sum = 0;
-      for (n_frame_t i = 0; i < input_frame.n_frame; i++)
-        if (input_data_frames[i].data_len == 0)
-          sum++;
+      sum =
+          count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
       syslog(LOG_NOTICE, "%d frames is unreceived", sum);
     } while (sum > 0);
 

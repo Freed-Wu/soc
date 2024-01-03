@@ -72,6 +72,7 @@ typedef struct {
 char *bin_to_str(uint8_t const *bin, size_t size);
 n_frame_t id_to_n_frame(n_frame_t id, n_frame_t len);
 n_frame_t n_frame_to_id(n_frame_t n_frame, n_frame_t len);
+n_frame_t count_unreceived_data_frames(data_frame_t *, n_frame_t);
 
 ssize_t send_frame(int, frame_t *, int);
 ssize_t receive_frame(int, frame_t *, int);

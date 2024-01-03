@@ -271,10 +271,8 @@ int main(int argc, char *argv[]) {
       }
 
       // statistic unreceived data frames
-      n_frame_t sum = 0;
-      for (n_frame_t i = 0; i < input_frame.n_frame; i++)
-        if (input_data_frames[i].data_len == 0)
-          sum++;
+      n_frame_t sum =
+          count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
       data_frame_infos[input_frame.n_file].len =
           data_frame_infos[input_frame.n_file].total_len - sum;
       syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", sum);
