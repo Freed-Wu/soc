@@ -48,7 +48,7 @@ static status_t get_status(n_file_t number) {
 }
 
 static void init_opt(opt_t *opt) {
-  opt->tty = "/tmp/ttyS1";
+  opt->tty = MASTER_TTY;
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
 #ifdef DRY_RUN

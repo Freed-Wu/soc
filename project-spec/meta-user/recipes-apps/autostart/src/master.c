@@ -39,7 +39,7 @@ static void init_opt(opt_t *opt) {
     wordfree(&exp);
   }
   opt->binary = false;
-  opt->tty = "/tmp/ttyS0";
+  opt->tty = SLAVE_TTY;
   opt->level = LOG_NOTICE;
 }
 
