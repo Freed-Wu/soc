@@ -208,6 +208,7 @@ int main(int argc, char *argv[]) {
   ssize_t n;
   while (true) {
     do {
+      // receive forever
       n = receive_frame(recv_fd, &input_frame, -1);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
 
@@ -217,8 +218,9 @@ int main(int argc, char *argv[]) {
       output_frame.n_file = input_frame.n_file;
       output_frame.status = get_status(input_frame.n_file);
       output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
-      syslog(LOG_NOTICE, "response query");
-      send_frame(send_fd, &output_frame, -1);
+      syslog(LOG_NOTICE, "%s to response query",
+             send_frame(send_fd, &output_frame, TIMEOUT) > 0 ? "succeed"
+                                                             : "failed");
       break;
 
     case TP_FRAME_TYPE_SEND:
@@ -233,9 +235,12 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
-      syslog(LOG_NOTICE, "response to receive yuv %d with %d frames",
-             output_frame.n_file, output_frame.n_frame);
-      send_frame(send_fd, &output_frame, -1);
+      ret = send_frame(send_fd, &output_frame, TIMEOUT) > 0;
+      syslog(LOG_NOTICE, "%s to response to receive yuv %d with %d frames",
+             ret ? "succeed" : "failed", output_frame.n_file,
+             output_frame.n_frame);
+      if (!ret)
+        break;
 
       // prepare to receive data frames, set data_frame_infos
       // every picture only malloc once!
@@ -321,16 +326,19 @@ int main(int argc, char *argv[]) {
       }
 
       // response to receive data
-      syslog(LOG_NOTICE, "response to send data %d with %d frames",
-             output_frame.n_file, output_frame.n_frame);
-      send_frame(send_fd, &output_frame, -1);
+      ret = send_frame(send_fd, &output_frame, TIMEOUT);
+      syslog(LOG_NOTICE, "%s to response to send data %d with %d frames",
+             ret ? "succeed" : "failed", output_frame.n_file,
+             output_frame.n_frame);
+      if (!ret)
+        break;
 
       // send data
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
         // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
           usleep(SAFE_TIME);
-        send_data_frame(send_fd, &output_data_frames[i], -1);
+        send_data_frame(send_fd, &output_data_frames[i], TIMEOUT);
       }
       syslog(LOG_NOTICE, "send data %d with %d frames", output_frame.n_file,
              output_frame.n_frame);

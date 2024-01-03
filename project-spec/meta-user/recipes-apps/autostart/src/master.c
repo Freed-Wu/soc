@@ -117,7 +117,9 @@ static void query_status(int send_fd, frame_t *output_frame, int recv_fd,
   output_frame->status = 0;
   ssize_t n;
   do {
-    send_frame(send_fd, output_frame, -1);
+    syslog(LOG_NOTICE, "%s to query status",
+           send_frame(send_fd, output_frame, TIMEOUT) > 0 ? "succeed"
+                                                          : "failed");
     n = receive_frame(recv_fd, input_frame, LOOP_PERIOD);
   } while (n <= 0 || input_frame->address != TP_ADDRESS_SLAVE ||
            input_frame->frame_type != output_frame->frame_type);
@@ -217,6 +219,7 @@ int main(int argc, char *argv[]) {
                "frames",
                output_frame.n_file, output_frame.n_frame,
                output_frame.n_frame - input_frame.n_frame);
+        // must send data, don't timeout
         send_frame(send_fd, &output_frame, -1);
         n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
       } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
@@ -228,7 +231,7 @@ int main(int argc, char *argv[]) {
         // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
           usleep(SAFE_TIME);
-        send_data_frame(send_fd, &output_data_frames[i], -1);
+        send_data_frame(send_fd, &output_data_frames[i], TIMEOUT);
       }
 
       // update input_frame
@@ -257,6 +260,7 @@ int main(int argc, char *argv[]) {
     do {
       // request to receive data
       do {
+        // must receive data, don't timeout
         send_frame(send_fd, &output_frame, -1);
         n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
       } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
