@@ -142,6 +142,25 @@ static void query_status(int send_fd, frame_t *output_frame, int recv_fd,
   }
 }
 
+static n_frame_t receive_data_frames(int recv_fd,
+                                     data_frame_t *input_data_frames,
+                                     frame_t input_frame, n_frame_t sum,
+                                     int timeout) {
+  data_frame_t data_frame;
+  for (n_frame_t _ = 0; _ < sum; _++) {
+    ssize_t n = receive_data_frame(recv_fd, &data_frame, timeout);
+    n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
+    if (n <= 0 || data_frame.n_file != input_frame.n_file ||
+        id >= input_frame.n_frame || data_frame.flag != TP_FLAG_DATA ||
+        memcmp(data_frame.header, tp_header, sizeof(tp_header)))
+      continue;
+    memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
+  }
+  // update sum
+  sum = count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
+  return sum;
+}
+
 int main(int argc, char *argv[]) {
   opt_t opt;
   openlog(NULL, LOG_CONS | LOG_PERROR, 0);
@@ -270,28 +289,21 @@ int main(int argc, char *argv[]) {
       syslog(LOG_NOTICE, "request to receive data %d with %d frames",
              output_frame.n_file, input_frame.n_frame);
 
-      // receive data frames
       // every picture only malloc once!
       if (input_data_frames == NULL) {
         input_data_frames = calloc(input_frame.n_frame, sizeof(data_frame_t));
         if (input_data_frames == NULL)
           err(errno, "%s", opt.files[n_file]);
       }
-      data_frame_t data_frame;
-      for (n_frame_t _ = 0; _ < input_frame.n_frame; _++) {
-        n = receive_data_frame(recv_fd, &data_frame, TIMEOUT);
-        n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
-        if (n <= 0 || data_frame.n_file != input_frame.n_file ||
-            id >= input_frame.n_frame || data_frame.flag != TP_FLAG_DATA ||
-            memcmp(data_frame.header, tp_header, sizeof(tp_header)))
-          continue;
-        memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
-      }
 
-      // statistic unreceived data frames
-      sum =
-          count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
+      // receive data frames
+      sum = input_frame.n_frame;
+      sum = receive_data_frames(recv_fd, input_data_frames, input_frame, sum,
+                                TIMEOUT);
       syslog(LOG_NOTICE, "%d frames is unreceived", sum);
+      sum = receive_data_frames(recv_fd, input_data_frames, input_frame, sum,
+                                TIMEOUT);
+      syslog(LOG_NOTICE, "%d frames is unreceived again", sum);
     } while (sum > 0);
 
     // save file
