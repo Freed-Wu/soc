@@ -38,6 +38,15 @@ n_frame_t n_frame_to_id(n_frame_t n_frame, n_frame_t len) {
   return n_frame--;
 }
 
+n_frame_t count_unreceived_data_frames(data_frame_t *data_frames,
+                                       n_frame_t n_frame) {
+  n_frame_t sum = 0;
+  for (n_frame_t i = 0; i < n_frame; i++)
+    if (data_frames[i].data_len == 0)
+      sum++;
+  return sum;
+}
+
 ssize_t send_frame(int fd, frame_t *frame, int timeout) {
   frame->check_sum = crc16((uint8_t *)frame, sizeof(*frame) - sizeof(uint16_t));
 
