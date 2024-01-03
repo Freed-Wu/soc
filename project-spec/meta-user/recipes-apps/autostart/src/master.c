@@ -271,7 +271,10 @@ int main(int argc, char *argv[]) {
     } while (input_frame.status != TP_STATUS_PROCESSED);
 
     // prepare to receive data, set output_frame
-    data_frame_t *input_data_frames = NULL;
+    data_frame_t *input_data_frames =
+        calloc(input_frame.n_frame, sizeof(data_frame_t));
+    if (input_data_frames == NULL)
+      err(errno, "%s", opt.files[n_file]);
     output_frame.frame_type = TP_FRAME_TYPE_RECV;
     // sum of unreceived frames
     n_frame_t sum = 0;
@@ -288,13 +291,6 @@ int main(int argc, char *argv[]) {
                input_frame.n_frame == 0);
       syslog(LOG_NOTICE, "request to receive data %d with %d frames",
              output_frame.n_file, input_frame.n_frame);
-
-      // every picture only malloc once!
-      if (input_data_frames == NULL) {
-        input_data_frames = calloc(input_frame.n_frame, sizeof(data_frame_t));
-        if (input_data_frames == NULL)
-          err(errno, "%s", opt.files[n_file]);
-      }
 
       // receive data frames
       sum = input_frame.n_frame;
