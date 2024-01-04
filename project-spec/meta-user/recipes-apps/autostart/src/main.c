@@ -16,7 +16,6 @@
 #include <termios.h>
 
 #include "axitangxi.h"
-#include "coding.h"
 #include "main.h"
 #include "utils.h"
 
