@@ -1,6 +1,6 @@
 {
-    "files.associations": {
-        "arithmeticcoder.hpp": "c",
-        "bitiostream.hpp": "c"
-    }
+  "files.associations": {
+    "arithmeticcoder.hpp": "c",
+    "bitiostream.hpp": "c"
+  }
 }

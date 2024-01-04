@@ -3,7 +3,7 @@ configure_file(config.h.in config.h)
 
 add_library(axitangxi SHARED axitangxi.c)
 install(TARGETS axitangxi LIBRARY)
-add_library(utils SHARED utils.c ) 
+add_library(utils SHARED utils.c )
 install(TARGETS utils LIBRARY)
 add_library(coding SHARED ArithmeticCoder.cpp BitIoStream.cpp GmmTable.cpp)
 install(TARGETS coding LIBRARY)

@@ -32,8 +32,6 @@ typedef struct {
 1. 改变了prob_t，mean_t， std_t的数据类型。**从double变成uint_16**，这是因为整数运算，传入的九个参数从浮点数变为16bit整数。
 2. **增加变量freqs_resolution**，作为分辨率。
 
-
-
 #### 2. GmmTable
 
 去掉了softmax，以及noraml_cdf。因为都涉及到浮点运算
@@ -42,7 +40,7 @@ typedef struct {
  double normal_cdf(double index, double mean, double std);
 ```
 
-**改成查表运算**。表存储在**'src/data'**目录下，**相对路径**如下：
+**改成查表运算**。表存储在\*\*'src/data'\*\*目录下，**相对路径**如下：
 
 ```
     char exp_file_path[255] = "data/exp.bin";
@@ -65,8 +63,6 @@ public:
 };
 ```
 
-
-
 #### 3. 编码
 
 下面是编码流程（可先不看）
@@ -75,8 +71,8 @@ public:
 extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound){
 	//根据GMM得到对应的频率表
     GmmTable freqs(gmm,low_bound,high_bound);
-	
-	BitOutputStream bout(data_addr);	
+
+	BitOutputStream bout(data_addr);
 
 	//读取数据。根据频率表进行算术编码
 	ArithmeticEncoder enc(32, bout);
@@ -90,8 +86,8 @@ extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_
 		enc.write(freqs, static_cast<uint32_t>(symbol));
 	}
 
-	// EOF，值域属于low_bound-high_bound，故而high_bound+1是终止符号	
-	enc.write(freqs, high_bound+1);  
+	// EOF，值域属于low_bound-high_bound，故而high_bound+1是终止符号
+	enc.write(freqs, high_bound+1);
 	enc.finish();
 	bout.finish();
 	size_t size=bout.size;
@@ -117,15 +113,11 @@ extern "C" size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_
 	// write_bin(data_addr,size,outputFile);
 ```
 
-
-
 #### 4. 解码
 
 下面是解码流程，具体为：从bin文件取数据，然后解码，写入txt文件。这里，每写入一个数据，间隔一个空格。
 
-**上述过程，仅为暂定（等实际接口）。**可能后续不是写入txt文件，而是写入数组里。
-
-
+\*\*上述过程，仅为暂定（等实际接口）。\*\*可能后续不是写入txt文件，而是写入数组里。
 
 ```
 extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char binFile[],char decFile[]){
@@ -145,7 +137,7 @@ extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char 
 			out << b << ' ';
 		}
 		return EXIT_SUCCESS;
-		
+
 	} catch (const char *msg) {
 		std::cerr << msg << std::endl;
 		return EXIT_FAILURE;
@@ -153,28 +145,26 @@ extern "C" bool decoding(gmm_t* gmm,uint32_t low_bound,uint32_t high_bound,char 
 }
 ```
 
-
-
 #### 5. 精度设计
 
 ##### 1. M441提案
 
 ###### 1.1. exp
 
-- **纵轴 (y):** `int16`，范围 [0, 20000]
-- **横轴 (x):** 区间 [-11, 0]，共有 11001 个点
+- **纵轴 (y):** `int16`，范围 \[0, 20000\]
+- **横轴 (x):** 区间 \[-11, 0\]，共有 11001 个点
 
 ###### 1.2. erf
 
-- **纵轴 (y):** `int32`，范围 [0, 99999]
-- **横轴 (x):** 区间 [-4.5, 4.5]，共有 45001 个点
+- **纵轴 (y):** `int32`，范围 \[0, 99999\]
+- **横轴 (x):** 区间 \[-4.5, 4.5\]，共有 45001 个点
 
 ##### 2. 航天
 
 ###### 2.1. exp
 
-- **纵轴 (y):** `uint16`，范围 [0, 65535]
-- **横轴 (x):** 区间 [-12, 0]，精度 1000，共有 12001 个点
+- **纵轴 (y):** `uint16`，范围 \[0, 65535\]
+- **横轴 (x):** 区间 \[-12, 0\]，精度 1000，共有 12001 个点
 
 代码:
 
@@ -192,8 +182,8 @@ e^-11.0 = 1.670170079e-5          1.111247662
 
 ###### 2.2. erf
 
-- **纵轴 (y):** `uint32`，范围 [0, UINT32_MAX]
-- **横轴 (x):** 区间 [-5, 0]，精度 10000，共有 50001 个点
+- **纵轴 (y):** `uint32`，范围 \[0, UINT32_MAX\]
+- **横轴 (x):** 区间 \[-5, 0\]，精度 10000，共有 50001 个点
 
 代码:
 
@@ -208,4 +198,3 @@ e^-11.0 = 1.670170079e-5          1.111247662
 Probability  4.5 standard deviations (SymPy): 0.9999932047     6.79534624947742
 Probability  5.0 standard deviations (SymPy): 0.9999994267     0.573303143736048
 ```
-
