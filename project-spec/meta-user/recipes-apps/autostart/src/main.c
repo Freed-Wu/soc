@@ -234,6 +234,7 @@ int main(int argc, char *argv[]) {
   while (true) {
     do {
       // receive forever
+      memset(&input_frame, 0, sizeof(input_frame));
       n = receive_frame(recv_fd, &input_frame, -1);
     } while (n <= 0 || input_frame.address != TP_ADDRESS_MASTER);
 
@@ -246,6 +247,12 @@ int main(int argc, char *argv[]) {
       syslog(LOG_NOTICE, "%s to response query",
              send_frame(send_fd, &output_frame, TIMEOUT) > 0 ? "succeed"
                                                              : "failed");
+      char *str = bin_to_str((uint8_t *)&output_frame, sizeof(output_frame));
+      syslog(LOG_WARNING, "send incorrectly: %s", str);
+      free(str);
+      str = bin_to_str((uint8_t *)&input_frame, sizeof(input_frame));
+      syslog(LOG_WARNING, "receive incorrectly: %s", str);
+      free(str);
       break;
 
     case TP_FRAME_TYPE_SEND:

@@ -1,7 +1,3 @@
-/**
- * socat pty,rawer,link=/tmp/ttyS0 pty,rawer,link=/tmp/ttyS1
- * journalctl -tslave0 -tmaster -fn0
- */
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -11,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <wordexp.h>
@@ -24,7 +21,8 @@
 #include "utils.h"
 
 #define TIMEOUT 3
-#define LOOP_PERIOD 10000
+// microseconds
+#define LOOP_PERIOD 1000
 
 extern const uint8_t tp_header[4];
 
@@ -106,6 +104,46 @@ ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
   return size;
 }
 
+static inline __suseconds_t tvdiff(struct timeval new_tv,
+                                   struct timeval old_tv) {
+  return (new_tv.tv_sec - old_tv.tv_sec) * 1000000 + new_tv.tv_usec -
+         old_tv.tv_usec;
+}
+
+static ssize_t send_and_receive_frame(int send_fd, frame_t *output_frame,
+                                      int recv_fd, frame_t *input_frame) {
+  struct timeval tv0, tv;
+  while (true) {
+    gettimeofday(&tv0, NULL);
+    bool ret = send_frame(send_fd, output_frame, TIMEOUT) > 0;
+    syslog(LOG_NOTICE, "%s to %s", ret ? "succeed" : "failed",
+           output_frame->frame_type == TP_FRAME_TYPE_QUERY ? "query"
+           : output_frame->frame_type == TP_FRAME_TYPE_SEND
+               ? "request to send data"
+               : "request to receive data");
+    ssize_t n = -1;
+    if (ret) {
+      memset(input_frame, 0, sizeof(*input_frame));
+      n = receive_frame(recv_fd, input_frame, LOOP_PERIOD);
+    }
+    if (n <= 0 || input_frame->address != TP_ADDRESS_SLAVE ||
+        input_frame->frame_type != output_frame->frame_type ||
+        input_frame->n_file != output_frame->n_file) {
+      switch (n) {
+      case -1:
+        syslog(LOG_WARNING, "timeout");
+        break;
+      case -2:
+        syslog(LOG_WARNING, "received not enough");
+      }
+      gettimeofday(&tv, NULL);
+      __suseconds_t usec = LOOP_PERIOD * 1000 - tvdiff(tv, tv0);
+      usleep(usec > 0 ? usec : 0);
+    } else
+      return n;
+  }
+}
+
 /**
  * query status is a very usual action.
  * set output_frame.n_file by yourself.
@@ -115,14 +153,7 @@ static void query_status(int send_fd, frame_t *output_frame, int recv_fd,
   output_frame->frame_type = TP_FRAME_TYPE_QUERY;
   // don't modify output_frame->n_frame!
   output_frame->status = 0;
-  ssize_t n;
-  do {
-    syslog(LOG_NOTICE, "%s to query status",
-           send_frame(send_fd, output_frame, TIMEOUT) > 0 ? "succeed"
-                                                          : "failed");
-    n = receive_frame(recv_fd, input_frame, LOOP_PERIOD);
-  } while (n <= 0 || input_frame->address != TP_ADDRESS_SLAVE ||
-           input_frame->frame_type != output_frame->frame_type);
+  send_and_receive_frame(send_fd, output_frame, recv_fd, input_frame);
 
   switch (input_frame->status) {
   case TP_STATUS_UNRECEIVED:
@@ -232,18 +263,12 @@ int main(int argc, char *argv[]) {
     do {
       // request to send data
       output_frame.frame_type = TP_FRAME_TYPE_SEND;
-      do {
-        syslog(LOG_NOTICE,
-               "request to send yuv %d with %d frames to correct %d missing "
-               "frames",
-               output_frame.n_file, output_frame.n_frame,
-               output_frame.n_frame - input_frame.n_frame);
-        // must send data, don't timeout
-        send_frame(send_fd, &output_frame, -1);
-        n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
-      } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
-               input_frame.frame_type != output_frame.frame_type ||
-               input_frame.n_file != output_frame.n_file);
+      syslog(LOG_NOTICE,
+             "request to send yuv %d with %d frames to correct %d missing "
+             "frames",
+             output_frame.n_file, output_frame.n_frame,
+             output_frame.n_frame - input_frame.n_frame);
+      send_and_receive_frame(send_fd, &output_frame, recv_fd, &input_frame);
 
       // send data frames
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
@@ -281,16 +306,9 @@ int main(int argc, char *argv[]) {
 
     do {
       // request to receive data
-      do {
-        // must receive data, don't timeout
-        send_frame(send_fd, &output_frame, -1);
-        n = receive_frame(recv_fd, &input_frame, LOOP_PERIOD);
-      } while (n <= 0 || input_frame.address != TP_ADDRESS_SLAVE ||
-               input_frame.frame_type != output_frame.frame_type ||
-               input_frame.n_file != output_frame.n_file ||
-               input_frame.n_frame == 0);
       syslog(LOG_NOTICE, "request to receive data %d with %d frames",
              output_frame.n_file, input_frame.n_frame);
+      send_and_receive_frame(send_fd, &output_frame, recv_fd, &input_frame);
 
       // receive data frames
       sum = input_frame.n_frame;

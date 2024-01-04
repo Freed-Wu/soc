@@ -93,22 +93,26 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
-  if (n < sizeof(*frame) ||
-      crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
-          temp->check_sum) {
-    syslog(LOG_INFO, "receive incorrectly: %s", str);
-    free(str);
-    free(temp);
-    return -1;
+  if (n < sizeof(*frame)) {
+    n = -2;
+    goto error;
+  }
+  if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
+      temp->check_sum) {
+    syslog(LOG_WARNING, "receive incorrectly: %s", str);
+    n = -3;
+    goto error;
   }
   syslog(LOG_INFO, "receive correctly: %s", str);
-  free(str);
   memcpy(frame, temp, sizeof(*frame));
-  free(temp);
 
   frame->n_file = le32toh(frame->n_file);
   frame->n_frame = le16toh(frame->n_frame);
   frame->status = le16toh(frame->status);
+
+error:
+  free(str);
+  free(temp);
   return n;
 }
 
@@ -121,24 +125,28 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
-  if (n < sizeof(*frame) ||
-      crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
-          temp->check_sum) {
+  if (n < sizeof(*frame)) {
+    n = -2;
+    goto error;
+  }
+  if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
+      temp->check_sum) {
     syslog(LOG_INFO, "receive incorrectly: %s", str);
-    free(str);
-    free(temp);
-    return -1;
+    n = -3;
+    goto error;
   }
   syslog(LOG_INFO, "receive correctly: %s", str);
-  free(str);
   memcpy(frame, temp, sizeof(*frame));
-  free(temp);
 
   frame->n_total_frame.uint24 = le32toh(frame->n_total_frame.uint24) >> 8;
   frame->n_file = le32toh(frame->n_file);
   frame->n_frame = le16toh(frame->n_frame);
   frame->total_data_len = le32toh(frame->total_data_len);
   frame->data_len = le16toh(frame->data_len);
+
+error:
+  free(str);
+  free(temp);
   return n;
 }
 
