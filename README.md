@@ -199,6 +199,19 @@ sync
 
 ## Usage
 
+### PC
+
+```sh
+# create two connected fake serials
+socat pty,rawer,link=/tmp/ttyS0 pty,rawer,link=/tmp/ttyS1
+# display log
+journalctl -tslave0 -tmaster -fn0
+main
+master
+```
+
+### Embedded
+
 ```sh
 # open serial debug helper
 # assume your COM port is /dev/ttyUSB1
