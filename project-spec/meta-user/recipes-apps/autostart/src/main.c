@@ -20,6 +20,13 @@
 #include "main.h"
 #include "utils.h"
 
+// 分别引用 算术编码器、比特IO（IO到数组）、GMM频率表
+
+#include "ArithmeticCoder.hpp"
+#include "BitIoStream.hpp"
+#include "GmmTable.h"
+
+
 // millisecond / frame
 #define TIMEOUT 3
 // 权重、因子、图片的地址
@@ -153,8 +160,12 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
     // TODO: multithread
-    data[k].len =
-        coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr);
+    gmm->freqs_resolution=1e6;
+    uint16_t low_bound=0;
+    uint16_t high_bound=65535;
+    // 相对于原来，额外增加上下界
+    data[k].len =coding(gmm,(uint16_t *)trans[k].addr,trans[k].len,data[k].addr,low_bound,high_bound)
+        // coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr);
 
     len += data[k].len;
   }
