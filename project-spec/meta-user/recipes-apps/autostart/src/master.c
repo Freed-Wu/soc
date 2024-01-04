@@ -312,12 +312,13 @@ int main(int argc, char *argv[]) {
 
       // receive data frames
       sum = input_frame.n_frame;
-      sum = receive_data_frames(recv_fd, input_data_frames, input_frame, sum,
-                                TIMEOUT);
-      syslog(LOG_NOTICE, "%d frames is unreceived", sum);
-      sum = receive_data_frames(recv_fd, input_data_frames, input_frame, sum,
-                                TIMEOUT);
-      syslog(LOG_NOTICE, "%d frames is unreceived again", sum);
+      n_frame_t new_sum = sum;
+      do {
+        sum = new_sum;
+        new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
+                                      sum, TIMEOUT);
+        syslog(LOG_NOTICE, "%d frames is unreceived", new_sum);
+      } while (new_sum < sum);
     } while (sum > 0);
 
     // save file
