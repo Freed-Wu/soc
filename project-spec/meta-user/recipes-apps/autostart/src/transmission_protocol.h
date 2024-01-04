@@ -3,7 +3,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "coding.h"
+// 分别引用 算术编码器、比特IO（IO到数组）、GMM频率表
+
+#include "ArithmeticCoder.hpp"
+#include "BitIoStream.hpp"
+#include "GmmTable.h"
 
 __BEGIN_DECLS
 
