@@ -111,11 +111,12 @@ static inline __suseconds_t tvdiff(struct timeval new_tv,
 }
 
 static ssize_t send_and_receive_frame(int send_fd, frame_t *output_frame,
-                                      int recv_fd, frame_t *input_frame) {
+                                      int send_timeout, int recv_fd,
+                                      frame_t *input_frame, int recv_timeout) {
   struct timeval tv0, tv;
   while (true) {
     gettimeofday(&tv0, NULL);
-    bool ret = send_frame(send_fd, output_frame, TIMEOUT) > 0;
+    bool ret = send_frame(send_fd, output_frame, send_timeout) > 0;
     syslog(LOG_NOTICE, "%s to %s", ret ? "succeed" : "failed",
            output_frame->frame_type == TP_FRAME_TYPE_QUERY ? "query"
            : output_frame->frame_type == TP_FRAME_TYPE_SEND
@@ -124,7 +125,7 @@ static ssize_t send_and_receive_frame(int send_fd, frame_t *output_frame,
     ssize_t n = -1;
     if (ret) {
       memset(input_frame, 0, sizeof(*input_frame));
-      n = receive_frame(recv_fd, input_frame, LOOP_PERIOD);
+      n = receive_frame(recv_fd, input_frame, recv_timeout);
     }
     if (n <= 0 || input_frame->address != TP_ADDRESS_SLAVE ||
         input_frame->frame_type != output_frame->frame_type ||
@@ -148,12 +149,13 @@ static ssize_t send_and_receive_frame(int send_fd, frame_t *output_frame,
  * query status is a very usual action.
  * set output_frame.n_file by yourself.
  */
-static void query_status(int send_fd, frame_t *output_frame, int recv_fd,
-                         frame_t *input_frame) {
+static void query_status(int send_fd, frame_t *output_frame, int send_timeout,
+                         int recv_fd, frame_t *input_frame, int recv_timeout) {
   output_frame->frame_type = TP_FRAME_TYPE_QUERY;
   // don't modify output_frame->n_frame!
   output_frame->status = 0;
-  send_and_receive_frame(send_fd, output_frame, recv_fd, input_frame);
+  send_and_receive_frame(send_fd, output_frame, send_timeout, recv_fd,
+                         input_frame, recv_timeout);
 
   switch (input_frame->status) {
   case TP_STATUS_UNRECEIVED:
@@ -215,14 +217,15 @@ int main(int argc, char *argv[]) {
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
   syslog(LOG_NOTICE, "%s: initial successfully, data will be saved to %s",
          opt.tty, opt.out_dir);
-  ssize_t n;
 
   // send data
+  receive_and_drop(recv_fd, TIMEOUT);
   syslog(LOG_NOTICE, "=== send data ===");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_MASTER};
   for (n_file_t n_file = 0; n_file < opt.number; n_file++) {
     output_frame.n_file = n_file;
-    query_status(send_fd, &output_frame, recv_fd, &input_frame);
+    query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+                 LOOP_PERIOD);
     // query status to ensure unreceived
     if (input_frame.status != TP_STATUS_UNRECEIVED)
       // skip to next picture
@@ -268,7 +271,8 @@ int main(int argc, char *argv[]) {
              "frames",
              output_frame.n_file, output_frame.n_frame,
              output_frame.n_frame - input_frame.n_frame);
-      send_and_receive_frame(send_fd, &output_frame, recv_fd, &input_frame);
+      send_and_receive_frame(send_fd, &output_frame, TIMEOUT, recv_fd,
+                             &input_frame, LOOP_PERIOD);
 
       // send data frames
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
@@ -279,7 +283,8 @@ int main(int argc, char *argv[]) {
       }
 
       // update input_frame
-      query_status(send_fd, &output_frame, recv_fd, &input_frame);
+      query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+                   LOOP_PERIOD);
     } while (input_frame.status == TP_STATUS_UNRECEIVED);
 
     // complete
@@ -292,7 +297,8 @@ int main(int argc, char *argv[]) {
     // block until query status is processed
     output_frame.n_file = n_file;
     do {
-      query_status(send_fd, &output_frame, recv_fd, &input_frame);
+      query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+                   LOOP_PERIOD);
     } while (input_frame.status != TP_STATUS_PROCESSED);
 
     // prepare to receive data, set output_frame
@@ -300,15 +306,16 @@ int main(int argc, char *argv[]) {
         calloc(input_frame.n_frame, sizeof(data_frame_t));
     if (input_data_frames == NULL)
       err(errno, "%s", opt.files[n_file]);
-    output_frame.frame_type = TP_FRAME_TYPE_RECV;
     // sum of unreceived frames
     n_frame_t sum = 0;
 
     do {
       // request to receive data
+      output_frame.frame_type = TP_FRAME_TYPE_RECV;
       syslog(LOG_NOTICE, "request to receive data %d with %d frames",
              output_frame.n_file, input_frame.n_frame);
-      send_and_receive_frame(send_fd, &output_frame, recv_fd, &input_frame);
+      send_and_receive_frame(send_fd, &output_frame, TIMEOUT, recv_fd,
+                             &input_frame, LOOP_PERIOD);
 
       // receive data frames
       sum = input_frame.n_frame;
@@ -319,6 +326,7 @@ int main(int argc, char *argv[]) {
                                       sum, TIMEOUT);
         syslog(LOG_NOTICE, "%d frames is unreceived", new_sum);
       } while (new_sum < sum);
+      receive_and_drop(recv_fd, TIMEOUT);
     } while (sum > 0);
 
     // save file

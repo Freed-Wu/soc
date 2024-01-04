@@ -78,6 +78,7 @@ ssize_t send_frame(int, frame_t *, int);
 ssize_t receive_frame(int, frame_t *, int);
 ssize_t send_data_frame(int, data_frame_t *, int);
 ssize_t receive_data_frame(int, data_frame_t *, int);
+ssize_t receive_and_drop(int fd, int timeout);
 
 void init_data_frames(data_frame_t *, n_frame_t, n_file_t, flag_t);
 data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t, flag_t);

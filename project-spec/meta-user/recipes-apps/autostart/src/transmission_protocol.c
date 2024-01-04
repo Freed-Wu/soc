@@ -99,7 +99,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   }
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
-    syslog(LOG_WARNING, "receive incorrectly: %s", str);
+    syslog(LOG_INFO, "receive incorrectly: %s", str);
     n = -3;
     goto error;
   }
@@ -147,6 +147,21 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
 error:
   free(str);
   free(temp);
+  return n;
+}
+
+ssize_t receive_and_drop(int fd, int timeout) {
+  uint8_t temp[2048];
+  struct epoll_event event;
+  ssize_t n = 0;
+
+  while (true) {
+    int num = epoll_wait(fd, &event, 1, timeout);
+    if (num == 1)
+      n += read(event.data.fd, temp, sizeof(temp));
+    else
+      break;
+  }
   return n;
 }
 
