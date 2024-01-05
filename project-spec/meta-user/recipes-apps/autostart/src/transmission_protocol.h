@@ -74,11 +74,15 @@ n_frame_t id_to_n_frame(n_frame_t id, n_frame_t len);
 n_frame_t n_frame_to_id(n_frame_t n_frame, n_frame_t len);
 n_frame_t count_unreceived_data_frames(data_frame_t *, n_frame_t);
 
+ssize_t write_frame(int fd, const frame_t *frame);
 ssize_t send_frame(int, const frame_t *, int);
 ssize_t receive_frame(int, frame_t *, int);
+ssize_t write_data_frame(int fd, const data_frame_t *frame);
 ssize_t send_data_frame(int, const data_frame_t *, int);
 ssize_t receive_data_frame(int, data_frame_t *, int);
 ssize_t receive_and_drop(int fd, int timeout);
+ssize_t send_data_frame_directly(int fd, const data_frame_t *frame,
+                                 int timeout);
 
 void init_data_frames(data_frame_t *, n_frame_t, n_file_t, flag_t);
 data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t, flag_t);

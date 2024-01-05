@@ -39,14 +39,16 @@ static void init_opt(opt_t *opt) {
   opt->binary = false;
   opt->tty = SLAVE_TTY;
   opt->level = LOG_NOTICE;
+  opt->dump = false;
 }
 
-static char shortopts[] = "hVvqbt:o:";
+static char shortopts[] = "hVvqbdt:o:";
 static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"version", no_argument, NULL, 'V'},
                                    {"verbose", no_argument, NULL, 'v'},
                                    {"quiet", no_argument, NULL, 'q'},
                                    {"binary", no_argument, NULL, 'b'},
+                                   {"dump", no_argument, NULL, 'd'},
                                    {"tty", required_argument, NULL, 't'},
                                    {"out_dir", required_argument, NULL, 'w'},
                                    {NULL, 0, NULL, 0}};
@@ -72,6 +74,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
     case 'b':
       opt->binary = true;
       break;
+    case 'd':
+      opt->dump = true;
+      break;
     case 't':
       opt->tty = optarg;
       break;
@@ -92,6 +97,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
 
 ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
                          char *filename) {
+  // Permission denied
   unlink(filename);
   int fd = open(filename, O_RDWR | O_CREAT);
   if (fd == -1)
@@ -260,6 +266,23 @@ int main(int argc, char *argv[]) {
       if (output_data_frames == NULL)
         err(errno, NULL);
     }
+    if (opt.dump) {
+      char *filename =
+          malloc((strlen(opt.out_dir) + sizeof("XX.dat") - 1) * sizeof(char));
+      sprintf(filename, "%s/%d.dat", opt.out_dir, n_file);
+      // Permission denied
+      unlink(filename);
+      int fd_dat = open(filename, O_RDWR | O_CREAT);
+      if (fd_dat == -1)
+        err(errno, NULL);
+      for (n_frame_t i = 0; i < output_frame.n_frame; i++)
+        write_data_frame(fd_dat, &output_data_frames[i]);
+      if (close(fd_dat) == -1)
+        err(errno, NULL);
+      syslog(LOG_NOTICE, "%s has been dumped to %s", opt.files[n_file],
+             filename);
+      free(filename);
+    }
     if (close(fd_file) == -1)
       syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
 
@@ -279,7 +302,10 @@ int main(int argc, char *argv[]) {
         // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
           usleep(SAFE_TIME);
-        send_data_frame(send_fd, &output_data_frames[i], TIMEOUT);
+        if (opt.binary)
+          send_data_frame_directly(send_fd, &output_data_frames[i], TIMEOUT);
+        else
+          send_data_frame(send_fd, &output_data_frames[i], TIMEOUT);
       }
 
       // update input_frame

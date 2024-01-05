@@ -47,27 +47,26 @@ n_frame_t count_unreceived_data_frames(data_frame_t *data_frames,
   return sum;
 }
 
-ssize_t send_frame(int fd, const frame_t *frame, int timeout) {
-  struct epoll_event event;
-  int num = epoll_wait(fd, &event, 1, timeout);
-  if (num < 1)
-    return -1;
-
+ssize_t write_frame(int fd, const frame_t *frame) {
   frame_t temp = *frame;
   temp.n_file = htobe32(frame->n_file);
   temp.n_frame = htobe16(frame->n_frame);
   temp.status = htobe16(frame->status);
   temp.check_sum = crc16((uint8_t *)&temp, sizeof(temp) - sizeof(uint16_t));
 
-  return write(event.data.fd, &temp, sizeof(temp));
+  return write(fd, &temp, sizeof(temp));
 }
 
-ssize_t send_data_frame(int fd, const data_frame_t *frame, int timeout) {
+ssize_t send_frame(int fd, const frame_t *frame, int timeout) {
   struct epoll_event event;
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1)
     return -1;
 
+  return write_frame(event.data.fd, frame);
+}
+
+ssize_t write_data_frame(int fd, const data_frame_t *frame) {
   data_frame_t temp = *frame;
   temp.n_total_frame.uint24 = htobe32(frame->n_total_frame.uint24) >> 8;
   temp.n_file = htobe32(frame->n_file);
@@ -76,7 +75,25 @@ ssize_t send_data_frame(int fd, const data_frame_t *frame, int timeout) {
   temp.data_len = htobe16(frame->data_len);
   temp.check_sum = crc16((uint8_t *)&temp, sizeof(temp) - sizeof(uint16_t));
 
-  return write(event.data.fd, &temp, sizeof(temp));
+  return write(fd, &temp, sizeof(temp));
+}
+
+ssize_t send_data_frame(int fd, const data_frame_t *frame, int timeout) {
+  struct epoll_event event;
+  int num = epoll_wait(fd, &event, 1, timeout);
+  if (num < 1)
+    return -1;
+
+  return write_data_frame(event.data.fd, frame);
+}
+
+ssize_t send_data_frame_directly(int fd, const data_frame_t *frame,
+                                 int timeout) {
+  struct epoll_event event;
+  int num = epoll_wait(fd, &event, 1, timeout);
+  if (num < 1)
+    return -1;
+  return write(event.data.fd, frame, sizeof(*frame));
 }
 
 /**
