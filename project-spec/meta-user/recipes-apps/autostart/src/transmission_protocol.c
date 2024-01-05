@@ -54,9 +54,9 @@ ssize_t send_frame(int fd, const frame_t *frame, int timeout) {
     return -1;
 
   frame_t temp = *frame;
-  temp.n_file = htole32(frame->n_file);
-  temp.n_frame = htole16(frame->n_frame);
-  temp.status = htole16(frame->status);
+  temp.n_file = htobe32(frame->n_file);
+  temp.n_frame = htobe16(frame->n_frame);
+  temp.status = htobe16(frame->status);
   temp.check_sum = crc16((uint8_t *)&temp, sizeof(temp) - sizeof(uint16_t));
 
   return write(event.data.fd, &temp, sizeof(temp));
@@ -69,11 +69,11 @@ ssize_t send_data_frame(int fd, const data_frame_t *frame, int timeout) {
     return -1;
 
   data_frame_t temp = *frame;
-  temp.n_total_frame.uint24 = htole32(frame->n_total_frame.uint24) >> 8;
-  temp.n_file = htole32(frame->n_file);
-  temp.n_frame = htole16(frame->n_frame);
-  temp.total_data_len = htole32(frame->total_data_len);
-  temp.data_len = htole16(frame->data_len);
+  temp.n_total_frame.uint24 = htobe32(frame->n_total_frame.uint24) >> 8;
+  temp.n_file = htobe32(frame->n_file);
+  temp.n_frame = htobe16(frame->n_frame);
+  temp.total_data_len = htobe32(frame->total_data_len);
+  temp.data_len = htobe16(frame->data_len);
   temp.check_sum = crc16((uint8_t *)&temp, sizeof(temp) - sizeof(uint16_t));
 
   return write(event.data.fd, &temp, sizeof(temp));
@@ -108,9 +108,9 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   syslog(LOG_INFO, "receive correctly: %s", str);
   memcpy(frame, temp, sizeof(*frame));
 
-  frame->n_file = le32toh(frame->n_file);
-  frame->n_frame = le16toh(frame->n_frame);
-  frame->status = le16toh(frame->status);
+  frame->n_file = be32toh(frame->n_file);
+  frame->n_frame = be16toh(frame->n_frame);
+  frame->status = be16toh(frame->status);
 
 error:
   free(str);
@@ -140,11 +140,11 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   syslog(LOG_INFO, "receive correctly: %s", str);
   memcpy(frame, temp, sizeof(*frame));
 
-  frame->n_total_frame.uint24 = le32toh(frame->n_total_frame.uint24) >> 8;
-  frame->n_file = le32toh(frame->n_file);
-  frame->n_frame = le16toh(frame->n_frame);
-  frame->total_data_len = le32toh(frame->total_data_len);
-  frame->data_len = le16toh(frame->data_len);
+  frame->n_total_frame.uint24 = be32toh(frame->n_total_frame.uint24) >> 8;
+  frame->n_file = be32toh(frame->n_file);
+  frame->n_frame = be16toh(frame->n_frame);
+  frame->total_data_len = be32toh(frame->total_data_len);
+  frame->data_len = be16toh(frame->data_len);
 
 error:
   free(str);
