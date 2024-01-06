@@ -223,18 +223,21 @@ int main(int argc, char *argv[]) {
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
   syslog(LOG_NOTICE, "%s: initial successfully, data will be saved to %s",
          opt.tty, opt.out_dir);
+  n_file_t *n_files = malloc(sizeof(n_file_t) * opt.number);
+  for (int k = 0; k < opt.number; k++)
+    n_files[k] = k;
 
   // send data
   receive_and_drop(recv_fd, TIMEOUT);
   syslog(LOG_NOTICE, "=== send data ===");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_MASTER};
-  for (n_file_t n_file = 0; n_file < opt.number; n_file++) {
+  for (n_file_t k = 0; k < opt.number; k++) {
     // prepare to send data
     output_frame.frame_type = TP_FRAME_TYPE_SEND;
-    int fd_file = open(opt.files[n_file], O_RDONLY);
+    int fd_file = open(opt.files[k], O_RDONLY);
     if (fd_file == -1) {
     error:
-      syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
+      syslog(LOG_ERR, "%s: %s", opt.files[k], strerror(errno));
       // skip to next picture
       continue;
     }
@@ -251,10 +254,11 @@ int main(int argc, char *argv[]) {
       data_frame_t *p = output_data_frames;
       for (n_frame_t i = 0; i < output_frame.n_frame; i++)
         read(fd_file, p++, sizeof(data_frame_t));
-      output_frame.n_file = output_data_frames[0].n_file;
+      n_files[k] = be32toh(output_data_frames[0].n_file);
+      output_frame.n_file = n_files[k];
     } else {
       output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
-      output_frame.n_file = n_file;
+      output_frame.n_file = n_files[k];
       output_data_frames =
           alloc_data_frames(output_frame.n_frame, output_frame.n_file, NULL,
                             fd_file, TP_FLAG_1_YUV420);
@@ -264,7 +268,7 @@ int main(int argc, char *argv[]) {
     if (opt.dump) {
       char *filename =
           malloc((strlen(opt.out_dir) + sizeof("XX.dat") - 1) * sizeof(char));
-      sprintf(filename, "%s/%d.dat", opt.out_dir, n_file);
+      sprintf(filename, "%s/%d.dat", opt.out_dir, k);
       // Permission denied
       unlink(filename);
       int fd_dat = open(filename, O_RDWR | O_CREAT);
@@ -274,12 +278,11 @@ int main(int argc, char *argv[]) {
         write_data_frame(fd_dat, &output_data_frames[i]);
       if (close(fd_dat) == -1)
         err(errno, NULL);
-      syslog(LOG_NOTICE, "%s has been dumped to %s", opt.files[n_file],
-             filename);
+      syslog(LOG_NOTICE, "%s has been dumped to %s", opt.files[k], filename);
       free(filename);
     }
     if (close(fd_file) == -1)
-      syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
+      syslog(LOG_ERR, "%s: %s", opt.files[k], strerror(errno));
 
     query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
                  LOOP_PERIOD);
@@ -322,9 +325,9 @@ int main(int argc, char *argv[]) {
 
   // receive data
   syslog(LOG_NOTICE, "=== receive data ===");
-  for (n_file_t n_file = 0; n_file < opt.number; n_file++) {
+  for (n_file_t k = 0; k < opt.number; k++) {
     // block until query status is processed
-    output_frame.n_file = n_file;
+    output_frame.n_file = n_files[k];
     do {
       query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
                    LOOP_PERIOD);
@@ -334,7 +337,7 @@ int main(int argc, char *argv[]) {
     data_frame_t *input_data_frames =
         calloc(input_frame.n_frame, sizeof(data_frame_t));
     if (input_data_frames == NULL)
-      err(errno, "%s", opt.files[n_file]);
+      err(errno, "%s", opt.files[k]);
     // sum of unreceived frames
     n_frame_t sum = 0;
 
@@ -362,13 +365,12 @@ int main(int argc, char *argv[]) {
     // TODO: multithread
     char *filename =
         malloc((strlen(opt.out_dir) + sizeof("XX.bin") - 1) * sizeof(char));
-    sprintf(filename, "%s/%d.bin", opt.out_dir, n_file);
+    sprintf(filename, "%s/%d.bin", opt.out_dir, k);
     if (dump_data_frames(input_data_frames, input_frame.n_frame, filename) ==
         -1)
       syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
     else
-      syslog(LOG_NOTICE, "%s has been encoded to %s", opt.files[n_file],
-             filename);
+      syslog(LOG_NOTICE, "%s has been encoded to %s", opt.files[k], filename);
 
     // complete
     free(input_data_frames);
@@ -377,6 +379,7 @@ int main(int argc, char *argv[]) {
     free(filename);
   }
 
+  free(n_files);
   tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
     err(errno, "%s", opt.tty);
