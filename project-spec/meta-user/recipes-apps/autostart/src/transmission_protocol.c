@@ -28,14 +28,14 @@ n_frame_t id_to_n_frame(n_frame_t id, n_frame_t len) {
   if (len == 1)
     return id;
   // count n_frame from 1 not 0
-  return id++;
+  return ++id;
 }
 
 n_frame_t n_frame_to_id(n_frame_t n_frame, n_frame_t len) {
   if (len == 1)
     return n_frame;
   // count id from 0 not 1
-  return n_frame--;
+  return --n_frame;
 }
 
 n_frame_t count_unreceived_data_frames(data_frame_t *data_frames,
