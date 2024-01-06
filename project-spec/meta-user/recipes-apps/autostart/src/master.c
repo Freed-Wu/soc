@@ -229,14 +229,6 @@ int main(int argc, char *argv[]) {
   syslog(LOG_NOTICE, "=== send data ===");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_MASTER};
   for (n_file_t n_file = 0; n_file < opt.number; n_file++) {
-    output_frame.n_file = n_file;
-    query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
-                 LOOP_PERIOD);
-    // query status to ensure unreceived
-    if (input_frame.status != TP_STATUS_UNRECEIVED)
-      // skip to next picture
-      continue;
-
     // prepare to send data
     output_frame.frame_type = TP_FRAME_TYPE_SEND;
     int fd_file = open(opt.files[n_file], O_RDONLY);
@@ -250,6 +242,7 @@ int main(int argc, char *argv[]) {
     if (fstat(fd_file, &status) == -1)
       goto error;
     data_frame_t *output_data_frames;
+    // update n_file, n_frame
     if (opt.binary) {
       output_frame.n_frame = status.st_size / sizeof(data_frame_t);
       output_data_frames = malloc(status.st_size);
@@ -258,8 +251,10 @@ int main(int argc, char *argv[]) {
       data_frame_t *p = output_data_frames;
       for (n_frame_t i = 0; i < output_frame.n_frame; i++)
         read(fd_file, p++, sizeof(data_frame_t));
+      output_frame.n_file = output_data_frames[0].n_file;
     } else {
       output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+      output_frame.n_file = n_file;
       output_data_frames =
           alloc_data_frames(output_frame.n_frame, output_frame.n_file, NULL,
                             fd_file, TP_FLAG_1_YUV420);
@@ -285,6 +280,13 @@ int main(int argc, char *argv[]) {
     }
     if (close(fd_file) == -1)
       syslog(LOG_ERR, "%s: %s", opt.files[n_file], strerror(errno));
+
+    query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+                 LOOP_PERIOD);
+    // query status to ensure unreceived
+    if (input_frame.status != TP_STATUS_UNRECEIVED)
+      // skip to next picture
+      goto free;
 
     do {
       // request to send data
@@ -314,6 +316,7 @@ int main(int argc, char *argv[]) {
     } while (input_frame.status == TP_STATUS_UNRECEIVED);
 
     // complete
+  free:
     free(output_data_frames);
   }
 
