@@ -113,16 +113,16 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   if (num < 1)
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
-  char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (n < sizeof(*frame)) {
     n = -2;
-    goto error;
+    goto free_temp;
   }
+  char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
     syslog(LOG_INFO, "receive incorrectly: %s", str);
     n = -3;
-    goto error;
+    goto free_str;
   }
   syslog(LOG_INFO, "receive correctly: %s", str);
   memcpy(frame, temp, sizeof(*frame));
@@ -131,8 +131,9 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   frame->n_frame = be16toh(frame->n_frame);
   frame->status = be16toh(frame->status);
 
-error:
+free_str:
   free(str);
+free_temp:
   free(temp);
   return n;
 }
@@ -145,16 +146,16 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   if (num < 1)
     return -1;
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
-  char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (n < sizeof(*frame)) {
     n = -2;
-    goto error;
+    goto free_temp;
   }
+  char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
     syslog(LOG_INFO, "receive incorrectly: %s", str);
     n = -3;
-    goto error;
+    goto free_str;
   }
   syslog(LOG_INFO, "receive correctly: %s", str);
   memcpy(frame, temp, sizeof(*frame));
@@ -165,8 +166,9 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   frame->total_data_len = be32toh(frame->total_data_len);
   frame->data_len = be16toh(frame->data_len);
 
-error:
+free_str:
   free(str);
+free_temp:
   free(temp);
   return n;
 }
