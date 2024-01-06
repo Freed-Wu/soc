@@ -224,8 +224,6 @@ int main(int argc, char *argv[]) {
   syslog(LOG_NOTICE, "%s: initial successfully, data will be saved to %s",
          opt.tty, opt.out_dir);
   n_file_t *n_files = malloc(sizeof(n_file_t) * opt.number);
-  for (int k = 0; k < opt.number; k++)
-    n_files[k] = k;
 
   // send data
   receive_and_drop(recv_fd, TIMEOUT);
@@ -255,16 +253,16 @@ int main(int argc, char *argv[]) {
       for (n_frame_t i = 0; i < output_frame.n_frame; i++)
         read(fd_file, p++, sizeof(data_frame_t));
       n_files[k] = be32toh(output_data_frames[0].n_file);
-      output_frame.n_file = n_files[k];
     } else {
       output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
-      output_frame.n_file = n_files[k];
+      n_files[k] = k;
       output_data_frames =
-          alloc_data_frames(output_frame.n_frame, output_frame.n_file, NULL,
-                            fd_file, TP_FLAG_1_YUV420, status.st_size);
+          alloc_data_frames(output_frame.n_frame, k, NULL, fd_file,
+                            TP_FLAG_1_YUV420, status.st_size);
       if (output_data_frames == NULL)
         err(errno, NULL);
     }
+    output_frame.n_file = n_files[k];
     if (opt.dump) {
       char *filename =
           malloc((strlen(opt.out_dir) + sizeof("XX.dat") - 1) * sizeof(char));

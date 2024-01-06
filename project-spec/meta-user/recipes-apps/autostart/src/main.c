@@ -38,13 +38,13 @@ data_t bit_streams[PICTURES_NUMBER_MAX];
 // look up len == total_len to see if a picture have been received
 data_frame_info_t data_frame_infos[PICTURES_NUMBER_MAX];
 
-static status_t get_status(n_file_t number) {
-  if (number >= PICTURES_NUMBER_MAX)
+static status_t get_status(n_file_t n_file) {
+  if (n_file >= PICTURES_NUMBER_MAX)
     return TP_STATUS_UNRECEIVED;
-  if (bit_streams[number].len > 0)
+  if (bit_streams[n_file].len > 0)
     return TP_STATUS_PROCESSED;
-  if (data_frame_infos[number].len == data_frame_infos[number].total_len &&
-      data_frame_infos[number].total_len)
+  if (data_frame_infos[n_file].len == data_frame_infos[n_file].total_len &&
+      data_frame_infos[n_file].total_len)
     return TP_STATUS_PROCESSING;
   return TP_STATUS_UNRECEIVED;
 }
@@ -272,6 +272,11 @@ int main(int argc, char *argv[]) {
         break;
 
       // prepare to receive data frames, set data_frame_infos
+      // override if processed
+      if (get_status(input_frame.n_file) == TP_STATUS_PROCESSED) {
+        free(data_frame_infos[input_frame.n_file].addr);
+        data_frame_infos[input_frame.n_file].addr = NULL;
+      }
       // every picture only malloc once!
       if (data_frame_infos[input_frame.n_file].addr == NULL) {
         data_frame_infos[input_frame.n_file].addr =
@@ -367,8 +372,10 @@ int main(int argc, char *argv[]) {
   }
 
   for (n_file_t i = 0; i < PICTURES_NUMBER_MAX; i++) {
-    free(bit_streams[i].addr);
-    free(data_frame_infos[i].addr);
+    if (bit_streams[i].addr != NULL)
+      free(bit_streams[i].addr);
+    if (data_frame_infos[i].addr != NULL)
+      free(data_frame_infos[i].addr);
   }
   tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
