@@ -13,6 +13,7 @@
 #include "transmission_protocol.h"
 
 const uint8_t tp_header[] = {0x3A, 0x62, 0x04, 0x3F};
+n_total_frame_t n_total_frame = {.uint24 = 0};
 
 char *bin_to_str(uint8_t const *bin, size_t size) {
   char *str = malloc(size * 3 + 1);
@@ -78,12 +79,13 @@ ssize_t write_data_frame(int fd, const data_frame_t *frame) {
   return write(fd, &temp, sizeof(temp));
 }
 
-ssize_t send_data_frame(int fd, const data_frame_t *frame, int timeout) {
+ssize_t send_data_frame(int fd, data_frame_t *frame, int timeout) {
   struct epoll_event event;
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1)
     return -1;
 
+  frame->n_total_frame.uint24 = n_total_frame.uint24++;
   return write_data_frame(event.data.fd, frame);
 }
 
