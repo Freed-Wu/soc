@@ -261,7 +261,7 @@ int main(int argc, char *argv[]) {
       output_frame.n_file = n_files[k];
       output_data_frames =
           alloc_data_frames(output_frame.n_frame, output_frame.n_file, NULL,
-                            fd_file, TP_FLAG_1_YUV420);
+                            fd_file, TP_FLAG_1_YUV420, status.st_size);
       if (output_data_frames == NULL)
         err(errno, NULL);
     }

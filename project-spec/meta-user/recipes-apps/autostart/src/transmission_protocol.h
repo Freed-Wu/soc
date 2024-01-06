@@ -84,8 +84,10 @@ ssize_t receive_and_drop(int fd, int timeout);
 ssize_t send_data_frame_directly(int fd, const data_frame_t *frame,
                                  int timeout);
 
-void init_data_frames(data_frame_t *, n_frame_t, n_file_t, flag_t);
-data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t, flag_t);
+void init_data_frames(data_frame_t *, n_frame_t, n_file_t, flag_t,
+                      total_data_len_t);
+data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t, flag_t,
+                                total_data_len_t);
 size_t data_frame_to_data_len(data_frame_t *, n_frame_t);
 void data_frames_to_data(data_frame_t *, n_frame_t, uint8_t *);
 void data_to_data_frames(uint8_t *, size_t, data_frame_t *);
