@@ -39,6 +39,8 @@ data_t bit_streams[PICTURES_NUMBER_MAX];
 data_frame_info_t data_frame_infos[PICTURES_NUMBER_MAX];
 
 static status_t get_status(n_file_t number) {
+  if (number >= PICTURES_NUMBER_MAX)
+    return TP_STATUS_UNRECEIVED;
   if (bit_streams[number].len > 0)
     return TP_STATUS_PROCESSED;
   if (data_frame_infos[number].len == data_frame_infos[number].total_len &&
