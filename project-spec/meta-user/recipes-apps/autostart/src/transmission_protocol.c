@@ -285,12 +285,14 @@ void entropy_to_gmm(uint16_t *entropy_addr, gmm_t *gmm, size_t len) {
  * data, data_len and check_sum should be set in data_to_data_frames()
  */
 void init_data_frames(data_frame_t *data_frames, n_frame_t n_frame,
-                      n_file_t n_file, flag_t flag) {
+                      n_file_t n_file, flag_t flag,
+                      total_data_len_t total_data_len) {
   for (int i = 0; i < n_frame; i++) {
     memcpy(data_frames[i].header, tp_header, sizeof(tp_header));
+    data_frames[i].flag = flag;
     data_frames[i].n_file = n_file;
     data_frames[i].n_frame = id_to_n_frame(i, n_frame);
-    data_frames[i].flag = flag;
+    data_frames[i].total_data_len = total_data_len;
   }
 }
 
@@ -298,11 +300,12 @@ void init_data_frames(data_frame_t *data_frames, n_frame_t n_frame,
  * if addr is NULL, len is fd
  */
 data_frame_t *alloc_data_frames(n_frame_t n_frame, n_file_t n_file,
-                                uint8_t *addr, size_t len, flag_t flag) {
+                                uint8_t *addr, size_t len, flag_t flag,
+                                total_data_len_t total_data_len) {
   data_frame_t *data_frames = malloc(n_frame * sizeof(data_frame_t));
   if (data_frames == NULL)
     return NULL;
-  init_data_frames(data_frames, n_frame, n_file, flag);
+  init_data_frames(data_frames, n_frame, n_file, flag, total_data_len);
   data_to_data_frames(addr, len, data_frames);
   return data_frames;
 }

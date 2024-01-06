@@ -332,7 +332,8 @@ int main(int argc, char *argv[]) {
       data_frame_t *output_data_frames =
           alloc_data_frames(output_frame.n_frame, output_frame.n_file,
                             bit_streams[input_frame.n_file].addr,
-                            bit_streams[input_frame.n_file].len, TP_FLAG_DATA);
+                            bit_streams[input_frame.n_file].len, TP_FLAG_DATA,
+                            bit_streams[input_frame.n_file].len);
       if (output_data_frames == NULL) {
         syslog(LOG_ERR, "%s", strerror(errno));
         break;
