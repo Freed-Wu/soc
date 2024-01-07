@@ -39,7 +39,7 @@ int print_help(const struct option *longopts, const char *arg0) {
     else if (o.has_arg == optional_argument)
       sprintf(value, "( %s)", meta);
     else
-      sprintf(value, "");
+      value[0] = '\0';
 
     printf(" [%s%s]", name, value);
 
