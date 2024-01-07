@@ -97,9 +97,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
 
 ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
                          char *filename) {
-  // Permission denied
-  unlink(filename);
-  int fd = open(filename, O_RDWR | O_CREAT, 0644);
+  int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
     return -1;
   ssize_t size = 0;
@@ -269,9 +267,7 @@ int main(int argc, char *argv[]) {
       char *filename =
           malloc((strlen(opt.out_dir) + sizeof("XX.dat") - 1) * sizeof(char));
       sprintf(filename, "%s/%d.dat", opt.out_dir, k);
-      // Permission denied
-      unlink(filename);
-      int fd_dat = open(filename, O_RDWR | O_CREAT, 0644);
+      int fd_dat = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
       if (fd_dat == -1)
         err(errno, NULL);
       for (n_frame_t i = 0; i < output_frame.n_frame; i++)
