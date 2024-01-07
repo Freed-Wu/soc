@@ -249,9 +249,11 @@ int main(int argc, char *argv[]) {
       output_data_frames = malloc(status.st_size);
       if (output_data_frames == NULL)
         err(errno, NULL);
-      data_frame_t *p = output_data_frames;
-      for (n_frame_t i = 0; i < output_frame.n_frame; i++)
-        read(fd_file, p++, sizeof(data_frame_t));
+      uint8_t *p = (uint8_t *)output_data_frames;
+      for (n_frame_t _ = 0; _ < output_frame.n_frame; _++) {
+        ssize_t n = read(fd_file, p, sizeof(data_frame_t));
+        p += n;
+      }
       n_files[k] = be32toh(output_data_frames[0].n_file);
     } else {
       output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
