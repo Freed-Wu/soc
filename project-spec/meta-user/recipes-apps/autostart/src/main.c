@@ -162,8 +162,11 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   }
   status &= ~TP_STATUS_ENTROPY_ENCODING;
   // combine 3 channels to one
-  if (addr == NULL)
+  if (addr == NULL) {
     addr = malloc(len);
+    if (addr == NULL)
+      err(errno, NULL);
+  }
   uint8_t *p = addr;
   for (int k = 0; k < 3; k++) {
     memcpy(p, data[k].addr, data[k].len);
