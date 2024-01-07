@@ -9,11 +9,6 @@
 #include <sys/mman.h>
 #include <syslog.h>
 #include <unistd.h>
-// https://stackoverflow.com/a/48521433/16027269
-#define termios asmtermios
-#include <asm/termios.h>
-#undef termios
-#include <termios.h>
 
 #include "axitangxi.h"
 #include "coding.h"
@@ -227,8 +222,8 @@ int main(int argc, char *argv[]) {
   struct termios newattr, oldattr;
   tcgetattr(fd, &oldattr);
   newattr = oldattr;
-  cfsetispeed(&newattr, B500000);
-  cfsetospeed(&newattr, B500000);
+  cfsetispeed(&newattr, TP_BAUD_RATE);
+  cfsetospeed(&newattr, TP_BAUD_RATE);
   tcsetattr(fd, TCSANOW, &newattr);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);

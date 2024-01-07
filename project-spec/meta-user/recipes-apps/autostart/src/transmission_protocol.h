@@ -2,11 +2,17 @@
 #define TRANSMISSION_PROTOCOL_H 1
 #include <stdint.h>
 #include <stdlib.h>
+// https://stackoverflow.com/a/48521433/16027269
+#define termios asmtermios
+#include <asm/termios.h>
+#undef termios
+#include <termios.h>
 
 #include "coding.h"
 
 __BEGIN_DECLS
 
+#define TP_BAUD_RATE B500000
 #define TP_FRAME_DATA_LEN_MAX 512
 
 enum {
