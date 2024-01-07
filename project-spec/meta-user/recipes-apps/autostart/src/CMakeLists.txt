@@ -1,5 +1,6 @@
 option(DRY_RUN "--dry-run by default")
-set(SLAVE_TTY "/dev/ttyPS0" CACHE STRING "slave's tty")
+# /dev/ttyPS0 has been used for stdin/stdout by default
+set(SLAVE_TTY "/dev/ttyPS1" CACHE STRING "slave's tty")
 set(MASTER_TTY "/dev/ttyUSB0" CACHE STRING "master's tty")
 configure_file(config.h.in config.h)
 
