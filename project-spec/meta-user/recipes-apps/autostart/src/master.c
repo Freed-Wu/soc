@@ -206,12 +206,7 @@ int main(int argc, char *argv[]) {
   int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
   if (fd == -1)
     err(errno, "%s", opt.tty);
-  struct termios newattr, oldattr;
-  tcgetattr(fd, &oldattr);
-  newattr = oldattr;
-  cfsetispeed(&newattr, TP_BAUD_RATE);
-  cfsetospeed(&newattr, TP_BAUD_RATE);
-  tcsetattr(fd, TCSANOW, &newattr);
+  struct termios oldattr = init_tty(fd);
 
   fd_to_epoll_fds(fd, &send_fd, &recv_fd);
   syslog(LOG_NOTICE, "%s: initial successfully, data will be saved to %s",

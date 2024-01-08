@@ -79,6 +79,7 @@ char *bin_to_str(uint8_t const *bin, size_t size);
 n_frame_t id_to_n_frame(n_frame_t id, n_frame_t len);
 n_frame_t n_frame_to_id(n_frame_t n_frame, n_frame_t len);
 n_frame_t count_unreceived_data_frames(data_frame_t *, n_frame_t);
+struct termios init_tty(int fd);
 
 ssize_t write_frame(int fd, const frame_t *frame);
 ssize_t send_frame(int, const frame_t *, int);
