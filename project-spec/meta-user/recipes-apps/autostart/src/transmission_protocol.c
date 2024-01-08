@@ -48,6 +48,21 @@ n_frame_t count_unreceived_data_frames(data_frame_t *data_frames,
   return sum;
 }
 
+/**
+ * Remember:
+ * tcsetattr(fd, TCSANOW, &oldattr);
+ * before exit()
+ */
+struct termios init_tty(int fd) {
+  struct termios newattr, oldattr;
+  tcgetattr(fd, &oldattr);
+  newattr = oldattr;
+  cfsetispeed(&newattr, TP_BAUD_RATE);
+  cfsetospeed(&newattr, TP_BAUD_RATE);
+  tcsetattr(fd, TCSANOW, &newattr);
+  return oldattr;
+}
+
 ssize_t write_frame(int fd, const frame_t *frame) {
   frame_t temp = *frame;
   temp.n_file = htobe32(frame->n_file);
