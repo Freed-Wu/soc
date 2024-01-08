@@ -153,11 +153,11 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   char *str = bin_to_str((uint8_t *)temp, sizeof(*frame));
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
-    syslog(LOG_INFO, "receive incorrectly: %s", str);
+    syslog(LOG_DEBUG, "receive incorrectly: %s", str);
     n = -3;
     goto free_str;
   }
-  syslog(LOG_INFO, "receive correctly: %s", str);
+  syslog(LOG_DEBUG, "receive correctly: %s", str);
   memcpy(frame, temp, sizeof(*frame));
 
   frame->n_total_frame.uint24 = be32toh(frame->n_total_frame.uint24) >> 8;
