@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
   n_file_t *n_files = malloc(sizeof(n_file_t) * opt.number);
 
   // send data
-  receive_and_drop(recv_fd, TIMEOUT);
+  syslog(LOG_NOTICE, "drop %zd bytes", receive_and_drop(recv_fd, TIMEOUT));
   syslog(LOG_NOTICE, "=== send data ===");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_MASTER};
   for (n_file_t k = 0; k < opt.number; k++) {
@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
                                       sum, TIMEOUT);
         syslog(LOG_NOTICE, "%d frames is unreceived", new_sum);
       } while (new_sum < sum);
-      receive_and_drop(recv_fd, TIMEOUT);
+      syslog(LOG_NOTICE, "drop %zd bytes", receive_and_drop(recv_fd, TIMEOUT));
     } while (sum > 0);
 
     // save file
