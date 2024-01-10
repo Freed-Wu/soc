@@ -57,8 +57,10 @@ struct termios init_tty(int fd) {
   struct termios newattr, oldattr;
   tcgetattr(fd, &oldattr);
   newattr = oldattr;
-  cfsetispeed(&newattr, TP_BAUD_RATE);
-  cfsetospeed(&newattr, TP_BAUD_RATE);
+  if (cfsetispeed(&newattr, TP_BAUD_RATE) == -1)
+    err(errno, NULL);
+  if (cfsetospeed(&newattr, TP_BAUD_RATE) == -1)
+    err(errno, NULL);
 
   // 8O1
   // 8
@@ -70,7 +72,8 @@ struct termios init_tty(int fd) {
   newattr.c_iflag |= INPCK;
   // 1
   newattr.c_cflag &= ~CSTOPB;
-  tcsetattr(fd, TCSANOW, &newattr);
+  if (tcsetattr(fd, TCSANOW, &newattr) == -1)
+    err(errno, NULL);
   return oldattr;
 }
 
