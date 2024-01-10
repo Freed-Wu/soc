@@ -165,21 +165,14 @@ petalinux-config -c rootfs
   - [x] serial-autologin-root
 
 ```sh
-petalinux-create -t apps -n autostart --enable --force
-petalinux-create -t modules -n axi-tangxi --enable --force
-# reset changes of `--force`
-git restore project-spec/meta-user/recipes-apps/autostart
-git clean -fd project-spec/meta-user/recipes-apps/autostart
-git restore project-spec/meta-user/recipes-bsp
-git clean -fd project-spec/meta-user/recipes-bsp
+scripts/config.sh
 ```
 
 ### Build
 
 ```sh
 # on the first time it costs about 1 hour while it costs 2.5 minutes later
-petalinux-build
-petalinux-package --boot --u-boot --fpga --force
+scripts/build.sh
 ```
 
 ### Burn
@@ -187,12 +180,8 @@ petalinux-package --boot --u-boot --fpga --force
 ```sh
 # insert SD card to your PC
 # assume your SD card has 2 part: BOOT (vfat) and root (ext4)
-cp images/linux/image.ub images/linux/BOOT.BIN images/linux/boot.scr /run/media/$USER/BOOT
-# use sudo to avoid wrong privilege
-sudo rm -r /run/media/$USER/root/*
-sudo tar vxaCf /run/media/$USER/root images/linux/rootfs.tar.gz
-# or wait > 10 seconds to sync automatically
-sync
+# wait > 10 seconds
+scripts/burn.sh
 # insert SD card to your board
 # reset the board
 ```
