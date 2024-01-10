@@ -148,7 +148,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   struct epoll_event event;
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1) {
-    syslog(LOG_INFO, "timeout");
+    syslog(LOG_INFO, "timeout %d", timeout);
     return -1;
   }
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
@@ -183,7 +183,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   struct epoll_event event;
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1) {
-    syslog(LOG_INFO, "timeout");
+    syslog(LOG_INFO, "timeout %d", timeout);
     return -1;
   }
   ssize_t n = read(event.data.fd, temp, sizeof(*frame));
