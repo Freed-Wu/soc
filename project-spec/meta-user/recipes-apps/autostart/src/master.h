@@ -13,6 +13,8 @@ typedef struct {
   char *out_dir;
   char **files;
   n_file_t number;
+  unsigned int wait;
+  // not unsigned, can be -1
   int timeout;
   unsigned int safe_time;
   unsigned int level : 3;
