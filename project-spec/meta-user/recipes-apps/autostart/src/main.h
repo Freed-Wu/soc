@@ -14,6 +14,7 @@ typedef struct {
   char *quantization_coefficience;
   bool dry_run;
   int timeout;
+  unsigned int safe_time;
   unsigned int level : 3;
 } opt_t;
 typedef struct {
