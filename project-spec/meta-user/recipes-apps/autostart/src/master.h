@@ -13,6 +13,7 @@ typedef struct {
   char *out_dir;
   char **files;
   n_file_t number;
+  int timeout;
   unsigned int level : 3;
   bool binary;
   bool dump;

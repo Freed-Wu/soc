@@ -15,8 +15,6 @@
 #include "main.h"
 #include "utils.h"
 
-// millisecond / frame
-#define TIMEOUT 3
 // 权重、因子、图片的地址
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
@@ -54,9 +52,10 @@ static void init_opt(opt_t *opt) {
   opt->dry_run = false;
 #endif
   opt->level = LOG_NOTICE;
+  opt->timeout = 3;
 }
 
-static char shortopts[] = "hVvqdt:w:c:";
+static char shortopts[] = "hVvqdt:T:w:c:";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
@@ -64,6 +63,7 @@ static struct option longopts[] = {
     {"quiet", no_argument, NULL, 'q'},
     {"dry-run", no_argument, NULL, 'd'},
     {"tty", required_argument, NULL, 't'},
+    {"timeout", required_argument, NULL, 'T'},
     {"weight", required_argument, NULL, 'w'},
     {"quantization_coefficience", required_argument, NULL, 'c'},
     {NULL, 0, NULL, 0}};
@@ -91,6 +91,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       break;
     case 't':
       opt->tty = optarg;
+      break;
+    case 'T':
+      opt->timeout = strtol(optarg, NULL, 0);
       break;
     case 'w':
       opt->weight = optarg;
@@ -241,7 +244,7 @@ int main(int argc, char *argv[]) {
       output_frame.status = get_status(input_frame.n_file);
       output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
       syslog(LOG_NOTICE, "%s to response query",
-             send_frame(send_fd, &output_frame, TIMEOUT) > 0 ? "succeed"
+             send_frame(send_fd, &output_frame, opt.timeout) > 0 ? "succeed"
                                                              : "failed");
       break;
 
@@ -257,7 +260,7 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
-      ret = send_frame(send_fd, &output_frame, TIMEOUT) > 0;
+      ret = send_frame(send_fd, &output_frame, opt.timeout) > 0;
       syslog(LOG_NOTICE, "%s to response to receive yuv %d with %d frames",
              ret ? "succeed" : "failed", output_frame.n_file,
              output_frame.n_frame);
@@ -286,7 +289,7 @@ int main(int argc, char *argv[]) {
       do {
         sum = new_sum;
         new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
-                                      sum, TIMEOUT);
+                                      sum, opt.timeout);
         syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", new_sum);
       } while (new_sum < sum);
 
@@ -338,7 +341,7 @@ int main(int argc, char *argv[]) {
       }
 
       // response to receive data
-      ret = send_frame(send_fd, &output_frame, TIMEOUT);
+      ret = send_frame(send_fd, &output_frame, opt.timeout);
       syslog(LOG_NOTICE, "%s to response to send data %d with %d frames",
              ret ? "succeed" : "failed", output_frame.n_file,
              output_frame.n_frame);
@@ -350,7 +353,7 @@ int main(int argc, char *argv[]) {
         // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
           usleep(SAFE_TIME);
-        send_data_frame(send_fd, &output_data_frames[i], TIMEOUT);
+        send_data_frame(send_fd, &output_data_frames[i], opt.timeout);
       }
       syslog(LOG_NOTICE, "send data %d with %d frames", output_frame.n_file,
              output_frame.n_frame);

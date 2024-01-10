@@ -15,8 +15,6 @@
 #include "master.h"
 #include "utils.h"
 
-#define TIMEOUT 3
-// microseconds
 #define LOOP_PERIOD 1000
 
 extern const uint8_t tp_header[4];
@@ -33,11 +31,12 @@ static void init_opt(opt_t *opt) {
   }
   opt->binary = false;
   opt->tty = MASTER_TTY;
+  opt->timeout = 3;
   opt->level = LOG_NOTICE;
   opt->dump = false;
 }
 
-static char shortopts[] = "hVvqbdt:o:";
+static char shortopts[] = "hVvqbdt:T:o:";
 static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"version", no_argument, NULL, 'V'},
                                    {"verbose", no_argument, NULL, 'v'},
@@ -45,6 +44,7 @@ static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"binary", no_argument, NULL, 'b'},
                                    {"dump", no_argument, NULL, 'd'},
                                    {"tty", required_argument, NULL, 't'},
+                                   {"timeout", required_argument, NULL, 'T'},
                                    {"out_dir", required_argument, NULL, 'w'},
                                    {NULL, 0, NULL, 0}};
 
@@ -74,6 +74,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       break;
     case 't':
       opt->tty = optarg;
+      break;
+    case 'T':
+      opt->timeout = strtol(optarg, NULL, 0);
       break;
     case 'o':
       opt->out_dir = optarg;
@@ -214,7 +217,7 @@ int main(int argc, char *argv[]) {
   n_file_t *n_files = malloc(sizeof(n_file_t) * opt.number);
 
   // send data
-  syslog(LOG_NOTICE, "drop %zd bytes", receive_and_drop(recv_fd, TIMEOUT));
+  syslog(LOG_NOTICE, "drop %zd bytes", receive_and_drop(recv_fd, opt.timeout));
   syslog(LOG_NOTICE, "=== send data ===");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_MASTER};
   for (n_file_t k = 0; k < opt.number; k++) {
@@ -270,7 +273,7 @@ int main(int argc, char *argv[]) {
     if (close(fd_file) == -1)
       syslog(LOG_ERR, "%s: %s", opt.files[k], strerror(errno));
 
-    query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+    query_status(send_fd, &output_frame, opt.timeout, recv_fd, &input_frame,
                  LOOP_PERIOD);
     // query status to ensure unreceived
     if (input_frame.status != TP_STATUS_UNRECEIVED)
@@ -285,7 +288,7 @@ int main(int argc, char *argv[]) {
              "frames",
              output_frame.n_file, output_frame.n_frame,
              output_frame.n_frame - input_frame.n_frame);
-      send_and_receive_frame(send_fd, &output_frame, TIMEOUT, recv_fd,
+      send_and_receive_frame(send_fd, &output_frame, opt.timeout, recv_fd,
                              &input_frame, LOOP_PERIOD);
 
       // send data frames
@@ -294,13 +297,14 @@ int main(int argc, char *argv[]) {
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
           usleep(SAFE_TIME);
         if (opt.binary)
-          send_data_frame_directly(send_fd, &output_data_frames[i], TIMEOUT);
+          send_data_frame_directly(send_fd, &output_data_frames[i],
+                                   opt.timeout);
         else
-          send_data_frame(send_fd, &output_data_frames[i], TIMEOUT);
+          send_data_frame(send_fd, &output_data_frames[i], opt.timeout);
       }
 
       // update input_frame
-      query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+      query_status(send_fd, &output_frame, opt.timeout, recv_fd, &input_frame,
                    LOOP_PERIOD);
     } while (input_frame.status == TP_STATUS_UNRECEIVED);
 
@@ -315,7 +319,7 @@ int main(int argc, char *argv[]) {
     // block until query status is processed
     output_frame.n_file = n_files[k];
     do {
-      query_status(send_fd, &output_frame, TIMEOUT, recv_fd, &input_frame,
+      query_status(send_fd, &output_frame, opt.timeout, recv_fd, &input_frame,
                    LOOP_PERIOD);
     } while (input_frame.status != TP_STATUS_PROCESSED);
 
@@ -332,7 +336,7 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = TP_FRAME_TYPE_RECV;
       syslog(LOG_NOTICE, "request to receive data %d with %d frames",
              output_frame.n_file, input_frame.n_frame);
-      send_and_receive_frame(send_fd, &output_frame, TIMEOUT, recv_fd,
+      send_and_receive_frame(send_fd, &output_frame, opt.timeout, recv_fd,
                              &input_frame, LOOP_PERIOD);
 
       // receive data frames
@@ -341,10 +345,11 @@ int main(int argc, char *argv[]) {
       do {
         sum = new_sum;
         new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
-                                      sum, TIMEOUT);
+                                      sum, opt.timeout);
         syslog(LOG_NOTICE, "%d frames is unreceived", new_sum);
       } while (new_sum < sum);
-      syslog(LOG_NOTICE, "drop %zd bytes", receive_and_drop(recv_fd, TIMEOUT));
+      syslog(LOG_NOTICE, "drop %zd bytes",
+             receive_and_drop(recv_fd, opt.timeout));
     } while (sum > 0);
 
     // save file
