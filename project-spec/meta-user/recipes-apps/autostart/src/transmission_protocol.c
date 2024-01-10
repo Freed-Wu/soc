@@ -59,6 +59,17 @@ struct termios init_tty(int fd) {
   newattr = oldattr;
   cfsetispeed(&newattr, TP_BAUD_RATE);
   cfsetospeed(&newattr, TP_BAUD_RATE);
+
+  // 8O1
+  // 8
+  newattr.c_cflag &= ~CSIZE;
+  newattr.c_cflag |= CS8;
+  // O
+  newattr.c_cflag |= PARENB;
+  newattr.c_cflag |= PARODD;
+  newattr.c_iflag |= INPCK;
+  // 1
+  newattr.c_cflag &= ~CSTOPB;
   tcsetattr(fd, TCSANOW, &newattr);
   return oldattr;
 }
