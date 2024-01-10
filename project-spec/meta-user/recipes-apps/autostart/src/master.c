@@ -37,7 +37,7 @@ static void init_opt(opt_t *opt) {
   opt->dump = false;
 }
 
-static char shortopts[] = "hVvqbdt:T:S:o:";
+static char shortopts[] = "hVvqbdt:T:S:W:o:";
 static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"version", no_argument, NULL, 'V'},
                                    {"verbose", no_argument, NULL, 'v'},
@@ -47,6 +47,7 @@ static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"tty", required_argument, NULL, 't'},
                                    {"timeout", required_argument, NULL, 'T'},
                                    {"safe-time", required_argument, NULL, 'S'},
+                                   {"wait", required_argument, NULL, 'W'},
                                    {"out-dir", required_argument, NULL, 'w'},
                                    {NULL, 0, NULL, 0}};
 
@@ -82,6 +83,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       break;
     case 'S':
       opt->safe_time = strtol(optarg, NULL, 0);
+      break;
+    case 'W':
+      opt->wait = strtol(optarg, NULL, 0);
       break;
     case 'o':
       opt->out_dir = optarg;
@@ -347,6 +351,7 @@ int main(int argc, char *argv[]) {
       // receive data frames
       sum = input_frame.n_frame;
       n_frame_t new_sum = sum;
+      usleep(opt.wait);
       do {
         sum = new_sum;
         new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
