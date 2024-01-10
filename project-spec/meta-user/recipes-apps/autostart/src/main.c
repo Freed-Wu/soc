@@ -53,9 +53,10 @@ static void init_opt(opt_t *opt) {
 #endif
   opt->level = LOG_NOTICE;
   opt->timeout = 3;
+  opt->safe_time = 3;
 }
 
-static char shortopts[] = "hVvqdt:T:w:c:";
+static char shortopts[] = "hVvqdt:T:S:w:c:";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
@@ -63,9 +64,12 @@ static struct option longopts[] = {
     {"quiet", no_argument, NULL, 'q'},
     {"dry-run", no_argument, NULL, 'd'},
     {"tty", required_argument, NULL, 't'},
+    // milli second
     {"timeout", required_argument, NULL, 'T'},
+    // micro second
+    {"safe-time", required_argument, NULL, 'S'},
     {"weight", required_argument, NULL, 'w'},
-    {"quantization_coefficience", required_argument, NULL, 'c'},
+    {"quantization-coefficience", required_argument, NULL, 'c'},
     {NULL, 0, NULL, 0}};
 
 static int parse(int argc, char *argv[], opt_t *opt) {
@@ -94,6 +98,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       break;
     case 'T':
       opt->timeout = strtol(optarg, NULL, 0);
+      break;
+    case 'S':
+      opt->safe_time = strtol(optarg, NULL, 0);
       break;
     case 'w':
       opt->weight = optarg;
@@ -245,7 +252,7 @@ int main(int argc, char *argv[]) {
       output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
       syslog(LOG_NOTICE, "%s to response query",
              send_frame(send_fd, &output_frame, opt.timeout) > 0 ? "succeed"
-                                                             : "failed");
+                                                                 : "failed");
       break;
 
     case TP_FRAME_TYPE_SEND:
@@ -352,7 +359,7 @@ int main(int argc, char *argv[]) {
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
         // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
-          usleep(SAFE_TIME);
+          usleep(opt.safe_time);
         send_data_frame(send_fd, &output_data_frames[i], opt.timeout);
       }
       syslog(LOG_NOTICE, "send data %d with %d frames", output_frame.n_file,

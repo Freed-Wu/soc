@@ -32,11 +32,12 @@ static void init_opt(opt_t *opt) {
   opt->binary = false;
   opt->tty = MASTER_TTY;
   opt->timeout = 3;
+  opt->safe_time = 3;
   opt->level = LOG_NOTICE;
   opt->dump = false;
 }
 
-static char shortopts[] = "hVvqbdt:T:o:";
+static char shortopts[] = "hVvqbdt:T:S:o:";
 static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"version", no_argument, NULL, 'V'},
                                    {"verbose", no_argument, NULL, 'v'},
@@ -45,7 +46,8 @@ static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"dump", no_argument, NULL, 'd'},
                                    {"tty", required_argument, NULL, 't'},
                                    {"timeout", required_argument, NULL, 'T'},
-                                   {"out_dir", required_argument, NULL, 'w'},
+                                   {"safe-time", required_argument, NULL, 'S'},
+                                   {"out-dir", required_argument, NULL, 'w'},
                                    {NULL, 0, NULL, 0}};
 
 static int parse(int argc, char *argv[], opt_t *opt) {
@@ -77,6 +79,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       break;
     case 'T':
       opt->timeout = strtol(optarg, NULL, 0);
+      break;
+    case 'S':
+      opt->safe_time = strtol(optarg, NULL, 0);
       break;
     case 'o':
       opt->out_dir = optarg;
@@ -295,7 +300,7 @@ int main(int argc, char *argv[]) {
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
         // cppcheck-suppress moduloofone
         if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
-          usleep(SAFE_TIME);
+          usleep(opt.safe_time);
         if (opt.binary)
           send_data_frame_directly(send_fd, &output_data_frames[i],
                                    opt.timeout);
