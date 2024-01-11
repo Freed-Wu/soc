@@ -57,6 +57,8 @@ struct termios init_tty(int fd) {
   struct termios newattr, oldattr;
   tcgetattr(fd, &oldattr);
   newattr = oldattr;
+  // https://stackoverflow.com/questions/22075741/weird-character-substitution-between-pseudo-terminal-and-serial-device
+  cfmakeraw(&newattr);
   if (cfsetispeed(&newattr, TP_BAUD_RATE) == -1)
     err(errno, NULL);
   if (cfsetospeed(&newattr, TP_BAUD_RATE) == -1)
