@@ -30,7 +30,7 @@ static void init_opt(opt_t *opt) {
     wordfree(&exp);
   }
   opt->binary = false;
-  opt->tty = "/tmp/ttyS0";
+  opt->tty = "/dev/ttyUSB1";
   opt->timeout = 3;
   opt->safe_time = 3;
   opt->level = LOG_NOTICE;

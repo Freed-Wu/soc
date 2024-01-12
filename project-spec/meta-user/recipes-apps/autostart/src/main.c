@@ -43,7 +43,7 @@ static status_t get_status(n_file_t n_file) {
 }
 
 static void init_opt(opt_t *opt) {
-  opt->tty = "/tmp/ttyS1";
+  opt->tty = "/dev/ttyPS1";
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
   opt->dry_run = false;
