@@ -31,7 +31,7 @@ static void init_opt(opt_t *opt) {
   }
   opt->binary = false;
   opt->tty = "/dev/ttyUSB1";
-  opt->timeout = 3;
+  opt->timeout = -1;
   opt->safe_time = 3;
   opt->level = LOG_NOTICE;
   opt->dump = false;
