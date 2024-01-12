@@ -38,7 +38,6 @@ compile_commands.events.json
 main
 deep-*
 _CPack_Packages/
-*.cmake
 config.h
 .cmake/
 *.ninja
