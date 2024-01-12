@@ -37,6 +37,12 @@ static void init_opt(opt_t *opt) {
   opt->dump = false;
 }
 
+static void deinit_opt(opt_t *opt) {
+  if (strcmp(opt->out_dir, "."))
+    free(opt->out_dir);
+  free(opt->files);
+}
+
 static char shortopts[] = "hVvqbdt:T:S:W:o:";
 static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"version", no_argument, NULL, 'V'},
@@ -380,6 +386,7 @@ int main(int argc, char *argv[]) {
     free(filename);
   }
 
+  deinit_opt(&opt);
   free(n_files);
   tcsetattr(fd, TCSANOW, &oldattr);
   if (close(fd) == -1)
