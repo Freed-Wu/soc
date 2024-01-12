@@ -185,20 +185,26 @@ scripts/burn.sh
 ### PC
 
 ```sh
+# run the following commands in different ttys
 # create two connected fake serials
 socat pty,rawer,link=/tmp/ttyS0 pty,rawer,link=/tmp/ttyS1
+main -dt/tmp/ttyS0
+master -t/tmp/ttyS1 /the/path/of/test.yuv
 # display log
 journalctl -tslave0 -tmaster -fn0
-main
-master
 ```
 
 ### Embedded
 
 ```sh
-# open serial debug helper
+# run the following commands in different ttys
+# open serial debug helper to see information
+# assume your COM port is /dev/ttyUSB0
+minicom -D/dev/ttyUSB0
 # assume your COM port is /dev/ttyUSB1
-minicom -D /dev/ttyUSB1
+master /the/path/of/test.yuv
+# display log
+journalctl -tmaster -fn0
 ```
 
 ## References
