@@ -10,6 +10,7 @@ project(
   DESCRIPTION deep-space-detection
   HOMEPAGE_URL https://github.com/Freed-Wu/deep-space-detection)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+include(cmake/sanitize.cmake)
 add_subdirectory(src)
 
 find_package(PkgConfig REQUIRED)
