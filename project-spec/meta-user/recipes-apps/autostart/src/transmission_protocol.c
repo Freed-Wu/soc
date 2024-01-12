@@ -220,21 +220,6 @@ free_temp:
   return n;
 }
 
-ssize_t receive_and_drop(int fd, int timeout) {
-  uint8_t temp[2048];
-  struct epoll_event event;
-  ssize_t n = 0;
-
-  while (true) {
-    int num = epoll_wait(fd, &event, 1, timeout);
-    if (num == 1)
-      n += read(event.data.fd, temp, sizeof(temp));
-    else
-      break;
-  }
-  return n;
-}
-
 size_t data_frame_to_data_len(data_frame_t *data_frames, n_frame_t n_frame) {
   size_t len = 0;
   for (int i = 0; i < n_frame; i++)

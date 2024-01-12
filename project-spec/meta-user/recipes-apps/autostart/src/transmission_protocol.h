@@ -87,7 +87,6 @@ ssize_t receive_frame(int, frame_t *, int);
 ssize_t write_data_frame(int fd, const data_frame_t *frame);
 ssize_t send_data_frame(int, data_frame_t *, int);
 ssize_t receive_data_frame(int, data_frame_t *, int);
-ssize_t receive_and_drop(int fd, int timeout);
 ssize_t send_data_frame_directly(int fd, const data_frame_t *frame,
                                  int timeout);
 
