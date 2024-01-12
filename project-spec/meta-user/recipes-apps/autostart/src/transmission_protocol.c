@@ -194,9 +194,14 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)temp, n);
   if (n < sizeof(*frame)) {
-    syslog(LOG_DEBUG, "receive incorrectly: %s", str);
-    n = -2;
-    goto free;
+    if (memcmp(frame, tp_header, sizeof(tp_header))) {
+      syslog(LOG_DEBUG, "receive incorrectly: %s", str);
+      n = -2;
+      goto free;
+    }
+    do {
+      n += read(event.data.fd, temp, sizeof(*frame) - n);
+    } while (n < sizeof(*frame));
   }
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
