@@ -48,7 +48,7 @@ static void init_opt(opt_t *opt) {
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
   opt->dry_run = false;
   opt->level = LOG_NOTICE;
-  opt->timeout = 3;
+  opt->timeout = -1;
   opt->safe_time = 3;
 }
 
