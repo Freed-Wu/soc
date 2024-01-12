@@ -49,19 +49,14 @@ Dependencies:
   - [pkgconf](https://gitea.treehouse.systems/ariadne/pkgconf)
   - [google test](https://github.com/google/googletest): optional, for unit test
 
-<!-- markdownlint-disable MD013 -->
-
 ```sh
 # modules
 make
 # apps
 cmake -Bbuild/cmake
-# or
-# cmake -Bbuild/cmake -DCMAKE_BUILD_TYPE=Debug -DDRY_RUN=ON -DMASTER_TTY=/tmp/ttyS0 -DSLAVE_TTY=/tmp/ttyS1
+# cmake -Bbuild/cmake -DCMAKE_BUILD_TYPE=Debug -DDRY_RUN=ON
 cmake --build build/cmake
 ```
-
-<!-- markdownlint-enable MD013 -->
 
 ## Cross Compile for Develop Board
 
