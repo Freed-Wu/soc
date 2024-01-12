@@ -147,11 +147,12 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
 
   struct epoll_event event;
   int num = epoll_wait(fd, &event, 1, timeout);
+  ssize_t n = -1;
   if (num < 1) {
     syslog(LOG_INFO, "timeout %d", timeout);
-    return -1;
+    goto free_temp;
   }
-  ssize_t n = read(event.data.fd, temp, sizeof(*frame));
+  n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)temp, n);
   if (n < sizeof(*frame)) {
     syslog(LOG_INFO, "receive incorrectly: %s", str);
@@ -173,6 +174,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
 
 free:
   free(str);
+free_temp:
   free(temp);
   return n;
 }
@@ -181,12 +183,13 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   __typeof__(frame) temp = malloc(sizeof(*frame));
 
   struct epoll_event event;
+  ssize_t n = -1;
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1) {
     syslog(LOG_INFO, "timeout %d", timeout);
-    return -1;
+    goto free_temp;
   }
-  ssize_t n = read(event.data.fd, temp, sizeof(*frame));
+  n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)temp, n);
   if (n < sizeof(*frame)) {
     syslog(LOG_DEBUG, "receive incorrectly: %s", str);
@@ -210,6 +213,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
 
 free:
   free(str);
+free_temp:
   free(temp);
   return n;
 }
