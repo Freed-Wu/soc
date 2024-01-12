@@ -53,11 +53,10 @@ static void init_opt(opt_t *opt) {
 #endif
   opt->level = LOG_NOTICE;
   opt->timeout = 3;
-  opt->wait = 0;
   opt->safe_time = 3;
 }
 
-static char shortopts[] = "hVvqdt:T:S:W:w:c:";
+static char shortopts[] = "hVvqdt:T:S:w:c:";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
@@ -69,8 +68,6 @@ static struct option longopts[] = {
     {"timeout", required_argument, NULL, 'T'},
     // micro second
     {"safe-time", required_argument, NULL, 'S'},
-    // micro second
-    {"wait", required_argument, NULL, 'W'},
     {"weight", required_argument, NULL, 'w'},
     {"quantization-coefficience", required_argument, NULL, 'c'},
     {NULL, 0, NULL, 0}};
@@ -104,9 +101,6 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       break;
     case 'S':
       opt->safe_time = strtol(optarg, NULL, 0);
-      break;
-    case 'W':
-      opt->wait = strtol(optarg, NULL, 0);
       break;
     case 'w':
       opt->weight = optarg;
@@ -299,7 +293,6 @@ int main(int argc, char *argv[]) {
 
       n_frame_t sum = input_frame.n_frame;
       n_frame_t new_sum = sum;
-      usleep(opt.wait);
       do {
         sum = new_sum;
         new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,

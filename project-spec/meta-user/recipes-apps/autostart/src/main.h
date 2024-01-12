@@ -13,8 +13,6 @@ typedef struct {
   char *weight;
   char *quantization_coefficience;
   bool dry_run;
-  unsigned int wait;
-  // not unsigned, can be -1
   int timeout;
   unsigned int safe_time;
   unsigned int level : 3;
