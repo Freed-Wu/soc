@@ -151,7 +151,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   int num = epoll_wait(fd, &event, 1, timeout);
   ssize_t n = -1;
   if (num < 1) {
-    syslog(LOG_INFO, "timeout %d", timeout);
+    syslog(LOG_INFO, "timeout overrun %d ms", timeout);
     goto free_temp;
   }
   n = read(event.data.fd, temp, sizeof(*frame));
@@ -163,7 +163,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   }
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
-    syslog(LOG_INFO, "receive incorrectly: %s", str);
+    syslog(LOG_INFO, "receive incorrect CRC: %s", str);
     n = -3;
     goto free;
   }
@@ -189,7 +189,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   ssize_t n = -1;
   int num = epoll_wait(fd, &event, 1, timeout);
   if (num < 1) {
-    syslog(LOG_INFO, "timeout %d", timeout);
+    syslog(LOG_INFO, "timeout overrun %d ms", timeout);
     goto free_temp;
   }
   n = read(event.data.fd, temp, sizeof(*frame));
@@ -197,7 +197,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   if (n < sizeof(*frame)) {
     if (memcmp(frame, tp_header, sizeof(tp_header))) {
       str = bin_to_str((uint8_t *)temp, n);
-      syslog(LOG_DEBUG, "receive not enough: %s", str);
+      syslog(LOG_DEBUG, "receive incorrect header: %s", str);
       n = -2;
       goto free;
     }
@@ -208,7 +208,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   str = bin_to_str((uint8_t *)temp, n);
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
-    syslog(LOG_DEBUG, "receive incorrectly: %s", str);
+    syslog(LOG_DEBUG, "receive incorrect CRC: %s", str);
     n = -3;
     goto free;
   }
