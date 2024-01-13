@@ -187,7 +187,7 @@ free_temp:
 
 ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   __typeof__(frame) temp = malloc(sizeof(*frame));
-  memset(temp, 0, sizeof(tp_header));
+  memset(temp->header, 0, sizeof(tp_header));
 
   struct epoll_event event;
   ssize_t n = -1;
@@ -198,17 +198,14 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   }
   n = read(event.data.fd, temp, sizeof(*frame));
   char *str;
-  if (n < sizeof(*frame)) {
-    if (memcmp(frame, tp_header, sizeof(tp_header))) {
-      str = bin_to_str((uint8_t *)temp, n);
-      syslog(LOG_DEBUG, "receive incorrect header: %s", str);
-      n = -2;
-      goto free;
-    }
-    do {
-      n += read(event.data.fd, temp, sizeof(*frame) - n);
-    } while (n < sizeof(*frame));
+  if (memcmp(temp->header, tp_header, sizeof(tp_header))) {
+    str = bin_to_str((uint8_t *)temp, n);
+    syslog(LOG_DEBUG, "receive incorrect header: %s", str);
+    n = -2;
+    goto free;
   }
+  while (n < sizeof(*frame))
+    n += read(event.data.fd, temp + n, sizeof(*frame) - n);
   str = bin_to_str((uint8_t *)temp, n);
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
