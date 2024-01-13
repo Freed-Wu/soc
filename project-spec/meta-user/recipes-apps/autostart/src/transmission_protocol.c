@@ -87,6 +87,8 @@ ssize_t write_frame(int fd, const frame_t *frame) {
   temp.check_sum = crc16((uint8_t *)&temp, sizeof(temp) - sizeof(uint16_t));
 
   ssize_t n = write(fd, &temp, sizeof(temp));
+  if (n < sizeof(temp))
+    err(errno, NULL);
   char *str = bin_to_str((uint8_t *)&temp, n);
   syslog(LOG_INFO, "send: %s", str);
   free(str);
@@ -112,6 +114,8 @@ ssize_t write_data_frame(int fd, const data_frame_t *frame) {
   temp.check_sum = crc16((uint8_t *)&temp, sizeof(temp) - sizeof(uint16_t));
 
   ssize_t n = write(fd, &temp, sizeof(temp));
+  if (n < sizeof(temp))
+    err(errno, NULL);
   char *str = bin_to_str((uint8_t *)&temp, n);
   syslog(LOG_DEBUG, "send: %s", str);
   free(str);
