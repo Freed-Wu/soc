@@ -157,7 +157,7 @@ ssize_t receive_frame(int fd, frame_t *frame, int timeout) {
   n = read(event.data.fd, temp, sizeof(*frame));
   char *str = bin_to_str((uint8_t *)temp, n);
   if (n < sizeof(*frame)) {
-    syslog(LOG_INFO, "receive incorrectly: %s", str);
+    syslog(LOG_INFO, "receive not enough: %s", str);
     n = -2;
     goto free;
   }
@@ -183,6 +183,7 @@ free_temp:
 
 ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
   __typeof__(frame) temp = malloc(sizeof(*frame));
+  memset(temp, 0, sizeof(tp_header));
 
   struct epoll_event event;
   ssize_t n = -1;
@@ -192,10 +193,11 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
     goto free_temp;
   }
   n = read(event.data.fd, temp, sizeof(*frame));
-  char *str = bin_to_str((uint8_t *)temp, n);
+  char *str;
   if (n < sizeof(*frame)) {
     if (memcmp(frame, tp_header, sizeof(tp_header))) {
-      syslog(LOG_DEBUG, "receive incorrectly: %s", str);
+      str = bin_to_str((uint8_t *)temp, n);
+      syslog(LOG_DEBUG, "receive not enough: %s", str);
       n = -2;
       goto free;
     }
@@ -203,6 +205,7 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
       n += read(event.data.fd, temp, sizeof(*frame) - n);
     } while (n < sizeof(*frame));
   }
+  str = bin_to_str((uint8_t *)temp, n);
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
     syslog(LOG_DEBUG, "receive incorrectly: %s", str);
