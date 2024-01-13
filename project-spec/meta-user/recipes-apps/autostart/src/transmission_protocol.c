@@ -204,8 +204,18 @@ ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
     n = -2;
     goto free;
   }
-  while (n < sizeof(*frame))
-    n += read(event.data.fd, temp + n, sizeof(*frame) - n);
+  if (n == -1)
+    n = 0;
+  while (n < sizeof(*frame)) {
+    ssize_t size = read(event.data.fd, (uint8_t *)temp + n, sizeof(*frame) - n);
+    if (size < 0) {
+      str = bin_to_str((uint8_t *)temp, n);
+      syslog(LOG_DEBUG, "receive not enough: %s", str);
+      n = -2;
+      goto free;
+    }
+    n += size;
+  }
   str = bin_to_str((uint8_t *)temp, n);
   if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
       temp->check_sum) {
