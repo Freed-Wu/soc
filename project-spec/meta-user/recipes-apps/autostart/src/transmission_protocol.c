@@ -240,9 +240,9 @@ free_temp:
 }
 
 n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
-                              frame_t input_frame, n_frame_t sum, int timeout) {
+                              frame_t input_frame, int timeout) {
   data_frame_t data_frame;
-  for (n_frame_t _ = 0; _ < sum; _++) {
+  for (n_frame_t _ = 0; _ < input_frame.n_frame; _++) {
     ssize_t n = receive_data_frame(recv_fd, &data_frame, timeout);
     n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
     if (n <= 0 || data_frame.n_file != input_frame.n_file ||
@@ -252,7 +252,10 @@ n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
     memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
   }
   // update sum
-  sum = count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
+  n_frame_t sum = 0;
+  for (n_frame_t i = 0; i < input_frame.n_frame; i++)
+    if (input_data_frames[i].data_len == 0)
+      sum++;
   return sum;
 }
 
