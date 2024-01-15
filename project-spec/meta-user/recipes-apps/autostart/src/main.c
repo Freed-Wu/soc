@@ -197,8 +197,6 @@ static n_frame_t receive_data_frames(int recv_fd,
   }
   // update sum
   sum = count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
-  data_frame_infos[input_frame.n_file].len =
-      data_frame_infos[input_frame.n_file].total_len - sum;
   return sum;
 }
 
@@ -293,6 +291,8 @@ int main(int argc, char *argv[]) {
         sum = new_sum;
         new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
                                       sum, opt.timeout);
+        data_frame_infos[input_frame.n_file].len =
+            data_frame_infos[input_frame.n_file].total_len - new_sum;
         syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", new_sum);
       } while (new_sum < sum);
 
