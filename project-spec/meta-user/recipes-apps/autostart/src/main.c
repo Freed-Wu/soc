@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
       } while (new_sum < sum);
 
       // process data frames
-      if (sum == 0)
+      if (sum == 0) {
         if (opt.dry_run) {
           bit_streams[input_frame.n_file].len =
               data_frame_to_data_len(input_data_frames, input_frame.n_frame);
@@ -290,6 +290,7 @@ int main(int argc, char *argv[]) {
           bit_streams[input_frame.n_file].len = process_data_frames(
               fd_dev, input_data_frames, input_frame.n_frame, reg,
               bit_streams[input_frame.n_file].addr);
+      }
       break;
 
     case TP_FRAME_TYPE_RECV:
