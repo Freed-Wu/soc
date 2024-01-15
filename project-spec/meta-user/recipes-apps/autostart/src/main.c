@@ -262,16 +262,12 @@ int main(int argc, char *argv[]) {
       data_frame_t *input_data_frames =
           data_frame_infos[input_frame.n_file].addr;
 
-      n_frame_t sum = input_frame.n_frame;
-      n_frame_t new_sum = sum;
-      do {
-        sum = new_sum;
-        new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
-                                      sum, opt.timeout);
-        data_frame_infos[input_frame.n_file].len =
-            data_frame_infos[input_frame.n_file].total_len - new_sum;
-        syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", new_sum);
-      } while (new_sum < sum);
+      n_frame_t sum =
+          receive_data_frames(recv_fd, input_data_frames, input_frame,
+                              input_frame.n_frame, opt.timeout);
+      data_frame_infos[input_frame.n_file].len =
+          data_frame_infos[input_frame.n_file].total_len - sum;
+      syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", sum);
 
       // process data frames
       if (sum == 0) {

@@ -333,14 +333,9 @@ int main(int argc, char *argv[]) {
                              &input_frame, LOOP_PERIOD);
 
       // receive data frames
-      sum = input_frame.n_frame;
-      n_frame_t new_sum = sum;
-      do {
-        sum = new_sum;
-        new_sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
-                                      sum, opt.timeout);
-        syslog(LOG_NOTICE, "%d frames is unreceived", new_sum);
-      } while (new_sum < sum);
+      sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
+                                input_frame.n_frame, opt.timeout);
+      syslog(LOG_NOTICE, "%d frames is unreceived", sum);
       if (tcflush(fd, TCIFLUSH) == -1)
         err(errno, NULL);
     } while (sum > 0);
