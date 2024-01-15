@@ -239,6 +239,23 @@ free_temp:
   return n;
 }
 
+n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
+                              frame_t input_frame, n_frame_t sum, int timeout) {
+  data_frame_t data_frame;
+  for (n_frame_t _ = 0; _ < sum; _++) {
+    ssize_t n = receive_data_frame(recv_fd, &data_frame, timeout);
+    n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
+    if (n <= 0 || data_frame.n_file != input_frame.n_file ||
+        id >= input_frame.n_frame ||
+        memcmp(data_frame.header, tp_header, sizeof(tp_header)))
+      continue;
+    memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
+  }
+  // update sum
+  sum = count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
+  return sum;
+}
+
 size_t data_frame_to_data_len(data_frame_t *data_frames, n_frame_t n_frame) {
   size_t len = 0;
   for (int i = 0; i < n_frame; i++)

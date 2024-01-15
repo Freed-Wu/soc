@@ -177,29 +177,6 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   return len;
 }
 
-static n_frame_t receive_data_frames(int recv_fd,
-                                     data_frame_t *input_data_frames,
-                                     frame_t input_frame, n_frame_t sum,
-                                     int timeout) {
-  data_frame_t data_frame;
-  for (n_frame_t _ = 0; _ < sum; _++) {
-    ssize_t n = receive_data_frame(recv_fd, &data_frame, timeout);
-    n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
-    if (n <= 0 || data_frame.n_file != input_frame.n_file ||
-        id >= input_frame.n_frame || data_frame.data_len == 0 ||
-        // if input_data_frames have this frame, skip it
-        input_data_frames[id].data_len > 0 ||
-        (data_frame.flag != TP_FLAG_1_YUV420 &&
-         data_frame.flag != TP_FLAG_2_YUV420) ||
-        memcmp(data_frame.header, tp_header, sizeof(tp_header)))
-      continue;
-    memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
-  }
-  // update sum
-  sum = count_unreceived_data_frames(input_data_frames, input_frame.n_frame);
-  return sum;
-}
-
 int main(int argc, char *argv[]) {
   opt_t opt;
   openlog("slave0", LOG_CONS | LOG_PERROR, 0);
