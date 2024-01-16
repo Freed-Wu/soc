@@ -172,15 +172,15 @@ static void query_status(int send_fd, frame_t *output_frame, int send_timeout,
 
   switch (input_frame->status) {
   case TP_STATUS_UNRECEIVED:
-    syslog(LOG_NOTICE, "yuv %d only received %d frames", input_frame->n_file,
+    syslog(LOG_NOTICE, "yuv %u only received %u frames", input_frame->n_file,
            input_frame->n_frame);
     break;
   case TP_STATUS_PROCESSING:
-    syslog(LOG_NOTICE, "yuv %d with %d frames is processing",
+    syslog(LOG_NOTICE, "yuv %u with %u frames is processing",
            input_frame->n_file, input_frame->n_frame);
     break;
   case TP_STATUS_PROCESSED:
-    syslog(LOG_NOTICE, "yuv %d have been processed to %d frames",
+    syslog(LOG_NOTICE, "yuv %u have been processed to %u frames",
            input_frame->n_file, input_frame->n_frame);
     break;
   default:
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
       // request to send data
       output_frame.frame_type = TP_FRAME_TYPE_SEND;
       syslog(LOG_NOTICE,
-             "request to send yuv %d with %d frames to correct %d missing "
+             "request to send yuv %u with %u frames to correct %u missing "
              "frames",
              output_frame.n_file, output_frame.n_frame,
              output_frame.n_frame - input_frame.n_frame);
@@ -327,7 +327,7 @@ int main(int argc, char *argv[]) {
     do {
       // request to receive data
       output_frame.frame_type = TP_FRAME_TYPE_RECV;
-      syslog(LOG_NOTICE, "request to receive data %d with %d frames",
+      syslog(LOG_NOTICE, "request to receive data %u with %u frames",
              output_frame.n_file, input_frame.n_frame);
       send_and_receive_frame(send_fd, &output_frame, opt.timeout, recv_fd,
                              &input_frame, LOOP_PERIOD);
@@ -335,7 +335,7 @@ int main(int argc, char *argv[]) {
       // receive data frames
       sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
                                 opt.timeout);
-      syslog(LOG_NOTICE, "%d frames is unreceived", sum);
+      syslog(LOG_NOTICE, "%u frames is unreceived", sum);
       if (tcflush(fd, TCIFLUSH) == -1)
         err(errno, NULL);
     } while (sum > 0);

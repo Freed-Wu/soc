@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
       output_frame.n_file = input_frame.n_file;
       output_frame.n_frame = input_frame.n_frame;
       ret = send_frame(send_fd, &output_frame, opt.timeout) > 0;
-      syslog(LOG_NOTICE, "%s to response to receive yuv %d with %d frames",
+      syslog(LOG_NOTICE, "%s to response to receive yuv %u with %u frames",
              ret ? "succeed" : "failed", output_frame.n_file,
              output_frame.n_frame);
       if (!ret)
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
                                           input_frame, opt.timeout);
       data_frame_infos[input_frame.n_file].len =
           data_frame_infos[input_frame.n_file].total_len - sum;
-      syslog(LOG_NOTICE, "%d incorrect frames need to be corrected", sum);
+      syslog(LOG_NOTICE, "%u incorrect frames need to be corrected", sum);
 
       // process data frames
       if (sum == 0) {
@@ -291,13 +291,13 @@ int main(int argc, char *argv[]) {
     case TP_FRAME_TYPE_RECV:
       // check
       if (input_frame.n_file >= PICTURES_NUMBER_MAX) {
-        syslog(LOG_ERR, "picture %d exceeds maximum: %d\n", input_frame.n_file,
+        syslog(LOG_ERR, "picture %u exceeds maximum: %d\n", input_frame.n_file,
                PICTURES_NUMBER_MAX);
         break;
       }
       // pictures haven't been encoded
       if (bit_streams[input_frame.n_file].len == 0) {
-        syslog(LOG_ERR, "picture %d haven't been encoded\n",
+        syslog(LOG_ERR, "picture %u haven't been encoded\n",
                input_frame.n_file);
         break;
       }
@@ -318,7 +318,7 @@ int main(int argc, char *argv[]) {
 
       // response to receive data
       ret = send_frame(send_fd, &output_frame, opt.timeout);
-      syslog(LOG_NOTICE, "%s to response to send data %d with %d frames",
+      syslog(LOG_NOTICE, "%s to response to send data %u with %u frames",
              ret ? "succeed" : "failed", output_frame.n_file,
              output_frame.n_frame);
       if (!ret)
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
           usleep(opt.safe_time);
         send_data_frame(send_fd, &output_data_frames[i], opt.timeout);
       }
-      syslog(LOG_NOTICE, "send data %d with %d frames", output_frame.n_file,
+      syslog(LOG_NOTICE, "send data %u with %u frames", output_frame.n_file,
              output_frame.n_frame);
 
       // complete
