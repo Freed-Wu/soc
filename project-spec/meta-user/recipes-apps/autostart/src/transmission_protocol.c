@@ -185,77 +185,47 @@ free_temp:
   return n;
 }
 
-ssize_t receive_data_frame(int fd, data_frame_t *frame, int timeout) {
-  __typeof__(frame) temp = malloc(sizeof(*frame));
-  memset(temp->header, 0, sizeof(tp_header));
-
-  struct epoll_event event;
-  ssize_t n = -1;
-  int num = epoll_wait(fd, &event, 1, timeout);
-  if (num < 1) {
-    syslog(LOG_INFO, "timeout overrun %d ms", timeout);
-    goto free_temp;
-  }
-  n = read(event.data.fd, temp, sizeof(*frame));
-  char *str;
-  if (memcmp(temp->header, tp_header, sizeof(tp_header))) {
-    str = bin_to_str((uint8_t *)temp, n);
-    syslog(LOG_DEBUG, "receive incorrect header: %s", str);
-    n = -2;
-    goto free;
-  }
-  if (n == -1)
-    n = 0;
-  while (n < sizeof(*frame)) {
-    ssize_t size = read(event.data.fd, (uint8_t *)temp + n, sizeof(*frame) - n);
-    if (size < 0) {
-      str = bin_to_str((uint8_t *)temp, n);
-      syslog(LOG_DEBUG, "receive not enough: %s", str);
-      n = -2;
-      goto free;
-    }
-    n += size;
-  }
-  str = bin_to_str((uint8_t *)temp, n);
-  if (crc16((uint8_t *)temp, sizeof(*frame) - sizeof(uint16_t)) !=
-      temp->check_sum) {
-    syslog(LOG_DEBUG, "receive incorrect CRC: %s", str);
-    n = -3;
-    goto free;
-  }
-  syslog(LOG_DEBUG, "receive correctly: %s", str);
-  memcpy(frame, temp, sizeof(*frame));
-
-  frame->n_total_frame.uint24 = be32toh(frame->n_total_frame.uint24) >> 8;
-  frame->n_file = be32toh(frame->n_file);
-  frame->n_frame = be16toh(frame->n_frame);
-  frame->total_data_len = be32toh(frame->total_data_len);
-  frame->data_len = be16toh(frame->data_len);
-
-free:
-  free(str);
-free_temp:
-  free(temp);
-  return n;
-}
-
 n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
                               frame_t input_frame, int timeout) {
-  data_frame_t data_frame;
-  for (n_frame_t _ = 0; _ < input_frame.n_frame; _++) {
-    ssize_t n = receive_data_frame(recv_fd, &data_frame, timeout);
-    n_frame_t id = n_frame_to_id(data_frame.n_frame, input_frame.n_frame);
-    if (n <= 0 || data_frame.n_file != input_frame.n_file ||
-        id >= input_frame.n_frame ||
-        memcmp(data_frame.header, tp_header, sizeof(tp_header)))
-      continue;
-    memcpy(&input_data_frames[id], &data_frame, sizeof(data_frame));
+  struct epoll_event event;
+  int num = epoll_wait(recv_fd, &event, 1, timeout);
+  if (num < 1) {
+    syslog(LOG_INFO, "timeout overrun %d ms", timeout);
+    return -1;
   }
-  // update sum
+  size_t len = sizeof(data_frame_t) * input_frame.n_frame;
+  data_frame_t *temp = malloc(len);
+  ssize_t n = 0;
+  do {
+    ssize_t size = read(event.data.fd, (uint8_t *)temp + n, len - n);
+    if (size > 0) {
+      n += size;
+      syslog(LOG_DEBUG, "receive %zd frames + %zd bytes",
+             n / sizeof(data_frame_t), n % sizeof(data_frame_t));
+    }
+  } while (n < len);
+
   n_frame_t sum = 0;
-  for (n_frame_t i = 0; i < input_frame.n_frame; i++)
-    if (input_data_frames[i].data_len == 0)
+  for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
+    if (input_data_frames[i].data_len > 0)
+      continue;
+    if (memcmp(temp[i].header, tp_header, sizeof(tp_header)) ||
+        crc16((uint8_t *)&temp[i], sizeof(data_frame_t) - sizeof(uint16_t)) !=
+            temp[i].check_sum) {
       sum++;
+      continue;
+    }
+    memcpy(&input_data_frames[i], &temp[i], sizeof(data_frame_t));
+
+    input_data_frames[i].n_total_frame.uint24 =
+        be32toh(input_data_frames[i].n_total_frame.uint24) >> 8;
+    input_data_frames[i].n_file = be32toh(input_data_frames[i].n_file);
+    input_data_frames[i].n_frame = be16toh(input_data_frames[i].n_frame);
+    input_data_frames[i].total_data_len =
+        be32toh(input_data_frames[i].total_data_len);
+    input_data_frames[i].data_len = be16toh(input_data_frames[i].data_len);
+  }
+  free(temp);
   return sum;
 }
 
