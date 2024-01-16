@@ -261,8 +261,6 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
       if (size != TP_FRAME_DATA_LEN_MAX)
         break;
       data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
-      data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
-                                       sizeof(data_frame_t) - sizeof(uint16_t));
       i++;
     }
     if (size == -1) {
@@ -272,8 +270,6 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
     if (size != 0) {
       data_frames[i].data_len = size;
       memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
-      data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
-                                       sizeof(data_frame_t) - sizeof(uint16_t));
     }
     return;
   }
@@ -282,16 +278,12 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
   for (; i < n_frame - 1; i++) {
     memcpy(data_frames[i].data, p, TP_FRAME_DATA_LEN_MAX);
     data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
-    data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
-                                     sizeof(data_frame_t) - sizeof(uint16_t));
     p += TP_FRAME_DATA_LEN_MAX;
   }
   data_frames[i].data_len = len - i * TP_FRAME_DATA_LEN_MAX;
   memcpy(data_frames[i].data, p, data_frames[i].data_len);
   memset(data_frames[i].data + data_frames[i].data_len, 0,
          TP_FRAME_DATA_LEN_MAX - data_frames[i].data_len);
-  data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
-                                   sizeof(data_frame_t) - sizeof(uint16_t));
 };
 
 ssize_t data_to_yuv420(uint8_t *y, uint8_t **u, uint8_t **v, size_t yuv_len) {
