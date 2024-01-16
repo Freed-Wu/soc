@@ -240,7 +240,10 @@ int main(int argc, char *argv[]) {
       }
       n_files[k] = be32toh(output_data_frames[0].n_file);
     } else {
-      output_frame.n_frame = (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+      output_frame.n_frame =
+          status.st_size == 0
+              ? 0
+              : (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
       n_files[k] = k;
       output_data_frames =
           alloc_data_frames(output_frame.n_frame, k, NULL, fd_file,

@@ -307,8 +307,11 @@ int main(int argc, char *argv[]) {
       // alloc output_data_frames
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
-      output_frame.n_frame =
-          (bit_streams[input_frame.n_file].len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+      output_frame.n_frame = bit_streams[input_frame.n_file].len == 0
+                                 ? 0
+                                 : (bit_streams[input_frame.n_file].len - 1) /
+                                           TP_FRAME_DATA_LEN_MAX +
+                                       1;
       data_frame_t *output_data_frames =
           alloc_data_frames(output_frame.n_frame, output_frame.n_file,
                             bit_streams[input_frame.n_file].addr,

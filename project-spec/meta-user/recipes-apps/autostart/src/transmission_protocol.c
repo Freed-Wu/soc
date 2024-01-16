@@ -262,14 +262,16 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
       perror(NULL);
       return;
     }
-    data_frames[i].data_len = size;
-    memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
-    data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
-                                     sizeof(data_frame_t) - sizeof(uint16_t));
+    if (size != 0) {
+      data_frames[i].data_len = size;
+      memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
+      data_frames[i].check_sum = crc16((uint8_t *)&data_frames[i],
+                                       sizeof(data_frame_t) - sizeof(uint16_t));
+    }
     return;
   }
   uint8_t *p = addr;
-  size_t n_frame = (len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+  size_t n_frame = len == 0 ? 0 : (len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
   for (; i < n_frame - 1; i++) {
     memcpy(data_frames[i].data, p, TP_FRAME_DATA_LEN_MAX);
     data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
