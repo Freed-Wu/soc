@@ -36,6 +36,7 @@ static status_t get_status(n_file_t n_file) {
     return TP_STATUS_UNRECEIVED;
   if (bit_streams[n_file].len > 0)
     return TP_STATUS_PROCESSED;
+  // empty file like /dev/null will be unreceived forever
   if (data_frame_infos[n_file].len == data_frame_infos[n_file].total_len &&
       data_frame_infos[n_file].total_len)
     return TP_STATUS_PROCESSING;
@@ -224,9 +225,10 @@ int main(int argc, char *argv[]) {
         output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
       else
         output_frame.n_frame = 0;
-      syslog(LOG_NOTICE, "%s to response query",
+      syslog(LOG_NOTICE, "%s to response query file %u with status %x",
              send_frame(send_fd, &output_frame, opt.timeout) > 0 ? "succeed"
-                                                                 : "failed");
+                                                                 : "failed",
+             output_frame.n_file, output_frame.status);
       break;
 
     case TP_FRAME_TYPE_SEND:
