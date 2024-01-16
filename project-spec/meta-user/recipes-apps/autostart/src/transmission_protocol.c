@@ -12,6 +12,8 @@
 #include "crc.h"
 #include "transmission_protocol.h"
 
+#define COUNT 10
+
 const uint8_t tp_header[] = {0x3A, 0x62, 0x04, 0x3F};
 n_total_frame_t n_total_frame = {.uint24 = 0};
 
@@ -194,16 +196,21 @@ n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
     return -1;
   }
   size_t len = sizeof(data_frame_t) * input_frame.n_frame;
-  data_frame_t *temp = malloc(len);
+  data_frame_t *temp = calloc(len, sizeof(uint8_t));
   ssize_t n = 0;
+  size_t count = 0;
   do {
     ssize_t size = read(event.data.fd, (uint8_t *)temp + n, len - n);
     if (size > 0) {
+      count = 0;
       n += size;
       syslog(LOG_DEBUG, "receive %zd frames + %zd bytes",
              n / sizeof(data_frame_t), n % sizeof(data_frame_t));
-    }
-  } while (n < len);
+    } else
+      count++;
+  } while (n < len && count < COUNT);
+  if (count == COUNT)
+    syslog(LOG_INFO, "timeout overrun %zu times", count);
 
   n_frame_t sum = 0;
   for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
