@@ -220,7 +220,10 @@ int main(int argc, char *argv[]) {
       output_frame.frame_type = input_frame.frame_type;
       output_frame.n_file = input_frame.n_file;
       output_frame.status = get_status(input_frame.n_file);
-      output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
+      if (input_frame.n_file < PICTURES_NUMBER_MAX)
+        output_frame.n_frame = data_frame_infos[input_frame.n_file].len;
+      else
+        output_frame.n_frame = 0;
       syslog(LOG_NOTICE, "%s to response query",
              send_frame(send_fd, &output_frame, opt.timeout) > 0 ? "succeed"
                                                                  : "failed");
