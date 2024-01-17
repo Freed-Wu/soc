@@ -333,9 +333,9 @@ int main(int argc, char *argv[]) {
         break;
 
       // send data
+      size_t safe_frames = sysconf(_SC_PAGESIZE) / sizeof(data_frame_t);
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
-        // cppcheck-suppress moduloofone
-        if (i % SAFE_FRAMES == SAFE_FRAMES - 1)
+        if (i % safe_frames == safe_frames - 1)
           usleep(opt.safe_time);
         send_data_frame(send_fd, &output_data_frames[i], opt.timeout);
       }
