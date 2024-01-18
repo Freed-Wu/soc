@@ -217,15 +217,11 @@ int main(int argc, char *argv[]) {
     // prepare to send data
     output_frame.frame_type = TP_FRAME_TYPE_SEND;
     int fd_file = open(opt.files[k], O_RDONLY);
-    if (fd_file == -1) {
-    error:
-      syslog(LOG_ERR, "%s: %s", opt.files[k], strerror(errno));
-      // skip to next picture
-      continue;
-    }
+    if (fd_file == -1)
+      err(errno, "%s", opt.files[k]);
     struct stat status;
     if (fstat(fd_file, &status) == -1)
-      goto error;
+      err(errno, "%s", opt.files[k]);
     data_frame_t *output_data_frames;
     // update n_file, n_frame
     if (opt.binary) {
@@ -347,7 +343,7 @@ int main(int argc, char *argv[]) {
     // save file
     // TODO: multithread
     char *filename =
-        malloc((strlen(opt.out_dir) + sizeof("XX.bin") - 1) * sizeof(char));
+        malloc((strlen(opt.out_dir) + sizeof("/XX.bin") - 1) * sizeof(char));
     sprintf(filename, "%s/%d.bin", opt.out_dir, k);
     if (dump_data_frames(input_data_frames, input_frame.n_frame, filename) ==
         -1)
