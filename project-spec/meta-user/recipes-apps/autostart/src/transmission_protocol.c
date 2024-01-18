@@ -204,10 +204,11 @@ n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
     if (size > 0) {
       count = 0;
       n += size;
-      syslog(LOG_DEBUG, "receive %zd frames + %zd bytes",
-             n / sizeof(data_frame_t), n % sizeof(data_frame_t));
-    } else
+    } else {
       count++;
+      syslog(LOG_WARNING, "receive %zd frames + %zd bytes after %zu failure",
+             n / sizeof(data_frame_t), n % sizeof(data_frame_t), count);
+    }
   } while (n < len && count < COUNT);
   if (count == COUNT)
     syslog(LOG_INFO, "timeout overrun %zu times", count);
