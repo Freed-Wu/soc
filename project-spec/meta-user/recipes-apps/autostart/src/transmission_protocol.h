@@ -98,6 +98,7 @@ data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t, flag_t,
 size_t data_frame_to_data_len(data_frame_t *, n_frame_t);
 void data_frames_to_data(data_frame_t *, n_frame_t, uint8_t *);
 void data_to_data_frames(uint8_t *, size_t, data_frame_t *);
+void fd_to_data_frames(int, data_frame_t *, n_frame_t);
 ssize_t data_to_yuv420(uint8_t *, uint8_t **, uint8_t **, size_t);
 void entropy_to_gmm(uint16_t *, gmm_t *, size_t);
 

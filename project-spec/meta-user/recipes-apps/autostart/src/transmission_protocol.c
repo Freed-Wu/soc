@@ -254,25 +254,6 @@ void data_frames_to_data(data_frame_t *data_frames, n_frame_t n_frame,
 
 void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
   n_frame_t i = 0;
-  if (addr == NULL) {
-    ssize_t size;
-    while (true) {
-      size = read(len, data_frames[i].data, TP_FRAME_DATA_LEN_MAX);
-      if (size != TP_FRAME_DATA_LEN_MAX)
-        break;
-      data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
-      i++;
-    }
-    if (size == -1) {
-      perror(NULL);
-      return;
-    }
-    if (size != 0) {
-      data_frames[i].data_len = size;
-      memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
-    }
-    return;
-  }
   uint8_t *p = addr;
   size_t n_frame = len == 0 ? 0 : (len - 1) / TP_FRAME_DATA_LEN_MAX + 1;
   for (; i < n_frame - 1; i++) {
@@ -285,6 +266,26 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
   memset(data_frames[i].data + data_frames[i].data_len, 0,
          TP_FRAME_DATA_LEN_MAX - data_frames[i].data_len);
 };
+
+void fd_to_data_frames(int fd, data_frame_t *data_frames, n_frame_t n_frame) {
+  n_frame_t i = 0;
+  ssize_t size;
+  while (true) {
+    size = read(fd, data_frames[i].data, TP_FRAME_DATA_LEN_MAX);
+    if (size != TP_FRAME_DATA_LEN_MAX)
+      break;
+    data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
+    i++;
+  }
+  if (size == -1) {
+    perror(NULL);
+    return;
+  }
+  if (size != 0) {
+    data_frames[i].data_len = size;
+    memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
+  }
+}
 
 ssize_t data_to_yuv420(uint8_t *y, uint8_t **u, uint8_t **v, size_t yuv_len) {
   size_t v_len = yuv_len / (4 + 1 + 1);
@@ -352,6 +353,9 @@ data_frame_t *alloc_data_frames(n_frame_t n_frame, n_file_t n_file,
   if (data_frames == NULL)
     return NULL;
   init_data_frames(data_frames, n_frame, n_file, flag, total_data_len);
-  data_to_data_frames(addr, len, data_frames);
+  if (addr == NULL)
+    fd_to_data_frames(len, data_frames, n_frame);
+  else
+    data_to_data_frames(addr, len, data_frames);
   return data_frames;
 }
