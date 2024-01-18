@@ -271,21 +271,13 @@ void data_to_data_frames(uint8_t *addr, size_t len, data_frame_t *data_frames) {
 void fd_to_data_frames(int fd, data_frame_t *data_frames, n_frame_t n_frame) {
   n_frame_t i = 0;
   ssize_t size;
-  while (true) {
+  for (n_frame_t i = 0; i < n_frame; i++) {
     size = read(fd, data_frames[i].data, TP_FRAME_DATA_LEN_MAX);
-    if (size != TP_FRAME_DATA_LEN_MAX)
-      break;
-    data_frames[i].data_len = TP_FRAME_DATA_LEN_MAX;
-    i++;
-  }
-  if (size == -1) {
-    perror(NULL);
-    return;
-  }
-  if (size != 0) {
+    if (size == -1)
+      err(errno, NULL);
     data_frames[i].data_len = size;
-    memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
   }
+  memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
 }
 
 ssize_t data_to_yuv420(uint8_t *y, uint8_t **u, uint8_t **v, size_t yuv_len) {
