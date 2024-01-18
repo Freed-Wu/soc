@@ -333,6 +333,7 @@ int main(int argc, char *argv[]) {
         break;
 
       // send data
+      sleep(5);
       size_t safe_frames = sysconf(_SC_PAGESIZE) / sizeof(data_frame_t);
       for (n_frame_t i = 0; i < output_frame.n_frame; i++) {
         if (i % safe_frames == safe_frames - 1)
