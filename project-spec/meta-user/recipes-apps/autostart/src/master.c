@@ -334,6 +334,7 @@ int main(int argc, char *argv[]) {
              output_frame.n_file, input_frame.n_frame);
       send_and_receive_frame(send_fd, &output_frame, opt.timeout, recv_fd,
                              &input_frame, LOOP_PERIOD);
+      sleep(5);
 
       // receive data frames
       sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
