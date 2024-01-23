@@ -74,34 +74,17 @@ repos:
     rev: v3.7.0-4
     hooks:
       - id: shfmt
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.14
     hooks:
-      - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        additional_dependencies:
-          - tomli
+      - id: ruff
+      - id: ruff-format
   - repo: https://github.com/kumaraditya303/mirrors-pyright
     rev: v1.1.342
     hooks:
       - id: pyright
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.6
-    hooks:
-      - id: bandit
-        args:
-          - -cpyproject.toml
-        additional_dependencies:
-          - tomli
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v16.0.6
+    rev: v17.0.6
     hooks:
       - id: clang-format
   - repo: https://github.com/cmake-lint/cmake-lint
