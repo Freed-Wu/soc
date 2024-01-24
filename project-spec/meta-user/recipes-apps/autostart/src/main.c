@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #include "axitangxi.h"
 #include "coding.h"
@@ -44,6 +46,15 @@ static status_t get_status(n_file_t n_file) {
 }
 
 static void init_opt(opt_t *opt) {
+  wordexp_t exp;
+  char out_dir[] = "~/Downloads";
+  if (wordexp(out_dir, &exp, 0) != 0) {
+    syslog(LOG_ERR, "%s expand failure. use . as fallback.", out_dir);
+    opt->out_dir = ".";
+  } else {
+    opt->out_dir = strdup(exp.we_wordv[0]);
+    wordfree(&exp);
+  }
   opt->tty = "/dev/ttyPS1";
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
@@ -51,6 +62,12 @@ static void init_opt(opt_t *opt) {
   opt->level = LOG_NOTICE;
   opt->timeout = -1;
   opt->safe_time = 3;
+}
+
+static void deinit_opt(opt_t *opt) {
+  if (strcmp(opt->out_dir, "."))
+    free(opt->out_dir);
+  free(opt->files);
 }
 
 static char shortopts[] = "hVvqdt:T:S:w:c:";
@@ -67,6 +84,7 @@ static struct option longopts[] = {
     {"safe-time", required_argument, NULL, 'S'},
     {"weight", required_argument, NULL, 'w'},
     {"quantization-coefficience", required_argument, NULL, 'c'},
+    {"out-dir", required_argument, NULL, 'w'},
     {NULL, 0, NULL, 0}};
 
 static int parse(int argc, char *argv[], opt_t *opt) {
@@ -79,7 +97,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       return 2;
     case 'h':
       if (print_help(longopts, argv[0]) == 0)
-        puts("");
+        puts(" [yuv_file] ...");
       return 1;
     case 'd':
       opt->dry_run = true;
@@ -105,11 +123,18 @@ static int parse(int argc, char *argv[], opt_t *opt) {
     case 'c':
       opt->quantization_coefficience = optarg;
       break;
+    case 'o':
+      opt->out_dir = optarg;
+      break;
     default:
       return -1;
     }
   }
   setlogmask(LOG_UPTO(opt->level));
+  opt->number = argc - optind;
+  opt->files = malloc(opt->number * sizeof(char *));
+  for (int i = 0; i < opt->number; i++)
+    opt->files[i] = argv[optind + i];
   return 0;
 }
 
@@ -208,7 +233,7 @@ int main(int argc, char *argv[]) {
          opt.dry_run ? " (dry run)" : "");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
-  while (true) {
+  while (opt.number == 0) {
     do {
       // receive forever
       memset(&input_frame, 0, sizeof(input_frame));
@@ -352,6 +377,42 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  for (n_file_t k = 0; k < opt.number; k++) {
+    int fd_file = open(opt.files[k], O_RDONLY);
+    if (fd_file == -1)
+      err(errno, "%s", opt.files[k]);
+    struct stat status;
+    if (fstat(fd_file, &status) == -1)
+      err(errno, "%s", opt.files[k]);
+    n_frame_t n_frame = status.st_size == 0
+                            ? 0
+                            : (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+    data_frame_t *output_data_frames = alloc_data_frames(
+        n_frame, k, NULL, fd_file, TP_FLAG_1_YUV420, status.st_size);
+    if (output_data_frames == NULL)
+      err(errno, NULL);
+    bit_streams[k].len = process_data_frames(fd_dev, output_data_frames,
+                                             n_frame, reg, bit_streams[k].addr);
+    free(output_data_frames);
+    output_data_frames =
+        alloc_data_frames(n_frame, k, bit_streams[k].addr, bit_streams[k].len,
+                          TP_FLAG_DATA, bit_streams[k].len);
+    if (output_data_frames == NULL)
+      syslog(LOG_ERR, "%s", strerror(errno));
+    char *filename =
+        malloc((strlen(opt.out_dir) + sizeof("/XX.bin") - 1) * sizeof(char));
+    sprintf(filename, "%s/%d.bin", opt.out_dir, k);
+    if (dump_data_frames(output_data_frames, n_frame, filename) == -1)
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
+    else
+      syslog(LOG_NOTICE, "%s has been encoded to %s", opt.files[k], filename);
+    free(filename);
+    free(output_data_frames);
+    if (close(fd_file) == -1)
+      err(errno, "%s", opt.files[k]);
+  }
+
+  deinit_opt(&opt);
   for (n_file_t i = 0; i < PICTURES_NUMBER_MAX; i++) {
     if (bit_streams[i].addr != NULL)
       free(bit_streams[i].addr);

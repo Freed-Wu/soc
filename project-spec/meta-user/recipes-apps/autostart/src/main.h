@@ -10,12 +10,15 @@ __BEGIN_DECLS
 
 typedef struct {
   char *tty;
+  char *out_dir;
   char *weight;
   char *quantization_coefficience;
   bool dry_run;
   int timeout;
   unsigned int safe_time;
   unsigned int level : 3;
+  char **files;
+  n_file_t number;
 } opt_t;
 typedef struct {
   uint8_t *addr;
