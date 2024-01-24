@@ -20,7 +20,5 @@ typedef struct {
   bool dump;
 } opt_t;
 
-ssize_t dump_data_frames(data_frame_t *, n_frame_t, char *);
-
 __END_DECLS
 #endif /* master.h */

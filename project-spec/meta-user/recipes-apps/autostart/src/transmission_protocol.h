@@ -101,6 +101,7 @@ void data_to_data_frames(uint8_t *, size_t, data_frame_t *);
 void fd_to_data_frames(int, data_frame_t *, n_frame_t);
 ssize_t data_to_yuv420(uint8_t *, uint8_t **, uint8_t **, size_t);
 void entropy_to_gmm(uint16_t *, gmm_t *, size_t);
+ssize_t dump_data_frames(data_frame_t *, n_frame_t, char *);
 
 __END_DECLS
 #endif /* transmission_protocol.h */

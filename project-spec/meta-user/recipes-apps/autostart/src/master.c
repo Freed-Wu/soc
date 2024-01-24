@@ -104,19 +104,6 @@ static int parse(int argc, char *argv[], opt_t *opt) {
   return 0;
 }
 
-ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
-                         char *filename) {
-  int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
-  if (fd == -1)
-    return -1;
-  ssize_t size = 0;
-  for (n_frame_t i = 0; i < n_frame; i++)
-    size += write(fd, input_data_frames[i].data, input_data_frames[i].data_len);
-  if (close(fd) == -1)
-    return -1;
-  return size;
-}
-
 static inline __suseconds_t tvdiff(struct timeval new_tv,
                                    struct timeval old_tv) {
   return (new_tv.tv_sec - old_tv.tv_sec) * 1000000 + new_tv.tv_usec -

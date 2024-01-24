@@ -1,6 +1,7 @@
 #include <endian.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -351,4 +352,17 @@ data_frame_t *alloc_data_frames(n_frame_t n_frame, n_file_t n_file,
   else
     data_to_data_frames(addr, len, data_frames);
   return data_frames;
+}
+
+ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
+                         char *filename) {
+  int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
+  if (fd == -1)
+    return -1;
+  ssize_t size = 0;
+  for (n_frame_t i = 0; i < n_frame; i++)
+    size += write(fd, input_data_frames[i].data, input_data_frames[i].data_len);
+  if (close(fd) == -1)
+    return -1;
+  return size;
 }
