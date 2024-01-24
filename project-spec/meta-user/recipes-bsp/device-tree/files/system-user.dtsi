@@ -1,0 +1,29 @@
+/include/ "system-conf.dtsi"
+/ {
+  amba_pl: amba_pl@0 {
+    compatible = "simple-bus";
+    #address-cells = <2>;
+    #size-cells = <2>;
+    ranges;
+    axi_tangxi: axi_tangxi@80000000 {
+      compatible = "xlnx,axi-tangxi";
+      reg = <0x0 0x80000000 0x0 0x10000>;
+      interrupt-names = "axitangxi_irq";
+      interrupt-parent = <&gic>;
+      interrupts = <0 89 4>;
+      clock-names = "clk";
+      clocks = <&zynqmp_clk 71>;
+    };
+  };
+};
+
+/* SD */
+&sdhci1 {
+  disable-wp;
+  no-1-8-v;
+};
+
+/* USB */
+&dwc3_0 {
+  dr_mode = "host";
+};
