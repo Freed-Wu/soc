@@ -32,7 +32,7 @@ jobs:
           cd build
           cpack -G DEB
           cpack -G RPM
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           gcov: true
       - uses: actions/upload-artifact@v3
