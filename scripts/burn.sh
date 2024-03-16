@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-cd "$(dirname "$(readlink -f "$0")")/.." || exit 1
+set -e
+cd "$(dirname "$(readlink -f "$0")")/.."
 
 boot=${1:-/run/media/$USER/BOOT}
 root=${2:-/run/media/$USER/root}
