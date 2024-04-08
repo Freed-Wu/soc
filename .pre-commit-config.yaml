@@ -92,6 +92,10 @@ repos:
     rev: 1.4.2
     hooks:
       - id: cmakelint
+  - repo: https://github.com/Decodetalkers/neocmakelsp
+    rev: v0.6.22
+    hooks:
+      - id: neocmakelsp-format
   - repo: https://github.com/priv-kweihmann/oelint-adv
     rev: 4.4.1
     hooks:
