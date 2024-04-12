@@ -108,7 +108,7 @@ cp hw/build/project/system.xsa project-spec/hw-description
 
 ### Configure
 
-To fasten building, you need download:
+To speed up building, you need download:
 
 - [u-boot-xlnx](https://github.com/Xilinx/u-boot-xlnx/tags)
 - [linux-xlnx](https://github.com/Xilinx/linux-xlnx/tags)
