@@ -11,6 +11,7 @@ project(
   HOMEPAGE_URL https://github.com/Freed-Wu/deep-space-detection)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include(cmake/sanitize.cmake)
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 add_subdirectory(src)
 
 find_package(PkgConfig REQUIRED)
