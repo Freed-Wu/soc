@@ -53,8 +53,8 @@ Dependencies:
 # modules
 make
 # apps
-cmake -Bbuild/cmake
-cmake --build build/cmake
+cmake -Bproject-spec/meta-user/recipes-apps/autostart/build
+cmake --build project-spec/meta-user/recipes-apps/autostart/build
 ```
 
 ## Cross Compile for Develop Board
