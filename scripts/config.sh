@@ -7,5 +7,5 @@ petalinux-create -t modules -n axi-tangxi --enable --force
 # reset changes of `--force`
 git restore project-spec/meta-user/recipes-apps/autostart
 git clean -fd project-spec/meta-user/recipes-apps/autostart
-git restore project-spec/meta-user/recipes-bsp
-git clean -fd project-spec/meta-user/recipes-bsp
+git restore project-spec/meta-user/recipes-modules
+git clean -fd project-spec/meta-user/recipes-modules
