@@ -1,7 +1,9 @@
 #ifndef TRANSMISSION_PROTOCOL_H
 #define TRANSMISSION_PROTOCOL_H 1
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 // https://stackoverflow.com/a/48521433/16027269
 #define termios asmtermios
 #include <asm/termios.h>
@@ -95,6 +97,9 @@ void init_data_frames(data_frame_t *, n_frame_t, n_file_t, flag_t,
                       total_data_len_t);
 data_frame_t *alloc_data_frames(n_frame_t, n_file_t, uint8_t *, size_t, flag_t,
                                 total_data_len_t);
+int get_data_frames(char *filename, n_file_t *const n_file,
+                    n_frame_t *const n_frame,
+                    data_frame_t **p_output_data_frames, bool binary);
 size_t data_frame_to_data_len(data_frame_t *, n_frame_t);
 void data_frames_to_data(data_frame_t *, n_frame_t, uint8_t *);
 void data_to_data_frames(uint8_t *, size_t, data_frame_t *);

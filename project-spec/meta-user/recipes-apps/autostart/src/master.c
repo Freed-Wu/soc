@@ -216,58 +216,42 @@ int main(int argc, char *argv[]) {
   for (n_file_t k = 0; k < opt.number; k++) {
     // prepare to send data
     output_frame.frame_type = TP_FRAME_TYPE_SEND;
-    int fd_file = open(opt.files[k], O_RDONLY);
-    if (fd_file == -1) {
-    error:
-      syslog(LOG_ERR, "%s: %s", opt.files[k], strerror(errno));
+    char *filename = opt.files[k];
+    data_frame_t *output_data_frames;
+    n_file_t n_file = k;
+    n_frame_t n_frame;
+    int ret_status = get_data_frames(filename, &n_file, &n_frame,
+                                     &output_data_frames, opt.binary);
+    output_frame.n_file = n_file;
+    output_frame.n_frame = n_frame;
+    // cannot open filename
+    if (ret_status == 1) {
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
       // skip to next picture
       continue;
+      // cannot close filename
+    } else if (ret_status == 2) {
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
+    } else if (ret_status == 3) {
+      err(errno, NULL);
     }
-    struct stat status;
-    if (fstat(fd_file, &status) == -1)
-      goto error;
-    data_frame_t *output_data_frames;
-    // update n_file, n_frame
-    if (opt.binary) {
-      output_frame.n_frame = status.st_size / sizeof(data_frame_t);
-      output_data_frames = malloc(status.st_size);
-      if (output_data_frames == NULL)
-        err(errno, NULL);
-      uint8_t *p = (uint8_t *)output_data_frames;
-      for (n_frame_t _ = 0; _ < output_frame.n_frame; _++) {
-        ssize_t n = read(fd_file, p, sizeof(data_frame_t));
-        p += n;
-      }
-      n_files[k] = be32toh(output_data_frames[0].n_file);
-    } else {
-      output_frame.n_frame =
-          status.st_size == 0
-              ? 0
-              : (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
-      n_files[k] = k;
-      output_data_frames =
-          alloc_data_frames(output_frame.n_frame, k, NULL, fd_file,
-                            TP_FLAG_1_YUV420, status.st_size);
-      if (output_data_frames == NULL)
-        err(errno, NULL);
-    }
-    output_frame.n_file = n_files[k];
+    n_files[k] = output_frame.n_file;
+
     if (opt.dump) {
-      char *filename =
+      char *output_filename =
           malloc((strlen(opt.out_dir) + sizeof("XX.dat") - 1) * sizeof(char));
-      sprintf(filename, "%s/%d.dat", opt.out_dir, k);
-      int fd_dat = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
+      sprintf(output_filename, "%s/%d.dat", opt.out_dir, k);
+      int fd_dat = open(output_filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
       if (fd_dat == -1)
         err(errno, NULL);
       for (n_frame_t i = 0; i < output_frame.n_frame; i++)
         write_data_frame(fd_dat, &output_data_frames[i]);
       if (close(fd_dat) == -1)
         err(errno, NULL);
-      syslog(LOG_NOTICE, "%s has been dumped to %s", opt.files[k], filename);
-      free(filename);
+      syslog(LOG_NOTICE, "%s has been dumped to %s", opt.files[k],
+             output_filename);
+      free(output_filename);
     }
-    if (close(fd_file) == -1)
-      syslog(LOG_ERR, "%s: %s", opt.files[k], strerror(errno));
 
     query_status(send_fd, &output_frame, opt.timeout, recv_fd, &input_frame,
                  LOOP_PERIOD);

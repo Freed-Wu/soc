@@ -1,6 +1,7 @@
 #include <endian.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -350,4 +351,41 @@ data_frame_t *alloc_data_frames(n_frame_t n_frame, n_file_t n_file,
   else
     data_to_data_frames(addr, len, data_frames);
   return data_frames;
+}
+
+int get_data_frames(char *filename, n_file_t *const n_file,
+                    n_frame_t *const n_frame,
+                    data_frame_t **p_output_data_frames, bool binary) {
+  int fd_file = open(filename, O_RDONLY);
+  if (fd_file == -1)
+    return 1;
+
+  struct stat status;
+  if (fstat(fd_file, &status) == -1)
+    return 1;
+  // update n_file, n_frame
+  if (binary) {
+    *n_frame = status.st_size / sizeof(data_frame_t);
+    *p_output_data_frames = malloc(status.st_size);
+    if (*p_output_data_frames == NULL)
+      err(errno, NULL);
+    uint8_t *p = *(uint8_t **)p_output_data_frames;
+    for (n_frame_t _ = 0; _ < *n_frame; _++) {
+      ssize_t n = read(fd_file, p, sizeof(data_frame_t));
+      p += n;
+    }
+    *n_file = be32toh((*p_output_data_frames)[0].n_file);
+  } else {
+    *n_frame = status.st_size == 0
+                   ? 0
+                   : (status.st_size - 1) / TP_FRAME_DATA_LEN_MAX + 1;
+    *p_output_data_frames = alloc_data_frames(*n_frame, *n_file, NULL, fd_file,
+                                              TP_FLAG_1_YUV420, status.st_size);
+    if (*p_output_data_frames == NULL)
+      return 3;
+  }
+
+  if (close(fd_file) == -1)
+    return 2;
+  return 0;
 }
