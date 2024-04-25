@@ -7,7 +7,7 @@
 class BitOutputStream {
 public:
   BitOutputStream(std::fstream &file)
-      : m_bit_out(file), m_currentbyte(0), m_numbitsfilled(0){};
+      : m_bit_out(file), m_currentbyte(0), m_numbitsfilled(0) {};
   void write(char);
   void close();
 
@@ -22,7 +22,7 @@ private:
 class BitInputStream {
 public:
   BitInputStream(std::fstream &file)
-      : m_bit_in(file), m_currentbyte(0), m_numbitsremaining(0){};
+      : m_bit_in(file), m_currentbyte(0), m_numbitsremaining(0) {};
   int read();
   int read_no_eof();
   void close();
@@ -38,7 +38,7 @@ private:
 class CountingBitOutputStream {
 public:
   CountingBitOutputStream(BitOutputStream &bit_out)
-      : m_bit_out(bit_out), m_num_bits(0){};
+      : m_bit_out(bit_out), m_num_bits(0) {};
   void close();
   void write(char);
 
@@ -88,7 +88,7 @@ public:
   // Mask of the second highest bit at width STATE_SIZE, i.e. 010...000.
   long long SECOND_MASK = TOP_MASK >> 1;
 
-  ArithmeticCoderBase() : m_low(0), m_high(MASK){};
+  ArithmeticCoderBase() : m_low(0), m_high(MASK) {};
   void update(long long total, long long low, long long high, char symbol);
   virtual void shift() = 0;
   virtual void underflow() = 0;
@@ -102,7 +102,7 @@ public:
 class ArithmeticEncoder : public ArithmeticCoderBase {
 public:
   ArithmeticEncoder(CountingBitOutputStream &c_bit_out)
-      : m_c_bit_out(c_bit_out), m_num_underflow(0){};
+      : m_c_bit_out(c_bit_out), m_num_underflow(0) {};
   void write(long long, long long, long long, char);
   void finish();
   void shift();
