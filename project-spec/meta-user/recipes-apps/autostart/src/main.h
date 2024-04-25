@@ -10,9 +10,13 @@ __BEGIN_DECLS
 
 typedef struct {
   char *tty;
+  char *out_dir;
+  char **files;
+  n_file_t number;
   char *weight;
   char *quantization_coefficience;
   bool dry_run;
+  bool binary;
   int timeout;
   unsigned int safe_time;
   unsigned int level : 3;

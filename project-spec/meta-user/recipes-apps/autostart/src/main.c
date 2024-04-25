@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #include "axitangxi.h"
 #include "coding.h"
@@ -44,6 +45,16 @@ static status_t get_status(n_file_t n_file) {
 }
 
 static void init_opt(opt_t *opt) {
+  wordexp_t exp;
+  char out_dir[] = "~/Downloads";
+  if (wordexp(out_dir, &exp, 0) != 0) {
+    syslog(LOG_ERR, "%s expand failure. use . as fallback.", out_dir);
+    opt->out_dir = ".";
+  } else {
+    opt->out_dir = strdup(exp.we_wordv[0]);
+    wordfree(&exp);
+  }
+  opt->binary = false;
   opt->tty = "/dev/ttyPS1";
   opt->weight = "/usr/share/autostart/weight.bin";
   opt->quantization_coefficience = "/usr/share/autostart/quantify.bin";
@@ -53,12 +64,19 @@ static void init_opt(opt_t *opt) {
   opt->safe_time = 3;
 }
 
-static char shortopts[] = "hVvqdt:T:S:w:c:";
+static void deinit_opt(opt_t *opt) {
+  if (strcmp(opt->out_dir, "."))
+    free(opt->out_dir);
+  free(opt->files);
+}
+
+static char shortopts[] = "hVvqbdt:T:S:w:c:o:";
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'V'},
     {"verbose", no_argument, NULL, 'v'},
     {"quiet", no_argument, NULL, 'q'},
+    {"binary", no_argument, NULL, 'b'},
     {"dry-run", no_argument, NULL, 'd'},
     {"tty", required_argument, NULL, 't'},
     // milli second
@@ -67,6 +85,7 @@ static struct option longopts[] = {
     {"safe-time", required_argument, NULL, 'S'},
     {"weight", required_argument, NULL, 'w'},
     {"quantization-coefficience", required_argument, NULL, 'c'},
+    {"out-dir", required_argument, NULL, 'o'},
     {NULL, 0, NULL, 0}};
 
 static int parse(int argc, char *argv[], opt_t *opt) {
@@ -79,16 +98,19 @@ static int parse(int argc, char *argv[], opt_t *opt) {
       return 2;
     case 'h':
       if (print_help(longopts, argv[0]) == 0)
-        puts("");
+        puts(" [yuv_file] ...");
       return 1;
-    case 'd':
-      opt->dry_run = true;
-      break;
     case 'v':
       opt->level++;
       break;
     case 'q':
       opt->level--;
+      break;
+    case 'b':
+      opt->binary = true;
+      break;
+    case 'd':
+      opt->dry_run = true;
       break;
     case 't':
       opt->tty = optarg;
@@ -105,11 +127,18 @@ static int parse(int argc, char *argv[], opt_t *opt) {
     case 'c':
       opt->quantization_coefficience = optarg;
       break;
+    case 'o':
+      opt->out_dir = optarg;
+      break;
     default:
       return -1;
     }
   }
   setlogmask(LOG_UPTO(opt->level));
+  opt->number = argc - optind;
+  opt->files = malloc(opt->number * sizeof(char *));
+  for (int i = 0; i < opt->number; i++)
+    opt->files[i] = argv[optind + i];
   return 0;
 }
 
@@ -217,17 +246,20 @@ int main(int argc, char *argv[]) {
             opt.quantization_coefficience, QUANTIFY_ADDR);
   }
 
-  int fd = open(opt.tty, O_RDWR | O_NOCTTY), send_fd, recv_fd;
-  if (fd == -1)
-    err(errno, "%s", opt.tty);
-  struct termios oldattr = init_tty(fd);
+  int fd, send_fd, recv_fd;
+  struct termios oldattr;
+  if (!opt.number) {
+    if ((fd = open(opt.tty, O_RDWR | O_NOCTTY)) == -1)
+      err(errno, "%s", opt.tty);
+    fd_to_epoll_fds(fd, &send_fd, &recv_fd);
+    oldattr = init_tty(fd);
+    syslog(LOG_NOTICE, "%s: initial successfully%s", opt.tty,
+           opt.dry_run ? " (dry run)" : "");
+  }
 
-  fd_to_epoll_fds(fd, &send_fd, &recv_fd);
-  syslog(LOG_NOTICE, "%s: initial successfully%s", opt.tty,
-         opt.dry_run ? " (dry run)" : "");
   frame_t input_frame, output_frame = {.address = TP_ADDRESS_SLAVE};
   ssize_t n;
-  while (true) {
+  while (!opt.number) {
     do {
       // receive forever
       memset(&input_frame, 0, sizeof(input_frame));
@@ -365,10 +397,13 @@ int main(int argc, char *argv[]) {
     if (data_frame_infos[i].addr != NULL)
       free(data_frame_infos[i].addr);
   }
-  tcsetattr(fd, TCSANOW, &oldattr);
-  if (close(fd) == -1)
-    err(errno, "%s", opt.tty);
-  if (close(fd_dev) == -1)
+  deinit_opt(&opt);
+  if (!opt.number) {
+    tcsetattr(fd, TCSANOW, &oldattr);
+    if (close(fd) == -1)
+      err(errno, "%s", opt.tty);
+  }
+  if (!opt.dry_run && close(fd_dev) == -1)
     err(errno, AXITX_DEV_PATH);
   err(errno, NULL);
 }
