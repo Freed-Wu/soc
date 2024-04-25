@@ -178,6 +178,25 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   return len;
 }
 
+static size_t process_data_frames_dry_run(int fd,
+                                          data_frame_t *input_data_frames,
+                                          n_frame_t n_frame,
+                                          struct network_acc_reg reg,
+                                          uint8_t **p_addr, bool dry_run) {
+  size_t len;
+  if (dry_run) {
+    len = data_frame_to_data_len(input_data_frames, n_frame);
+    uint8_t *p = *p_addr = malloc(len * sizeof(uint8_t));
+    for (n_frame_t i = 0; i < n_frame; i++) {
+      memcpy(p, input_data_frames[i].data, input_data_frames[i].data_len);
+      p += input_data_frames[i].data_len;
+    }
+  } else
+    // TODO: multithread
+    len = process_data_frames(fd, input_data_frames, n_frame, reg, p_addr);
+  return len;
+}
+
 int main(int argc, char *argv[]) {
   opt_t opt;
   openlog("slave0", LOG_CONS | LOG_PERROR, 0);
@@ -275,20 +294,9 @@ int main(int argc, char *argv[]) {
 
       // process data frames
       if (sum == 0) {
-        size_t len;
-        uint8_t **p_addr = &bit_streams[input_frame.n_file].addr;
-        if (opt.dry_run) {
-          len = data_frame_to_data_len(input_data_frames, input_frame.n_frame);
-          uint8_t *p = *p_addr = malloc(len * sizeof(uint8_t));
-          for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
-            memcpy(p, input_data_frames[i].data, input_data_frames[i].data_len);
-            p += input_data_frames[i].data_len;
-          }
-        } else
-          // TODO: multithread
-          len = process_data_frames(fd_dev, input_data_frames,
-                                    input_frame.n_frame, reg, p_addr);
-        bit_streams[input_frame.n_file].len = len;
+        bit_streams[input_frame.n_file].len = process_data_frames_dry_run(
+            fd_dev, input_data_frames, input_frame.n_frame, reg,
+            &bit_streams[input_frame.n_file].addr, opt.dry_run);
       }
       break;
 
