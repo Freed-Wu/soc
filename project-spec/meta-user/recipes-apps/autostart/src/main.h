@@ -29,7 +29,7 @@ typedef struct {
 } data_frame_info_t;
 
 size_t process_data_frames(int, data_frame_t *, n_frame_t,
-                           struct network_acc_reg, uint8_t *);
+                           struct network_acc_reg, uint8_t **);
 
 __END_DECLS
 #endif /* main.h */

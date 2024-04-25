@@ -115,7 +115,7 @@ static int parse(int argc, char *argv[], opt_t *opt) {
 
 size_t process_data_frames(int fd, data_frame_t *input_data_frames,
                            n_frame_t n_frame, struct network_acc_reg reg,
-                           uint8_t *addr) {
+                           uint8_t **p_addr) {
   // convert data frames to yuv
   ssize_t yuv_len = data_frame_to_data_len(input_data_frames, n_frame);
   data_t yuv[3] = {};
@@ -164,12 +164,12 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   }
   status &= ~TP_STATUS_ENTROPY_ENCODING;
   // combine 3 channels to one
-  if (addr == NULL) {
-    addr = malloc(len);
-    if (addr == NULL)
+  if (*p_addr == NULL) {
+    *p_addr = malloc(len);
+    if (*p_addr == NULL)
       err(errno, NULL);
   }
-  uint8_t *p = addr;
+  uint8_t *p = *p_addr;
   for (int k = 0; k < 3; k++) {
     memcpy(p, data[k].addr, data[k].len);
     p += data[k].len;
@@ -275,21 +275,20 @@ int main(int argc, char *argv[]) {
 
       // process data frames
       if (sum == 0) {
+        size_t len;
+        uint8_t **p_addr = &bit_streams[input_frame.n_file].addr;
         if (opt.dry_run) {
-          bit_streams[input_frame.n_file].len =
-              data_frame_to_data_len(input_data_frames, input_frame.n_frame);
-          bit_streams[input_frame.n_file].addr =
-              malloc(bit_streams[input_frame.n_file].len * sizeof(uint8_t));
-          uint8_t *p = bit_streams[input_frame.n_file].addr;
+          len = data_frame_to_data_len(input_data_frames, input_frame.n_frame);
+          uint8_t *p = *p_addr = malloc(len * sizeof(uint8_t));
           for (n_frame_t i = 0; i < input_frame.n_frame; i++) {
             memcpy(p, input_data_frames[i].data, input_data_frames[i].data_len);
             p += input_data_frames[i].data_len;
           }
         } else
           // TODO: multithread
-          bit_streams[input_frame.n_file].len = process_data_frames(
-              fd_dev, input_data_frames, input_frame.n_frame, reg,
-              bit_streams[input_frame.n_file].addr);
+          len = process_data_frames(fd_dev, input_data_frames,
+                                    input_frame.n_frame, reg, p_addr);
+        bit_streams[input_frame.n_file].len = len;
       }
       break;
 
