@@ -55,6 +55,9 @@ make
 # apps
 cmake -Bproject-spec/meta-user/recipes-apps/autostart/build
 cmake --build project-spec/meta-user/recipes-apps/autostart/build
+# or
+meson setup project-spec/meta-user/recipes-apps/autostart/build project-spec/meta-user/recipes-apps/autostart
+meson compile -Cproject-spec/meta-user/recipes-apps/autostart/build
 ```
 
 ## Cross Compile for Develop Board
