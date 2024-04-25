@@ -53,7 +53,7 @@ static struct option longopts[] = {{"help", no_argument, NULL, 'h'},
                                    {"tty", required_argument, NULL, 't'},
                                    {"timeout", required_argument, NULL, 'T'},
                                    {"safe-time", required_argument, NULL, 'S'},
-                                   {"out-dir", required_argument, NULL, 'w'},
+                                   {"out-dir", required_argument, NULL, 'o'},
                                    {NULL, 0, NULL, 0}};
 
 static int parse(int argc, char *argv[], opt_t *opt) {
