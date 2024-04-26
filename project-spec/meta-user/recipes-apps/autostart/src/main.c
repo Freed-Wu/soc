@@ -246,6 +246,40 @@ int main(int argc, char *argv[]) {
             opt.quantization_coefficience, QUANTIFY_ADDR);
   }
 
+  for (n_file_t k = 0; k < opt.number; k++) {
+    char *filename = opt.files[k];
+    data_frame_t *data_frames;
+    n_file_t n_file = k;
+    n_frame_t n_frame;
+    int ret_status =
+        get_data_frames(filename, &n_file, &n_frame, &data_frames, opt.binary);
+    // cannot open filename
+    if (ret_status == 1) {
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
+      // skip to next picture
+      continue;
+      // cannot close filename
+    } else if (ret_status == 2) {
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
+    } else if (ret_status == 3) {
+      err(errno, NULL);
+    }
+    bit_streams[n_file].len =
+        process_data_frames_dry_run(fd_dev, data_frames, n_frame, reg,
+                                    &bit_streams[n_file].addr, opt.dry_run);
+    // save file
+    // TODO: multithread
+    filename =
+        malloc((strlen(opt.out_dir) + sizeof("XX.bin") - 1) * sizeof(char));
+    sprintf(filename, "%s/%d.bin", opt.out_dir, k);
+    if (dump_mem(filename, bit_streams[n_file].addr, bit_streams[n_file].len) ==
+        -1)
+      syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
+    else
+      syslog(LOG_NOTICE, "%s has been encoded to %s", opt.files[k], filename);
+    free(filename);
+  }
+
   int fd, send_fd, recv_fd;
   struct termios oldattr;
   if (!opt.number) {
