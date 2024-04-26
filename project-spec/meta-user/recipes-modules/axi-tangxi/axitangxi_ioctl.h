@@ -33,7 +33,7 @@
 #define DEVICE_NAME "axi_tangxi"
 
 // The standard path to the AXI DMA device
-#define AXITX_DEV_PATH ("/dev/" DEVICE_NAME)
+#define AXITX_DEV_PATH "/dev/" DEVICE_NAME
 
 // 内核参数定义
 struct axitangxi_transfer {

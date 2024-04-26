@@ -244,6 +244,7 @@ int main(int argc, char *argv[]) {
       err(errno, AXITX_DEV_PATH);
     pl_init(fd_dev, &reg, opt.weight, WEIGHT_ADDR,
             opt.quantization_coefficience, QUANTIFY_ADDR);
+    syslog(LOG_NOTICE, AXITX_DEV_PATH " init successfully");
   }
 
   for (n_file_t k = 0; k < opt.number; k++) {
