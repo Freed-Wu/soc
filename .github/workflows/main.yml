@@ -12,39 +12,41 @@
 permissions:
   contents: write
 
+env:
+  python-version: 3.x
+  cache: pip
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.python-version}}
+          cache: ${{env.cache}}
+          cache-dependency-path: |-
+            requirements.txt
       - name: Install dependencies
         run: |
-          sudo apt-get -y update
-          sudo apt-get -y install rpm
-          # sudo apt-get -y install rpm check
+          pip install -rrequirements.txt
       - name: Build
-        # https://bugs.launchpad.net/ubuntu/+source/check/+bug/2019478
         run: |
-          cd project-spec/meta-user/recipes-apps/autostart
-          cmake -Bbuild
-          cmake --build build
-          ctest --test-dir build
-          cd build
-          cpack -G DEB
-          cpack -G RPM
-      - uses: codecov/codecov-action@v3
-        with:
-          gcov: true
-      - uses: actions/upload-artifact@v3
+          meson setup build project-spec/meta-user/recipes-apps/autostart
+          meson compile -Cbuild
+          # meson test -Cbuild
+          meson dist -Cbuild
+      # - uses: codecov/codecov-action@v3
+      #   with:
+      #     gcov: true
+      - uses: actions/upload-artifact@v4
         if: "! startsWith(github.ref, 'refs/tags/')"
         with:
           path: |
-            build/*.deb
-            build/*.rpm
-      - uses: softprops/action-gh-release@v1
+            build/meson-dist/*.tar.xz
+      - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           # body_path: build/CHANGELOG.md
           files: |
-            build/*.deb
-            build/*.rpm
+            build/meson-dist/*.tar.xz
