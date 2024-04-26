@@ -15,6 +15,7 @@ int print_help(const struct option *longopts, const char *arg0) {
   unsigned int i = 0;
   char *base = strdup(arg0);
   printf("%s", basename(base));
+  free(base);
   struct option o = longopts[i];
   while (o.name != NULL) {
     char *name = malloc(strlen(o.name) + strlen("(|0)"));
