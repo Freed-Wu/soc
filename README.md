@@ -157,6 +157,10 @@ petalinux-config
 petalinux-config -c rootfs
 ```
 
+- Filesystem Packages
+  - misc
+    - gdb
+      - [x] gdb-server
 - Image Features
   - [x] package-management
   - [x] serial-autologin-root
@@ -208,6 +212,22 @@ minicom -D/dev/ttyUSB0
 master /the/path/of/test.yuv
 # display log
 journalctl -tmaster -fn0
+```
+
+For debug, connect board and PC by a WLAN, then add IP address in board and PC,
+such as:
+
+Board:
+
+```sh
+ip a add 192.168.151.112/24 dev eth0
+gdbserver 192.168.151.112:6666 main
+```
+
+PC:
+
+```sh
+cgdb -darm-none-eabi-gdb
 ```
 
 ## References

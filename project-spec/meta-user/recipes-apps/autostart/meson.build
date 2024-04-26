@@ -2,6 +2,7 @@ project(
   'deep-space-detection',
   ['c', 'cpp'],
 )
+add_project_arguments('-O0', '-g', language: ['cpp', 'c'])
 subdir('src')
 systemd_dep = dependency('systemd', method: 'pkg-config', required: false)
 systemd_system_unit_dir = systemd_dep.get_variable(
