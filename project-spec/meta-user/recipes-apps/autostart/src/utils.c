@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -53,10 +54,22 @@ int print_help(const struct option *longopts, const char *arg0) {
   return EXIT_SUCCESS;
 }
 
+int mkdir_p(const char *path, mode_t mode) {
+  char *dir = strdup(path);
+  dirname(dir);
+  struct stat st;
+  if (stat(dir, &st) == -1) {
+    return mkdir(dir, mode);
+  }
+  return 0;
+}
+
 /**
  * for debug
  */
 ssize_t dump_mem(char *filename, void *addr, size_t size) {
+  if (mkdir_p(filename, 0755) == -1)
+    return -1;
   int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
     return -1;

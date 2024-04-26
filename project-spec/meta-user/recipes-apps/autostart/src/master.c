@@ -106,6 +106,8 @@ static int parse(int argc, char *argv[], opt_t *opt) {
 
 ssize_t dump_data_frames(data_frame_t *input_data_frames, n_frame_t n_frame,
                          char *filename) {
+  if (mkdir_p(filename, 0755) == -1)
+    return -1;
   int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
     return -1;

@@ -12,6 +12,7 @@ __BEGIN_DECLS
                   "Written by Wu Zhenyu <wuzhenyu@ustc.edu>\n"
 
 int print_help(const struct option *longopts, const char *arg0);
+int mkdir_p(const char *path, mode_t mode);
 ssize_t dump_mem(char *filename, void *addr, size_t size);
 void fd_to_epoll_fds(int fd, int *send_fd, int *recv_fd);
 
