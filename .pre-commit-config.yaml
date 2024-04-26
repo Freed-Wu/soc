@@ -76,12 +76,12 @@ repos:
     hooks:
       - id: shfmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.5
+    rev: v0.4.1
     hooks:
       - id: ruff
       - id: ruff-format
   - repo: https://github.com/kumaraditya303/mirrors-pyright
-    rev: v1.1.357
+    rev: v1.1.359
     hooks:
       - id: pyright
   - repo: https://github.com/pre-commit/mirrors-clang-format
@@ -97,7 +97,7 @@ repos:
     hooks:
       - id: neocmakelsp-format
   - repo: https://github.com/priv-kweihmann/oelint-adv
-    rev: 4.4.1
+    rev: 5.3.0
     hooks:
       - id: oelint-adv
 

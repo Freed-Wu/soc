@@ -3,7 +3,7 @@ project(
   ['c', 'cpp'],
 )
 subdir('src')
-systemd_dep = dependency('systemd', method: 'pkg-config')
+systemd_dep = dependency('systemd', method: 'pkg-config', required: false)
 systemd_system_unit_dir = systemd_dep.get_variable(
   'systemd_system_unit_dir',
   default_value: '/lib/systemd/system',

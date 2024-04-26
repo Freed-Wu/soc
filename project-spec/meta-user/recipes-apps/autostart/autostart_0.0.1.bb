@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://${FILE_DIRNAME}/../../../../LICENSE;md5=1ebbd3e34237a
 SRC_URI = "file://${FILE_DIRNAME}"
 S = "${WORKDIR}/${FILE_DIRNAME}"
 
-inherit cmake pkgconfig
+inherit meson pkgconfig
 
 FILES:${PN} += "${systemd_unitdir}/* ${libdir}/*"
 # nooelint: oelint.var.filesoverride
