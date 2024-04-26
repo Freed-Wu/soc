@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
     // TODO: multithread
     char *filename =
         malloc((strlen(opt.out_dir) + sizeof("XX.bin") - 1) * sizeof(char));
-    sprintf(filename, "%s/%d.bin", opt.out_dir, k);
+    sprintf(filename, "%s/%d.bin", opt.out_dir, n_files[k]);
     if (dump_data_frames(input_data_frames, input_frame.n_frame, filename) ==
         -1)
       syslog(LOG_ERR, "%s: %s", filename, strerror(errno));
