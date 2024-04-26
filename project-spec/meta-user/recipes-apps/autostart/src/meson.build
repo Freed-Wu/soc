@@ -24,7 +24,7 @@ lib_transmission_protocol = library(
   link_with: [lib_crc, lib_utils],
   install: true,
 )
-executable(
+main = executable(
   'main',
   dir + 'main.c',
   link_with: [lib_axitangxi, lib_utils, lib_transmission_protocol, lib_coding],
@@ -36,3 +36,4 @@ executable(
   link_with: [lib_utils, lib_transmission_protocol],
   dependencies: thread_dep,
 )
+test('main', main, args: ['-d', meson.project_source_root() + '/meson.build'])

@@ -34,11 +34,11 @@ jobs:
         run: |
           meson setup build project-spec/meta-user/recipes-apps/autostart
           meson compile -Cbuild
-          # meson test -Cbuild
+          meson test -Cbuild
           meson dist -Cbuild
-      # - uses: codecov/codecov-action@v3
-      #   with:
-      #     gcov: true
+      - uses: codecov/codecov-action@v3
+        with:
+          gcov: true
       - uses: actions/upload-artifact@v4
         if: "! startsWith(github.ref, 'refs/tags/')"
         with:
