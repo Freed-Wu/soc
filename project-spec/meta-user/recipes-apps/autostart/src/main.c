@@ -439,5 +439,5 @@ int main(int argc, char *argv[]) {
   }
   if (!opt.dry_run && close(fd_dev) == -1)
     err(errno, AXITX_DEV_PATH);
-  err(errno, NULL);
+  return EXIT_SUCCESS;
 }
