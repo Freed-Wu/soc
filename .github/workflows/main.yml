@@ -30,6 +30,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -rrequirements.txt
+      - name: Prepare
+        run: |
+          mkdir project-spec/meta-user/recipes-apps/autostart/assets/bin
+          cd project-spec/meta-user/recipes-apps/autostart/assets/bin
+          touch weight.bin
       - name: Build
         run: |
           meson setup build project-spec/meta-user/recipes-apps/autostart
