@@ -8,13 +8,18 @@
  * @bug
  **/
 
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+#include <linux/interrupt.h>
+#else
+#include <linux/ide.h>
+#endif
 #include <linux/cdev.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h> // DMA shared buffers interface
 #include <linux/errno.h>
 #include <linux/init.h>
-#include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/kernel.h>
 #include <linux/list.h> // Linked list definitions and functions
@@ -26,7 +31,6 @@
 #include <linux/of_irq.h>
 #include <linux/types.h>
 #include <linux/uaccess.h> // Userspace memory access functions
-#include <linux/version.h>
 
 #include "axitangxi_dev.h"
 #include "axitangxi_ioctl.h"
