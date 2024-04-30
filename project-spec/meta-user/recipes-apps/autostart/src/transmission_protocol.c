@@ -199,6 +199,7 @@ n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
   data_frame_t *temp = calloc(len, sizeof(uint8_t));
   ssize_t n = 0;
   size_t count = 0;
+  syslog(LOG_NOTICE, "begin to read");
   do {
     ssize_t size = read(event.data.fd, (uint8_t *)temp + n, len - n);
     if (size > 0) {
@@ -210,6 +211,7 @@ n_frame_t receive_data_frames(int recv_fd, data_frame_t *input_data_frames,
              n / sizeof(data_frame_t), n % sizeof(data_frame_t), count);
     }
   } while (n < len && count < COUNT);
+  syslog(LOG_NOTICE, "finish to read");
   if (count == COUNT)
     syslog(LOG_INFO, "timeout overrun %zu times", count);
 

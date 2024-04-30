@@ -346,8 +346,10 @@ int main(int argc, char *argv[]) {
       if (data_frame_infos[input_frame.n_file].addr == NULL) {
         data_frame_infos[input_frame.n_file].addr =
             calloc(input_frame.n_frame, sizeof(data_frame_t));
-        if (data_frame_infos[input_frame.n_file].addr == NULL)
+        if (data_frame_infos[input_frame.n_file].addr == NULL) {
+          syslog(LOG_ERR, "malloc failed");
           err(errno, NULL);
+        }
       }
       data_frame_infos[input_frame.n_file].total_len = input_frame.n_frame;
       data_frame_t *input_data_frames =
