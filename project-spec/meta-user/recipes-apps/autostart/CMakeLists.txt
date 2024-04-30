@@ -30,11 +30,9 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/assets/systemd/system-preset/98-autostart.preset
   DESTINATION ${SYSTEMD_SYSTEM_PRESET_DIR})
 include(GNUInstallDirs)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/assets/bin/weight.bin)
-  install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/assets/bin/weight.bin
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/autostart)
-endif()
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/assets/bin/weight.bin
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/autostart)
 
 include(CTest)
 add_subdirectory(tests EXCLUDE_FORM_ALL)

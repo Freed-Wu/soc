@@ -4,6 +4,10 @@ project(
 )
 add_project_arguments('-O0', '-g', language: ['cpp', 'c'])
 subdir('src')
+install_data(
+  'assets/bin/weight.bin',
+  install_dir: '/usr/share/autostart',
+)
 systemd_dep = dependency('systemd', method: 'pkg-config', required: false)
 systemd_system_unit_dir = systemd_dep.get_variable(
   'systemd_system_unit_dir',
