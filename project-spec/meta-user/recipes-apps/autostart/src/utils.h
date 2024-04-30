@@ -6,6 +6,7 @@
 #include "config.h"
 __BEGIN_DECLS
 
+#define TIMEOUT 600000
 #define VERSION                                                                \
   PROJECT_VERSION "\n"                                                         \
                   "Copyright (C) 2023\n"                                       \

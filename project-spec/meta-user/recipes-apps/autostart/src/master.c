@@ -323,8 +323,8 @@ int main(int argc, char *argv[]) {
       sleep(5);
 
       // receive data frames
-      sum = receive_data_frames(recv_fd, input_data_frames, input_frame,
-                                opt.timeout);
+      sum =
+          receive_data_frames(recv_fd, input_data_frames, input_frame, TIMEOUT);
       syslog(LOG_NOTICE, "%u frames is unreceived", sum);
       if (tcflush(fd, TCIFLUSH) == -1)
         err(errno, NULL);
