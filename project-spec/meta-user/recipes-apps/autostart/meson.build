@@ -1,8 +1,8 @@
 project(
   'deep-space-detection',
   ['c', 'cpp'],
+  default_options: ['debug=true'],
 )
-add_project_arguments('-O0', '-g', language: ['cpp', 'c'])
 subdir('src')
 install_data(
   'assets/bin/weight.bin',
