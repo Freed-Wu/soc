@@ -186,8 +186,10 @@ size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
     // TODO: multithread
-    data[k].len =
-        coding(gmm, (uint16_t *)trans[k].addr, trans[k].len, data[k].addr);
+    uint32_t low_bound = 0;
+    uint32_t high_bound = 65535;
+    data[k].len = coding(gmm, (uint16_t *)trans[k].addr, trans[k].len,
+                         data[k].addr, low_bound, high_bound);
 
     len += data[k].len;
   }

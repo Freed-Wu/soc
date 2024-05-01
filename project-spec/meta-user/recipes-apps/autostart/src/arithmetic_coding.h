@@ -1,22 +1,21 @@
 #pragma once
-#include <assert.h>
+#include <cstdint>
 #include <fstream>
-#include <iostream>
-#include <string>
+#include <vector>
 
 class BitOutputStream {
 public:
-  BitOutputStream(std::fstream &file)
-      : m_bit_out(file), m_currentbyte(0), m_numbitsfilled(0) {};
+  BitOutputStream(uint8_t *_addr)
+      : data_addr(_addr), m_currentbyte(0), m_numbitsfilled(0) {};
   void write(char);
   void close();
-
-private:
+  uint8_t *data_addr;
   char m_currentbyte;  // The accumulated bits for the current byte, always in
                        // the range [0x00, 0xFF]
   int m_numbitsfilled; // Number of accumulated bits in the current byte, always
                        // between 0 and 7 (inclusive)
-  std::fstream &m_bit_out;
+
+  size_t size = 0;
 };
 
 class BitInputStream {
@@ -28,11 +27,11 @@ public:
   void close();
 
 private:
+  std::fstream &m_bit_in;
   int m_currentbyte; // The accumulated bits for the current byte, always in the
                      // range [0x00, 0xFF]
   int m_numbitsremaining; // Number of accumulated bits in the current byte,
                           // always between 0 and 7 (inclusive)
-  std::fstream &m_bit_in;
 };
 
 class CountingBitOutputStream {
@@ -43,10 +42,24 @@ public:
   void write(char);
 
 private:
-  int m_num_bits;
   BitOutputStream &m_bit_out;
+  int m_num_bits;
 };
 
+class GmmTable {
+public:
+  std::vector<uint32_t> symlow, symhigh;
+  uint64_t total_freqs = 0;
+  uint32_t low_bound = 0, high_bound = 65536;
+  char exp_file_path[255] = "D:/code/codec/data/exp.bin";
+  char cdf_file_path[255] = "D:/code/codec/data/cdf.bin";
+
+public:
+  GmmTable(uint16_t m_probs[3], uint16_t m_means[3], uint16_t m_stds[3],
+           uint32_t freqs_resolution, uint32_t _low_bound,
+           uint32_t _high_bound);
+  std::uint32_t getSymbolLimit() const;
+};
 // class FrequencyTable
 //{
 // public:
