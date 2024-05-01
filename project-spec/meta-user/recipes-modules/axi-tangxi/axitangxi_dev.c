@@ -14,6 +14,9 @@
 #else
 #include <linux/ide.h>
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
+#include <linux/platform_device.h>
+#endif
 #include <linux/cdev.h>
 #include <linux/delay.h>
 #include <linux/device.h>
