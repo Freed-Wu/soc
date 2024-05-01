@@ -214,7 +214,9 @@ master /the/path/of/test.yuv
 journalctl -tmaster -fn0
 ```
 
-For debug, connect board and PC by a WLAN, then add IP address in board and PC,
+## Debug
+
+Connect board and PC by a WLAN, then add IP address in board and PC,
 such as:
 
 Board:
