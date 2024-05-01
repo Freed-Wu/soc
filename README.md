@@ -45,8 +45,8 @@ Dependencies:
   - [make](https://www.gnu.org/software/make)
   - [linux-headers](https://archlinux.org/packages/core/x86_64/linux-headers)
 - apps
-  - [cmake](https://cmake.org)
-  - [pkgconf](https://gitea.treehouse.systems/ariadne/pkgconf)
+  - [cmake](https://cmake.org) or [meson](https://mesonbuild.com/)
+  - [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/)
   - [google test](https://github.com/google/googletest): optional, for unit test
 
 ```sh
