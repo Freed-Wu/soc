@@ -1,10 +1,10 @@
 # https://stackoverflow.com/a/73509979/16027269
 SRC := $(patsubst %/,%,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
+DRIVER_NAME := $(notdir $(SRC))
+$(DRIVER_NAME)-objs := axi_tangxi_platform.o axitangxi_dev.o axi_tangxi.o
 ifneq ($(KERNELRELEASE),)
-	DRIVER_NAME := $(notdir $(SRC))
 	ccflags-y += -g -DDEBUG
 	obj-m := $(DRIVER_NAME).o
-	$(DRIVER_NAME)-objs := axi_tangxi_platform.o axitangxi_dev.o axi_tangxi.o
 else
 # https://docs.yoctoproject.org/1.9/ref-manual/ref-manual.html#var-KERNEL_SRC
 ifeq ($(KERNEL_SRC),)
@@ -20,9 +20,11 @@ endif
 endif
 KERNEL_MAKE := $(MAKE) -C$(KERNEL_SRC) M=$(SRC)
 RULES := all modules modules_prepare modules_check modules_install clean
-.PHONY: default $(RULES) install uninstall reinstall
+.PHONY: default $(RULES)
 default:
-	$(KERNEL_MAKE)
+	$(KERNEL_MAKE) && $(MAKE) $(SRC)/compile_commands.json
 $(RULES):
-	$(KERNEL_MAKE) $@
+	$(KERNEL_MAKE) $@ && $(MAKE) $(SRC)/compile_commands.json
+$(SRC)/compile_commands.json: $(patsubst %,$(SRC)/%,$($(DRIVER_NAME)-objs)) $(SRC)/modules.order
+	$(KERNEL_SRC)/scripts/clang-tools/gen_compile_commands.py -d$(KERNEL_SRC) -o$(SRC)/compile_commands.json $(SRC)
 endif
