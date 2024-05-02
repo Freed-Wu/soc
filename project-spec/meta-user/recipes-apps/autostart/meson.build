@@ -4,10 +4,12 @@ project(
   default_options: ['debug=true'],
 )
 subdir('src')
-install_data(
-  'assets/bin/weight.bin',
-  install_dir: '/usr/share/autostart',
-)
+if get_option('binary')
+  install_data(
+    'assets/bin/weight.bin',
+    install_dir: '/usr/share/autostart',
+  )
+endif
 systemd_dep = dependency('systemd', method: 'pkg-config', required: false)
 systemd_system_unit_dir = systemd_dep.get_variable(
   'systemd_system_unit_dir',

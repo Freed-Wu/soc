@@ -30,16 +30,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -rrequirements.txt
-      - name: Prepare
-        run: |
-          mkdir project-spec/meta-user/recipes-apps/autostart/assets/bin
-          cd project-spec/meta-user/recipes-apps/autostart/assets/bin
-          touch weight.bin
       - name: Build
         run: |
-          meson setup build project-spec/meta-user/recipes-apps/autostart
-          meson compile -Cbuild
-          meson test -Cbuild
+          cd project-spec/meta-user/recipes-apps/autostart
+          meson setup build -Dbinary=false
           meson dist -Cbuild
       - uses: codecov/codecov-action@v3
         with:
