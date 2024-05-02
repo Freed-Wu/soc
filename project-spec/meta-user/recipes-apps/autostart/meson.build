@@ -5,8 +5,9 @@ project(
 )
 subdir('src')
 if get_option('binary')
+  bin = 'assets/bin/'
   install_data(
-    'assets/bin/weight.bin',
+    [bin + 'weight.bin', bin + 'cdf.bin', bin + 'exp.bin'],
     install_dir: '/usr/share/autostart',
   )
 endif
