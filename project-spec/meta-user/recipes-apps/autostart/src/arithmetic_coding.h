@@ -51,8 +51,8 @@ public:
   std::vector<uint32_t> symlow, symhigh;
   uint64_t total_freqs = 0;
   uint32_t low_bound = 0, high_bound = 65536;
-  char exp_file_path[255] = "D:/code/codec/data/exp.bin";
-  char cdf_file_path[255] = "D:/code/codec/data/cdf.bin";
+  char exp_file_path[255] = "/usr/share/autostart/exp.bin";
+  char cdf_file_path[255] = "/usr/share/autostart/cdf.bin";
 
 public:
   GmmTable(uint16_t m_probs[3], uint16_t m_means[3], uint16_t m_stds[3],
