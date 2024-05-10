@@ -1,0 +1,4 @@
+CONFIG_SUBSYSTEM_COMPONENT_U__BOOT_NAME_EXT_LOCAL_SRC_PATH="/mnt/xilinx/cache/u-boot-xlnx-xlnx_rebase_v2023.01_2023.1"
+CONFIG_SUBSYSTEM_COMPONENT_LINUX__KERNEL_NAME_EXT_LOCAL_SRC_PATH="/mnt/xilinx/cache/linux-xlnx-xlnx_rebase_v6.1_2023.1"
+CONFIG_PRE_MIRROR_URL="file:///mnt/xilinx/cache/downloads"
+CONFIG_YOCTO_LOCAL_SSTATE_FEEDS_URL="/mnt/xilinx/cache/aarch64"

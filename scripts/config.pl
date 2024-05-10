@@ -9,4 +9,5 @@ unless ( $#ARGV < 0 ) {
 }
 while ( my ( $k, $v ) = each %config ) {
     s/$k=.*/$k=$v/;
+    s/# $k is not set/$k=$v/;
 }

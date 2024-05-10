@@ -119,54 +119,12 @@ To speed up building, you need download:
   - [downloads](https://www.xilinx.com/member/forms/download/xef.html?filename=daily-downloads_2023.1_09121239.tar.gz)
   - [aarch64 sstate-cache](https://www.xilinx.com/member/forms/download/xef.html?filename=sstate_aarch64_2023.1_09121239.tar.gz)
 
-Then extract them.
+Then extract them to some paths. Refer
+[assets/configs/example/config](assets/configs/example/config) to modify these
+paths.
 
 ```sh
-petalinux-config
-```
-
-![petalinux-config](https://github.com/ustc-ivclab/.github/assets/32936898/e0ddb510-d0fb-4db8-92aa-d6feac9da9db)
-
-- Linux Components Selection
-  - u-boot
-    - [x] ext-local-src
-  - External u-boot local source settings
-    - External u-boot local source path
-      - `/the/path/of/downloaded/` <https://github.com/Xilinx/u-boot-xlnx>
-  - linux-kernel
-    - [x] ext-local-src
-  - External linux-kernel local source settings
-    - External linux-kernel local source path
-      - `/the/path/of/downloaded/` <https://github.com/Xilinx/linux-xlnx>
-- FPGA Manager
-  - [x] Fpga Manager
-- Image Packaging Configuration
-  - Root filesystem type
-    - [x] EXT4 (SD/eMMC/SATA/USB): image is too large for initrd.
-  - Device node of SD device
-    - `/dev/mmcblk1p2`: 2nd partition of SD card. eMMC is `/dev/mmcblk0`.
-- Yocto Settings
-  - Add pre-mirror url
-    - pre-mirror url path
-      - `file:///the/path/of/downloaded/downloads`
-  - Local sstate feeds settings
-    - local sstate feeds url
-      - `/the/path/of/downloaded/sstate-cache/of/aarch64`
-
-```sh
-petalinux-config -c rootfs
-```
-
-- Filesystem Packages
-  - misc
-    - gdb
-      - [x] gdb-server
-- Image Features
-  - [x] package-management
-  - [x] serial-autologin-root
-
-```sh
-scripts/config.sh
+scripts/config.sh assets/configs/example/config
 ```
 
 ### Build
