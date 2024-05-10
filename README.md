@@ -17,12 +17,6 @@ The repository contains:
 
 Linux driver and Linux application share `axitangxi_ioctl.h`.
 
-Some binary files needed by this repository:
-
-- `system.xsa`: a zip file compressing FPGA's `*.bit` and some generated tcl/c files
-- `weight.bin`: weight factors of neural network
-- `quantify.bin`: quantification coefficiences
-
 The repository doesn't contain:
 
 - the code to build FPGA's `*.bit`
@@ -45,19 +39,21 @@ Dependencies:
   - [make](https://www.gnu.org/software/make)
   - [linux-headers](https://archlinux.org/packages/core/x86_64/linux-headers)
 - apps
-  - [cmake](https://cmake.org) or [meson](https://mesonbuild.com/)
+  - [meson](https://mesonbuild.com/) or [cmake](https://cmake.org)
   - [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/)
   - [google test](https://github.com/google/googletest): optional, for unit test
+
+Some required binary files `*.bin` can be seen [here](#binary-files).
 
 ```sh
 # modules
 make
 # apps
-cmake -Bproject-spec/meta-user/recipes-apps/autostart/build
-cmake --build project-spec/meta-user/recipes-apps/autostart/build
-# or
 meson setup project-spec/meta-user/recipes-apps/autostart/build project-spec/meta-user/recipes-apps/autostart
 meson compile -Cproject-spec/meta-user/recipes-apps/autostart/build
+# or
+cmake -Bproject-spec/meta-user/recipes-apps/autostart/build
+cmake --build project-spec/meta-user/recipes-apps/autostart/build
 ```
 
 ## Cross Compile for Develop Board
@@ -78,7 +74,7 @@ Dependencies:
 <!-- markdownlint-disable MD013 -->
 
 ```sh
-petalinux-create -t project -n soc --template zynqMP
+petalinux-create -tproject -nsoc --template zynqMP
 cd soc
 # download source code to `soc/`
 git clone --depth=1 --bare https://github.com/ustc-ivclab/deep-space-detection .git
@@ -88,30 +84,27 @@ git reset --hard
 
 <!-- markdownlint-enable MD013 -->
 
-### Get a Hardware Description File `system.xsa`
-
-You can download `system.xsa` from
-[Release](https://github.com/ustc-ivclab/deep-space-detection/releases)
-to `project-spec/hw-description`.
-
-Or you can generate it by yourself:
-
-```sh
-# make sure `vivado` and `xsct` in your `$PATH`
-# wait about 4 minutes for `hw/build/project/system.xsa`
-hw/generate-xsa.tcl
-# or
-vivado -mode batch -source hw/generate-xsa.tcl
-# test can be skipped
-hw/test-xsa.tcl
-# or
-xsct hw/test-xsa.tcl
-cp hw/build/project/system.xsa project-spec/hw-description
-```
-
 ### Configure
 
-To speed up building, you need download:
+#### Binary files
+
+Before building, some required binary files can be downloaded from
+[Release](https://github.com/ustc-ivclab/deep-space-detection/releases):
+
+- `system.xsa`: a zip file compressing FPGA's `*.bit` and some generated tcl/c
+  files, which is called as hardware description file
+- `weight.bin`: weight factors of neural network
+- `exp.bin`: gauss function factors for speeding up entropy encoding
+- `cdf.bin`: cdf function factors for speeding up entropy encoding
+
+Currently, `system.xsa` has hard encoded some coefficiences, so the followings
+are unnecessary temporally:
+
+- `quantify.bin`: quantification coefficiences
+
+#### Third-party Files
+
+To speed up building, you need to download:
 
 - [u-boot-xlnx](https://github.com/Xilinx/u-boot-xlnx/tags)
 - [linux-xlnx](https://github.com/Xilinx/linux-xlnx/tags)
@@ -124,10 +117,15 @@ Then extract them to some paths. Refer
 paths.
 
 ```sh
+cp /the/path/of/system.xsa project-spec/hw-description
+install -Dm644 /the/path/of/{weight,cdf,exp}.bin -t project-spec/meta-user/recipes-apps/autostart/assets/bin
+# wait > 60 seconds
 scripts/config.sh assets/configs/example/config
 ```
 
 ### Build
+
+Every time source code is modified, you need to rerun:
 
 ```sh
 # on the first time it costs about 1 hour while it costs 2.5 minutes later
@@ -136,14 +134,31 @@ scripts/build.sh
 
 ### Burn
 
+Assume your SD card has 2 parts:
+
+1. BOOT: vfat
+2. rootfs: ext4
+
+If not, you can generate it by:
+
 ```sh
-# insert SD card to your PC
-# assume your SD card has 2 part: BOOT (vfat) and root (ext4)
+# create two parts
+sudo fdisk /dev/sdb
+# create filesystems of two parts
+sudo scripts/create-disk.sh /dev/sdb
+```
+
+Insert SD card to your PC. Run:
+
+```sh
 # wait > 10 seconds
 scripts/burn.sh
-# insert SD card to your board
-# reset the board
 ```
+
+Then:
+
+1. insert SD card to your board
+2. reset the board
 
 ## Usage
 
@@ -174,6 +189,8 @@ journalctl -tmaster -fn0
 
 ## Debug
 
+### App
+
 Connect board and PC by a WLAN, then add IP address in board and PC,
 such as:
 
@@ -188,6 +205,21 @@ PC:
 
 ```sh
 cgdb -darm-none-eabi-gdb
+```
+
+### Hardware description file
+
+You can generate an example `system.xsa` which doesn't contain the code of
+neural network.
+
+Make sure `vivado` and `xsct` in your `$PATH`.
+
+```sh
+# wait about 4 minutes
+hw/generate-xsa.tcl
+# test, it can be skipped
+hw/test-xsa.tcl
+cp hw/build/project/system.xsa project-spec/hw-description
 ```
 
 ## References
