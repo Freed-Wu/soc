@@ -97,8 +97,8 @@ Before building, some required binary files can be downloaded from
 - `exp.bin`: gauss function factors for speeding up entropy encoding
 - `cdf.bin`: cdf function factors for speeding up entropy encoding
 
-Currently, `system.xsa` has hard encoded some coefficiences, so the followings
-are unnecessary temporally:
+Currently, `system.xsa` has hard encoded some coefficiences, so the following
+files are unnecessary temporally:
 
 - `quantify.bin`: quantification coefficiences
 
