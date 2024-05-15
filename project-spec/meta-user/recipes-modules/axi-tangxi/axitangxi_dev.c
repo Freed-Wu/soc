@@ -568,7 +568,7 @@ void inline reg_unmap(void) {
 }
 
 /* 模块加载时会调用的函数 */
-int axitangxi_chrdev_init(struct axitangxi_device *axitangxi_dev) {
+int axitangxi_chrdev_init(struct axitangxi_device *dev) {
   /* 用于接受返回值 */
   u32 ret = 0;
 
@@ -577,6 +577,7 @@ int axitangxi_chrdev_init(struct axitangxi_device *axitangxi_dev) {
   //    spin_lock_init(&alinx_char.lock);
 
   /** 设备框架 **/
+  axitangxi_dev = dev;
 
   /* 获取设备节点 */
   axitangxi_dev->nd = of_find_node_by_path("/amba_pl@0/axi_tangxi@80000000");
