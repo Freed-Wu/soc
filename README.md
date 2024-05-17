@@ -23,14 +23,6 @@ The repository doesn't contain:
 - the code to train neural network and generate `weight.bin` and
   `quantify.bin`, please see <https://gitlab.com/iWave/iwave>
 
-All documents:
-
-- [图像压缩软件设计报告大纲](docs/resources/design-report.md): written by Cheng Ran
-- [搭载板图像加速处理软件与中心机的串口传输协议](docs/resources/serial-transmission-protocol.md):
-  written by Li Yunfei
-- [基于 linux 系统上与 tangxi 芯片通信的 AXI 驱动](docs/resources/build.md): written by Wang Yang
-- [数据格式](docs/resources/format.md): written by Tao Jie
-
 ## Build for Local Machine
 
 Dependencies:
@@ -221,6 +213,14 @@ hw/generate-xsa.tcl
 hw/test-xsa.tcl
 cp hw/build/project/system.xsa project-spec/hw-description
 ```
+
+## Documents
+
+- [图像压缩软件设计报告大纲](docs/resources/design-report.md): written by Cheng Ran
+- [搭载板图像加速处理软件与中心机的串口传输协议](docs/resources/serial-transmission-protocol.md):
+  written by Li Yunfei
+- [基于 linux 系统上与 tangxi 芯片通信的 AXI 驱动](docs/resources/build.md): written by Wang Yang
+- [数据格式](docs/resources/format.md): written by Tao Jie
 
 ## References
 
