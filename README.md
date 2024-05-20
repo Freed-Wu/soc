@@ -183,6 +183,17 @@ journalctl -tmaster -fn0
 
 ### App
 
+Add [example kconfig](assets/configs/rootfsconfigs/Kconfig.user) to
+[kconfig](project-spec/configs/rootfsconfigs/Kconfig.user).
+
+Add the following code to [rootfs_config](project-spec/configs/rootfs_config):
+
+```config
+CONFIG_autostart-dbg=y
+```
+
+Rebuild and reburn it.
+
 Connect board and PC by a WLAN, then add IP address in board and PC,
 such as:
 
