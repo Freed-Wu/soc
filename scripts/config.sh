@@ -6,14 +6,12 @@ cd "$(dirname "$(readlink -f "$0")")/.."
 petalinux-config --silentconfig
 petalinux-config -crootfs --silentconfig
 
-# config again because some option will occur after `petalinux-config --silentconfig`
+# configure again because some options will occur after `petalinux-config --silentconfig`
 for _i in 1 2; do
-	# common config
-	scripts/config.pl assets/configs/config project-spec/configs/config
-	scripts/config.pl assets/configs/config project-spec/configs/rootfs_config
-	# customized config
-	scripts/config.pl "${1:-assets/configs/example/config}" project-spec/configs/config
-	scripts/config.pl "${1:-assets/configs/example/config}" project-spec/configs/rootfs_config
+	for config; do
+		scripts/config.pl "$config" project-spec/configs/config
+		scripts/config.pl "$config" project-spec/configs/rootfs_config
+	done
 	# refresh config
 	petalinux-config --silentconfig
 	petalinux-config -crootfs --silentconfig
