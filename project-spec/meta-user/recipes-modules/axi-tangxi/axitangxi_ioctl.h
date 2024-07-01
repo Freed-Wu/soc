@@ -23,8 +23,8 @@
 /*----------------------------------------------------------------------------
  * IOCTL Argument Definitions
  *----------------------------------------------------------------------------*/
-// The default timeout for DMA is 10 seconds
-#define AXI_TANGXI_TIMEOUT 10000
+// The default timeout for DMA in milliseconds
+#define AXI_TANGXI_TIMEOUT 1800000
 
 // 突发长度默认最大 1024*1024 /16
 #define BURST_SIZE 65536
