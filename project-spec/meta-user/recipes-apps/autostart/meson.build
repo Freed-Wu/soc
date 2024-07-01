@@ -28,3 +28,7 @@ install_data(
   'assets/systemd/system-preset/98-autostart.preset',
   install_dir: systemd_system_preset_dir,
 )
+install_data(
+  'scripts/post-burn-emmc.sh',
+  install_dir: 'bin',
+)

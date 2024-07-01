@@ -143,17 +143,34 @@ sudo fdisk /dev/sdb
 sudo scripts/create-disk.sh /dev/sdb
 ```
 
-Insert SD card to your PC. Run:
+Insert the SD card to your PC. For eMMC, make sure the SD card has been burn.
+
+Run:
 
 ```sh
 # wait > 10 seconds
+# for SD
 scripts/burn.sh
+# for eMMC
+scripts/burn-emmc.sh
 ```
 
 Then:
 
-1. insert SD card to your board
-2. reset the board
+For SD:
+
+1. insert the SD card to your board
+2. set switch to 0101
+3. reset the board
+
+For eMMC:
+
+1. insert the SD card to your board
+2. set switch to 0101
+3. reset the board
+4. run `post-burn-emmc.sh`
+5. set switch to 0110
+6. reset the board
 
 ## Usage
 
