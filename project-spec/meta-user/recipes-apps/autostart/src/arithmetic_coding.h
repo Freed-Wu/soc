@@ -128,7 +128,7 @@ private:
 
 class ArithmeticDecoder : public ArithmeticCoderBase {
 public:
-  ArithmeticDecoder(ArithmeticCoderBase &bitin);
+  ArithmeticDecoder(ArithmeticCoderBase &bit_in);
   int read();
 
 private:

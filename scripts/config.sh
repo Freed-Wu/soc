@@ -7,16 +7,16 @@ petalinux-config --silentconfig
 petalinux-config -crootfs --silentconfig
 
 # config again because some option will occur after `petalinux-config --silentconfig`
-for _i in 1 2 ; do
-  # common config
-  scripts/config.pl assets/configs/config project-spec/configs/config
-  scripts/config.pl assets/configs/config project-spec/configs/rootfs_config
-  # customized config
-  scripts/config.pl "${1:-assets/configs/example/config}" project-spec/configs/config
-  scripts/config.pl "${1:-assets/configs/example/config}" project-spec/configs/rootfs_config
-  # refresh config
-  petalinux-config --silentconfig
-  petalinux-config -crootfs --silentconfig
+for _i in 1 2; do
+	# common config
+	scripts/config.pl assets/configs/config project-spec/configs/config
+	scripts/config.pl assets/configs/config project-spec/configs/rootfs_config
+	# customized config
+	scripts/config.pl "${1:-assets/configs/example/config}" project-spec/configs/config
+	scripts/config.pl "${1:-assets/configs/example/config}" project-spec/configs/rootfs_config
+	# refresh config
+	petalinux-config --silentconfig
+	petalinux-config -crootfs --silentconfig
 done
 
 petalinux-create -t apps -n autostart --enable --force
