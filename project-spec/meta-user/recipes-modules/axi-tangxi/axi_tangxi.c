@@ -481,7 +481,7 @@ int acc_complete() {
 
   axitangxi_irq_data.comp = &my_completion;
   // 等待中断响应
-  unsigned long timeout = msecs_to_jiffies(10000);
+  unsigned long timeout = msecs_to_jiffies(AXI_TANGXI_TIMEOUT);
   unsigned long time_remain =
       wait_for_completion_timeout(axitangxi_irq_data.comp, timeout);
   if (time_remain == 0) {
