@@ -74,6 +74,14 @@ git config core.bare false
 git reset --hard
 ```
 
+You can create a new project from the old project:
+
+```sh
+scripts/copy-project.sh ../soc
+```
+
+Then refer [Configure](#configure) to run `scripts/config.sh`.
+
 <!-- markdownlint-enable MD013 -->
 
 ### Configure
