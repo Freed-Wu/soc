@@ -129,15 +129,10 @@ scripts/build.sh
 
 ### Burn
 
-Assume your SD card has 2 parts:
-
-1. BOOT: vfat
-2. rootfs: ext4
-
-If not, you can generate it by:
+You need a parted SD card:
 
 ```sh
-sudo scripts/create-disk.sh /dev/sdb assets/sfdisk/example.yaml
+sudo scripts/part-disk.sh /dev/sdb assets/sfdisk/example.yaml
 ```
 
 Dependencies:
@@ -157,20 +152,13 @@ scripts/burn.sh
 
 Then:
 
-For SD:
-
 1. insert the SD card to your board
-2. set switch to 0101
-3. reset the board
-
-For eMMC:
-
-1. insert the SD card to your board
-2. set switch to 0101
-3. reset the board
+2. set the switch to ↓↑↓↑ for xzcu7ev1517 or ↑↓↑↓ for xzcu7ev1156
+3. reset the board. The next steps are for eMMC:
 4. run `post-burn-emmc.sh`
-5. set switch to 0110
+5. set the switch to ↑↓↓↑
 6. reset the board
+7. pull out the SD card
 
 ## Usage
 
