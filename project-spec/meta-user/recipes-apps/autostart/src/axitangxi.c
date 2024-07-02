@@ -85,9 +85,11 @@ void pl_init(int fd_dev, struct network_acc_reg *reg, char *weight_filename,
   if (pl_config(fd_dev, weight_filename, reg->weight_addr = weight_addr,
                 &reg->weight_size) == -1)
     err(errno, "%s", weight_filename);
-  if (pl_config(fd_dev, quantify_filename, reg->quantify_addr = quantify_addr,
-                &reg->quantify_size) == -1)
-    err(errno, "%s", quantify_filename);
+  // TODO: use quantify_filename to config builtin quantization coefficience
+  // if (pl_config(fd_dev, quantify_filename, reg->quantify_addr =
+  // quantify_addr,
+  //               &reg->quantify_size) == -1)
+  //   err(errno, "%s", quantify_filename);
 }
 
 uint16_t complete_to_original16(uint16_t code) {
