@@ -2,10 +2,18 @@
 set -e
 cd "$(dirname "$(readlink -f "$0")")/.."
 
-boot=${1:-/run/media/$USER/BOOT}
+config="$(grep CONFIG_SUBSYSTEM_SDROOT_DEV project-spec/configs/config)"
+config="${config#*\"}"
+config="${config%\"}"
+
 root=${2:-/run/media/$USER/root}
-cp images/linux/image.ub images/linux/BOOT.BIN images/linux/boot.scr "$boot"
-# use sudo to avoid wrong privilege
-sudo rm -rf "$root"/*
-sudo tar vxaCf "$root" images/linux/rootfs.tar.gz
+if [[ $config == /dev/mmcblk0p2 ]]; then
+	# use sudo to avoid wrong privilege
+	sudo install -Dm644 images/linux/image.ub images/linux/BOOT.BIN images/linux/boot.scr images/linux/rootfs.tar.gz -t "$root${3:-/home/root}"
+else
+	boot=${1:-/run/media/$USER/BOOT}
+	cp images/linux/image.ub images/linux/BOOT.BIN images/linux/boot.scr "$boot"
+	sudo rm -rf "$root"/*
+	sudo tar vxaCf "$root" images/linux/rootfs.tar.gz
+fi
 sync

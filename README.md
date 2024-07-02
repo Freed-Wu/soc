@@ -152,10 +152,7 @@ Run:
 
 ```sh
 # wait > 10 seconds
-# for SD
 scripts/burn.sh
-# for eMMC
-scripts/burn-emmc.sh
 ```
 
 Then:
