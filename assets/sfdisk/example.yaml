@@ -1,0 +1,6 @@
+label: dos
+unit: sectors
+sector-size: 512
+
+/dev/sdb1: start=        2048, size=     2000000, type=c
+/dev/sdb2: start=     2002944, size=    29296875, type=83

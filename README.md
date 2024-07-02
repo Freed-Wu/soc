@@ -137,11 +137,14 @@ Assume your SD card has 2 parts:
 If not, you can generate it by:
 
 ```sh
-# create two parts
-sudo fdisk /dev/sdb
-# create filesystems of two parts
-sudo scripts/create-disk.sh /dev/sdb
+sudo scripts/create-disk.sh /dev/sdb assets/sfdisk/example.yaml
 ```
+
+Dependencies:
+
+- [util-linux](https://github.com/util-linux/util-linux)
+- [dosfstools](https://github.com/dosfstools/dosfstools)
+- [e2fsprogs](http://e2fsprogs.sourceforge.net)
 
 Insert the SD card to your PC. For eMMC, make sure the SD card has been burn.
 
