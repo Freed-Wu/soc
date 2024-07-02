@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-cd "$(dirname "$(readlink -f "$0")")/.."
+cd "$(dirname "$(dirname "$(readlink -f "$0")")")"
 
 cp "${1:-/home/root}"/{BOOT.BIN,boot.scr,image.ub} /run/media/mmcblk0p1
 rm -rf /run/media/mmcblk0p2/*

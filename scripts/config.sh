@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-cd "$(dirname "$(readlink -f "$0")")/.."
+cd "$(dirname "$(dirname "$(readlink -f "$0")")")"
 
 # initial project-spec/configs/config and project-spec/configs/rootfs_config
 petalinux-config --silentconfig

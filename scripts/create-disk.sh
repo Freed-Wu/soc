@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
-cd "$(dirname "$(readlink -f "$0")")/.."
+cd "$(dirname "$(dirname "$(readlink -f "$0")")")"
 
+umount "${1:-/dev/sdb}"* || true
 sfdisk "${1:-/dev/sdb}" <"${2:-assets/sfdisk/example.yaml}"
 mkfs.vfat "${1:-/dev/sdb}1"
 # /dev/sdb2 contains `Targa image data - Color 3 x 15648 x 16 +17 +38112 - 1-bit alpha' data
