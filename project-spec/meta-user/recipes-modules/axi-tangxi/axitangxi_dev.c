@@ -231,7 +231,7 @@ static long axitangxi_ioctl(struct file *file, unsigned int cmd,
 
   // Coerce the argument as a userspace pointer
   arg_ptr = (void __user *)arg;
-  printk("axitangxi_ioctl start\n");
+  printk("axitangxi_ioctl %u start\n", _IOC_NR(cmd));
 
   // Get the axitangxi device from the file
   struct axitangxi_device *dev = file->private_data;
