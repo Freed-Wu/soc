@@ -154,10 +154,11 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   yuv[1].len = yuv[2].addr - yuv[1].addr;
   yuv[0].len = yuv[1].addr - yuv[0].addr;
 
-  // neural encoding yuv
+  // neural encoding yuv to y', u', v'
   data_t trans[3] = {};
   data_t entropy[3] = {};
   for (int k = 0; k < 3; k++) {
+    syslog(LOG_NOTICE, "start to encode yuv channel %d", k);
     if (pl_write(fd, yuv[k].addr, reg.picture_addr = PICTURE_BASE_ADDR,
                  reg.picture_size = yuv[k].len) == -1)
       err(errno, NULL);
@@ -168,6 +169,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
 
     status |= TP_STATUS_NETWORK_ENCODING;
     // TODO: multithread
+    syslog(LOG_NOTICE, "wait yuv channel %d to be encoded", k);
     pl_get(fd, &reg, (uint16_t *)trans[k].addr, (uint16_t *)entropy[k].addr);
     status &= ~TP_STATUS_NETWORK_ENCODING;
 
@@ -176,7 +178,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   }
   munmap(yuv[0].addr, yuv_len);
 
-  // entropy encoding y' u' v'
+  // entropy encoding y', u', v'
   data_t data[3] = {};
   size_t len = 0;
   status |= TP_STATUS_ENTROPY_ENCODING;
@@ -267,6 +269,7 @@ int main(int argc, char *argv[]) {
     } else if (ret_status == 3) {
       err(errno, NULL);
     }
+    syslog(LOG_NOTICE, "start to encode %s", opt.files[k]);
     bit_streams[n_file].len =
         process_data_frames_dry_run(fd_dev, data_frames, n_frame, reg,
                                     &bit_streams[n_file].addr, opt.dry_run);
