@@ -102,7 +102,7 @@
   printk(KERN_ERR DEVICE_NAME ": %s: %s: %d: " fmt, __FILENAME__, __func__,    \
          __LINE__, ##__VA_ARGS__)
 #define axitangxi_info(fmt, ...)                                               \
-  printk(KERN_ERR DEVICE_NAME ": %s: %s: %d: " fmt, __FILENAME__, __func__,    \
+  printk(KERN_INFO DEVICE_NAME ": %s: %s: %d: " fmt, __FILENAME__, __func__,   \
          __LINE__, ##__VA_ARGS__)
 
 /* 把驱动代码中会用到的数据打包进设备结构体 */
