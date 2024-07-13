@@ -142,9 +142,9 @@ static int parse(int argc, char *argv[], opt_t *opt) {
   return 0;
 }
 
-size_t process_data_frames(int fd, data_frame_t *input_data_frames,
-                           n_frame_t n_frame, struct network_acc_reg reg,
-                           uint8_t **p_addr) {
+static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
+                                  n_frame_t n_frame, struct network_acc_reg reg,
+                                  uint8_t **p_addr) {
   // convert data frames to yuv
   ssize_t yuv_len = data_frame_to_data_len(input_data_frames, n_frame);
   data_t yuv[3] = {};
