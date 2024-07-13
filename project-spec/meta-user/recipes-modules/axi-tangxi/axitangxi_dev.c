@@ -9,7 +9,7 @@
  **/
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
 #include <linux/interrupt.h>
 #else
 #include <linux/ide.h>
