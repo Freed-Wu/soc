@@ -69,13 +69,13 @@ int mkdir_p(const char *path, mode_t mode) {
  */
 ssize_t dump_mem(char *filename, void *addr, size_t size) {
   if (mkdir_p(filename, 0755) == -1)
-    return -1;
+    return -2;
   int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
-    return -1;
+    return -3;
   ssize_t _size = write(fd, addr, size);
   if (close(fd) == -1)
-    return -1;
+    return -4;
   return _size;
 }
 
