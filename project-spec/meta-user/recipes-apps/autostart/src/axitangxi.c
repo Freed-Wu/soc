@@ -47,7 +47,7 @@ ssize_t pl_read(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size) {
   return pl_io(fd_dev, ps_addr, pl_addr, size, PLDDR_TO_PSDDR);
 }
 
-ssize_t ps_read_file(int fd_dev, char *filename, void *addr) {
+ssize_t ps_read_file(int fd_dev, const char *filename, void *addr) {
   int fd = open(filename, O_RDWR);
   if (fd == -1)
     return -1;
@@ -63,7 +63,7 @@ ssize_t ps_read_file(int fd_dev, char *filename, void *addr) {
   return size;
 }
 
-ssize_t pl_config(int fd_dev, char *filename, uint32_t pl_addr,
+ssize_t pl_config(int fd_dev, const char *filename, uint32_t pl_addr,
                   uint32_t *p_size) {
   void *ps_addr = NULL;
   *p_size = ps_read_file(fd_dev, filename, ps_addr);
@@ -82,9 +82,9 @@ void pl_run(int fd_dev, struct network_acc_reg *reg) {
     err(errno, AXITX_DEV_PATH);
 }
 
-void pl_init(int fd_dev, struct network_acc_reg *reg, char *weight_filename,
-             uint32_t weight_addr, char *quantify_filename,
-             uint32_t quantify_addr) {
+void pl_init(int fd_dev, struct network_acc_reg *reg,
+             const char *weight_filename, uint32_t weight_addr,
+             const char *quantify_filename, uint32_t quantify_addr) {
   if (pl_config(fd_dev, weight_filename, reg->weight_addr = weight_addr,
                 &reg->weight_size) == -1)
     err(errno, "%s", weight_filename);
