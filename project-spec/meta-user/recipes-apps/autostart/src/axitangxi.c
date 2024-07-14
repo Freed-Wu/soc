@@ -68,8 +68,11 @@ ssize_t pl_config(int fd_dev, char *filename, uint32_t pl_addr,
   void *ps_addr = NULL;
   *p_size = ps_read_file(fd_dev, filename, ps_addr);
   if (*p_size == -1)
-    return -1;
-  return pl_write(fd_dev, ps_addr, pl_addr, *p_size);
+    return -2;
+  ssize_t ssize = pl_write(fd_dev, ps_addr, pl_addr, *p_size);
+  if (munmap(ps_addr, *p_size) == -1)
+    return -3;
+  return ssize;
 }
 
 void pl_run(int fd_dev, struct network_acc_reg *reg) {

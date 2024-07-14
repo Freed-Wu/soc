@@ -176,7 +176,8 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     trans[k].len = reg.trans_size;
     entropy[k].len = reg.entropy_size;
   }
-  munmap(yuv[0].addr, yuv_len);
+  if (munmap(yuv[0].addr, yuv_len) == -1)
+    err(errno, AXITX_DEV_PATH);
 
   // entropy encoding y', u', v'
   data_t data[3] = {};
