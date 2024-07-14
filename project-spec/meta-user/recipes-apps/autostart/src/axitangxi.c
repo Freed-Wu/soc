@@ -16,14 +16,13 @@ void *ps_mmap(int fd_dev, size_t size) {
 
 static void init_trans(struct axitangxi_transaction *trans, void *ps_addr,
                        uint32_t pl_addr, uint32_t size) {
-  trans->tx_data_size = size;
-  trans->rx_data_size = size;
+  trans->tx_data_size = trans->rx_data_size = size;
   trans->burst_size = BURST_SIZE;
   trans->burst_data = 16 * BURST_SIZE;
   // ceil(a / b) = floor((a - 1) / b) + 1
   trans->burst_count = (size - 1) / (BURST_SIZE * 16) + 1;
-  trans->tx_data_ps_ptr = ps_addr;
-  trans->rx_data_pl_ptr = pl_addr;
+  trans->tx_data_ps_ptr = trans->rx_data_ps_ptr = ps_addr;
+  trans->rx_data_pl_ptr = trans->tx_data_pl_ptr = pl_addr;
 }
 
 ssize_t pl_io(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size,
