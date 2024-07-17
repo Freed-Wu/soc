@@ -4,8 +4,29 @@
 
 #include "arithmetic_coding.h"
 
+void read_txt(const char *file_path, uint16_t *&data, size_t &size,
+              uint32_t &max, uint32_t &min) {
+  ifstream file(file_path);
+  if (!file.is_open()) {
+    cerr << "Error opening file: " << file_path << endl;
+    return;
+  }
+  // 读取数据到data数组
+  vector<uint16_t> vec;
+  uint32_t temp;
+  while (file >> temp) {
+    vec.push_back(temp);
+  }
+  file.close();
+  size = vec.size();
+  data = new uint16_t[size];
+  copy(vec.begin(), vec.end(), data);
+  // 获取最大最小值
+  max = *max_element(data, data + size);
+  min = *min_element(data, data + size);
+}
+
 void BitOutputStream::write(char b) {
-  // std::cout << b;
   if (b != 0 and b != 1)
     throw "Argument must be 0 or 1";
   m_currentbyte = (m_currentbyte << 1) | b;
@@ -67,16 +88,16 @@ void CountingBitOutputStream::close() {
 }
 
 bool readBinaryFile(char file_path[], void *&data, size_t &size) {
-  std::ifstream file(file_path, std::ios::binary);
+  ifstream file(file_path, ios::binary);
   if (!file.is_open()) {
-    std::cerr << "Error opening file: " << file_path << std::endl;
+    cerr << "Error opening file: " << file_path << endl;
     return false;
   }
 
   // 获取文件大小
-  file.seekg(0, std::ios::end);
+  file.seekg(0, ios::end);
   size = file.tellg();
-  file.seekg(0, std::ios::beg);
+  file.seekg(0, ios::beg);
 
   // 分配内存
   data = new char[size];
@@ -100,7 +121,7 @@ int64_t clamp(int64_t x, int64_t l, int64_t r) {
 
 uint32_t softmax(uint16_t probs[3], uint16_t exp_table[], int scale = 1000,
                  int x_bound = -12) {
-  int mx = *(std::max_element(probs, probs + 3));
+  int mx = *(max_element(probs, probs + 3));
   uint32_t sum = 0;
   int base = -x_bound * scale;
 
@@ -119,73 +140,83 @@ uint32_t softmax(uint16_t probs[3], uint16_t exp_table[], int scale = 1000,
   return sum;
 }
 
-int cnt(int x, uint32_t cdf_table[], uint16_t probs[3], uint32_t prob_sum,
-        uint16_t means[3], uint16_t stds[3], uint32_t resolution = 1e6,
-        int scale = 10000, int x_bound = -5) {
-  uint32_t y_bound = UINT32_MAX;
-  int base = -x_bound * scale;
-  uint64_t cnt = 0;
+EncTable::EncTable(uint32_t _freqs_resolution, uint32_t _low_bound,
+                   uint32_t _high_bound) {
+  readBinaryFile(exp_file_path, reinterpret_cast<void *&>(exp_table), exp_size);
+  readBinaryFile(cdf_file_path, reinterpret_cast<void *&>(cdf_table), cdf_size);
+  low_bound = _low_bound;
+  high_bound = _high_bound;
+  freqs_resolution = _freqs_resolution;
+}
 
+void EncTable::update(uint16_t m_probs[3], uint16_t m_means[3],
+                      uint16_t m_stds[3]) {
+  probs = m_probs;
+  means = m_means;
+  stds = m_stds;
+  prob_sum = softmax(m_probs, exp_table, exp_scale, exp_x_bound);
+}
+
+void EncTable::get_bound(int x) {
+  uint32_t y_bound = UINT32_MAX;
+  int base = -cdf_x_bound * cdf_scale;
+
+  l_bound = 0, r_bound = 0;
   for (int i = 0; i < 3; i++) {
-    // int idx_l=((-0.5+x)-means[i])*scale/stds[i];
-    int idx_l = ((x - means[i]) * scale - (scale >> 1)) / stds[i];
+    int idx_l =
+        ((low_bound - means[i]) * cdf_scale - (cdf_scale >> 1)) / stds[i];
     idx_l = clamp(idx_l, -base, base);
     idx_l += base;
 
-    // int idx_r=((0.5+x)-means[i])*scale/stds[i];
-    int idx_r = ((x - means[i]) * scale + (scale >> 1)) / stds[i];
+    int idx_r =
+        ((high_bound - means[i]) * cdf_scale + (cdf_scale >> 1)) / stds[i];
     idx_r = clamp(idx_r, -base, base);
     idx_r += base;
-    // uint64_t tr=cdf_table[idx_r],tl=cdf_table[idx_l];
-    uint32_t cdf = cdf_table[idx_r] - cdf_table[idx_l];
-    // 分辨率*权值*概率
-    cnt += uint64_t(1) * resolution * probs[i] * cdf;
-  }
 
-  cnt /= prob_sum; // probs[i]
-  cnt /= y_bound;  // cdf
-  return cnt;
+    l_bound +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
+    r_bound +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
+  }
+  l_bound /= y_bound; // cdf
+  r_bound /= y_bound; // cdf
+
+  uint64_t low = 0, high = 0;
+  for (int i = 0; i < 3; i++) {
+    int idx_l = ((x - means[i]) * cdf_scale - (cdf_scale >> 1)) / stds[i];
+    idx_l = clamp(idx_l, -base, base);
+    idx_l += base;
+
+    int idx_r = ((x - means[i]) * cdf_scale + (cdf_scale >> 1)) / stds[i];
+    idx_r = clamp(idx_r, -base, base);
+    idx_r += base;
+
+    low +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
+    high +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
+  }
+  low /= y_bound;  // cdf
+  high /= y_bound; // cdf
+
+  sym_low = low - l_bound +
+            (x - low_bound); // (x-0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
+  sym_high =
+      high - l_bound +
+      (x - low_bound + 1); // (x+0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
+  total_freqs = r_bound - l_bound +
+                (high_bound - low_bound +
+                 1); // (high+0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
 }
 
-GmmTable::GmmTable(uint16_t m_probs[3], uint16_t m_means[3], uint16_t m_stds[3],
-                   uint32_t freqs_resolution, uint32_t _low_bound,
-                   uint32_t _high_bound) {
-  uint16_t *exp_table = nullptr;
-  size_t exp_size = 0;
-
-  uint32_t *cdf_table = nullptr;
-  size_t cdf_size = 0;
-
-  readBinaryFile(exp_file_path, reinterpret_cast<void *&>(exp_table), exp_size);
-  readBinaryFile(cdf_file_path, reinterpret_cast<void *&>(cdf_table), cdf_size);
-
-  low_bound = _low_bound;
-  high_bound = _high_bound; // 左闭右闭
-
-  symlow.resize(high_bound + 2);
-  symhigh.resize(high_bound + 2);
-
-  uint32_t prob_sum = softmax(m_probs, exp_table);
-
-  for (uint32_t i = low_bound; i <= high_bound + 1; i++) {
-    int dif =
-        cnt(i, cdf_table, m_probs, prob_sum, m_means, m_stds, freqs_resolution);
-    dif = std::max(dif, 1);
-    symlow[i] = total_freqs;
-    total_freqs += dif;
-    symhigh[i] = total_freqs;
-  }
-
+EncTable::~EncTable() {
   delete[] exp_table;
   delete[] cdf_table;
 }
 
-uint32_t GmmTable::getSymbolLimit() const {
-  return static_cast<uint32_t>(symlow.size());
-}
-
 void ArithmeticCoderBase::update(long long total, long long symlow,
                                  long long symhigh, char symbol) {
+  // printf("update\n");
   long long low = m_low;
   long long high = m_high;
   long long range = high - low;
@@ -195,18 +226,19 @@ void ArithmeticCoderBase::update(long long total, long long symlow,
   long long newhigh = low + symhigh * range / total - 1;
   m_low = newlow;
   m_high = newhigh;
-
+  // printf("update init\n");
   while (((m_low ^ m_high) & TOP_MASK) == 0) {
     shift(); // 将low最高位写入码流，然后根据underflow继续写
     m_low = (m_low << 1) & MASK;
     m_high = ((m_high << 1) & MASK) | 1; // 最后补1
   }
-
+  // printf("update shift\n");
   while ((m_low & ~m_high & SECOND_MASK) != 0) {
     underflow();
     m_low = (m_low << 1) & (MASK >> 1);
     m_high = ((m_high << 1) & (MASK >> 1)) | TOP_MASK | 1;
   }
+  // printf("update end\n");
 }
 
 void ArithmeticEncoder::write(long long total, long long symlow,
