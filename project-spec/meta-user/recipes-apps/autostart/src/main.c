@@ -196,43 +196,45 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   syslog(LOG_NOTICE, "all yuv channels are encoded");
 
   // entropy encoding y', u', v'
-  data8_t data[3] = {};
-  size_t len = 0;
   status |= TP_STATUS_ENTROPY_ENCODING;
+  size_t lens[SUB_CNT] = {
+      32400,  32400,  32400,   32400,   129600,  129600, 129600, 518400,
+      518400, 518400, 2073600, 2073600, 2073600, 8160,   8160,   8160,
+      8160,   32640,  32640,   32640,   130560,  130560, 130560, 522240,
+      522240, 522240, 8160,    8160,    8160,    8160,   32640,  32640,
+      32640,  130560, 130560,  130560,  522240,  522240, 522240};
+  gmm_t *gmms[SUB_CNT];
+  int16_t *datas[SUB_CNT];
   for (int k = 0; k < 3; k++) {
     size_t gmm_len = reg.entropy_size / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
-    entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
-
-    // TODO: multithread
-    uint32_t data_max = 0, data_min = 65535;
-
-    for (size_t i = 0; i < data[k].len; i++) {
-      if (data[k].addr[i] > data_max)
-        data_max = data[k].addr[i];
-      if (data[k].addr[i] < data_min)
-        data_min = data[k].addr[i];
+    entropy_to_gmm((int16_t *)entropy[k].addr, gmm, gmm_len);
+    size_t ptr = 0;
+    for (int i = 13 * k; i < 13 * (k + 1); i++) {
+      datas[i] = trans[k].addr + ptr;
+      gmms[i] = gmm + ptr;
+      ptr += lens[i];
     }
-    uint32_t freqs_resolution = 1000000;
-    syslog(LOG_NOTICE, "wait yuv channel %d to be entropy encoded", k);
-    data[k].len = coding(gmm, trans[k].addr, trans[k].len, data[k].addr,
-                         data_min, data_max, freqs_resolution);
-    len += data[k].len;
+    if (ptr != gmm_len || ptr != trans[k].len)
+      syslog(LOG_NOTICE, "yuv channel %d error", k);
   }
   syslog(LOG_NOTICE, "all yuv channels are entropy encoded");
+  // ******** gmm_scale由硬件给出
+  int gmm_scale = 10000;
+  // ********
+  CodingResult enc_res = codings(gmms, datas, lens, gmm_scale);
+  uint8_t *enc_data = enc_res.data;
+  size_t len = enc_res.length;
   status &= ~TP_STATUS_ENTROPY_ENCODING;
-  // combine 3 channels to one
+
   if (*p_addr == NULL) {
     *p_addr = malloc(len);
     if (*p_addr == NULL)
       err(errno, NULL);
   }
   p = *p_addr;
-  for (int k = 0; k < 3; k++) {
-    memcpy(p, data[k].addr, data[k].len);
-    p += data[k].len;
-    free(data[k].addr);
-  }
+  memcpy(p, enc_data, len);
+  free(enc_data);
   return len;
 }
 
