@@ -18,11 +18,12 @@ typedef struct {
   prob_t prob1, prob2, prob3;
   mean_t mean1, mean2, mean3;
   std_t std1, std2, std3;
-  uint32_t freqs_resolution;
 } gmm_t;
 
-size_t coding(gmm_t *gmm, uint16_t *symbol, size_t len, uint8_t *bits,
-              uint32_t low_bound, uint32_t high_bound);
+
+extern  size_t coding(gmm_t* gmm,uint16_t* trans_addr,size_t trans_len,uint8_t* data_addr,uint32_t low_bound,uint32_t high_bound,uint32_t freqs_resolution);
+
+double test_one(char *input_path, char *bin_path, bool is_bin );
 
 __END_DECLS
 #endif /* coding.h */
