@@ -4,27 +4,27 @@
 
 #include "arithmetic_coding.h"
 
-void read_txt(const char* file_path, uint16_t* &data, size_t &size, uint32_t &max, uint32_t &min){
-	ifstream file(file_path);
-	if (!file.is_open()) {
-		cerr << "Error opening file: " << file_path << endl;
-		return;
-	}
-	// 读取数据到data数组
-	vector<uint16_t> vec;
-	uint32_t temp;
-	while (file >> temp) {
-		vec.push_back(temp);
-	}
-	file.close();
-	size = vec.size();
-	data = new uint16_t[size];
-	copy(vec.begin(), vec.end(), data);
-	// 获取最大最小值
-	max = *max_element(data, data + size);
-	min = *min_element(data, data + size);
+void read_txt(const char *file_path, uint16_t *&data, size_t &size,
+              uint32_t &max, uint32_t &min) {
+  ifstream file(file_path);
+  if (!file.is_open()) {
+    cerr << "Error opening file: " << file_path << endl;
+    return;
+  }
+  // 读取数据到data数组
+  vector<uint16_t> vec;
+  uint32_t temp;
+  while (file >> temp) {
+    vec.push_back(temp);
+  }
+  file.close();
+  size = vec.size();
+  data = new uint16_t[size];
+  copy(vec.begin(), vec.end(), data);
+  // 获取最大最小值
+  max = *max_element(data, data + size);
+  min = *min_element(data, data + size);
 }
-
 
 void BitOutputStream::write(char b) {
   if (b != 0 and b != 1)
@@ -140,75 +140,79 @@ uint32_t softmax(uint16_t probs[3], uint16_t exp_table[], int scale = 1000,
   return sum;
 }
 
-
-EncTable::EncTable(uint32_t _freqs_resolution,uint32_t _low_bound,uint32_t _high_bound){
-	readBinaryFile(exp_file_path, reinterpret_cast<void*&>(exp_table), exp_size);
-	readBinaryFile(cdf_file_path, reinterpret_cast<void*&>(cdf_table), cdf_size);
-	low_bound=_low_bound;
-	high_bound=_high_bound;
-	freqs_resolution=_freqs_resolution;
+EncTable::EncTable(uint32_t _freqs_resolution, uint32_t _low_bound,
+                   uint32_t _high_bound) {
+  readBinaryFile(exp_file_path, reinterpret_cast<void *&>(exp_table), exp_size);
+  readBinaryFile(cdf_file_path, reinterpret_cast<void *&>(cdf_table), cdf_size);
+  low_bound = _low_bound;
+  high_bound = _high_bound;
+  freqs_resolution = _freqs_resolution;
 }
 
-
-void EncTable::update(uint16_t m_probs[3],uint16_t m_means[3],uint16_t m_stds[3]){
-	probs=m_probs;
-	means=m_means;
-	stds=m_stds;
-	prob_sum= softmax(m_probs,exp_table,exp_scale,exp_x_bound);
+void EncTable::update(uint16_t m_probs[3], uint16_t m_means[3],
+                      uint16_t m_stds[3]) {
+  probs = m_probs;
+  means = m_means;
+  stds = m_stds;
+  prob_sum = softmax(m_probs, exp_table, exp_scale, exp_x_bound);
 }
 
+void EncTable::get_bound(int x) {
+  uint32_t y_bound = UINT32_MAX;
+  int base = -cdf_x_bound * cdf_scale;
 
-void EncTable::get_bound(int x){
-	uint32_t y_bound = UINT32_MAX;
-	int base = -cdf_x_bound * cdf_scale;
+  l_bound = 0, r_bound = 0;
+  for (int i = 0; i < 3; i++) {
+    int idx_l =
+        ((low_bound - means[i]) * cdf_scale - (cdf_scale >> 1)) / stds[i];
+    idx_l = clamp(idx_l, -base, base);
+    idx_l += base;
 
-	l_bound = 0, r_bound = 0;
-	for(int i=0; i<3 ;i++){
-		int idx_l = ((low_bound - means[i]) * cdf_scale - (cdf_scale >> 1)) / stds[i];
-		idx_l = clamp(idx_l, -base, base);
-		idx_l += base;		
+    int idx_r =
+        ((high_bound - means[i]) * cdf_scale + (cdf_scale >> 1)) / stds[i];
+    idx_r = clamp(idx_r, -base, base);
+    idx_r += base;
 
-		int idx_r = ((high_bound - means[i]) * cdf_scale + (cdf_scale >> 1)) / stds[i];
-		idx_r = clamp(idx_r, -base, base);
-		idx_r += base;
+    l_bound +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
+    r_bound +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
+  }
+  l_bound /= y_bound; // cdf
+  r_bound /= y_bound; // cdf
 
-		l_bound+= uint64_t(1) * freqs_resolution  * cdf_table[idx_l]/prob_sum* probs[i];
-		r_bound+= uint64_t(1) * freqs_resolution  * cdf_table[idx_r]/prob_sum* probs[i];
-	}
-	l_bound/= y_bound;  // cdf
-	r_bound/= y_bound;  // cdf
+  uint64_t low = 0, high = 0;
+  for (int i = 0; i < 3; i++) {
+    int idx_l = ((x - means[i]) * cdf_scale - (cdf_scale >> 1)) / stds[i];
+    idx_l = clamp(idx_l, -base, base);
+    idx_l += base;
 
+    int idx_r = ((x - means[i]) * cdf_scale + (cdf_scale >> 1)) / stds[i];
+    idx_r = clamp(idx_r, -base, base);
+    idx_r += base;
 
-	uint64_t low=0,high=0;
-	for(int i=0; i<3 ;i++){
-		int idx_l = ((x - means[i]) * cdf_scale - (cdf_scale >> 1)) / stds[i];
-		idx_l = clamp(idx_l, -base, base);
-		idx_l += base;
+    low +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
+    high +=
+        uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
+  }
+  low /= y_bound;  // cdf
+  high /= y_bound; // cdf
 
-		int idx_r = ((x - means[i]) * cdf_scale + (cdf_scale >> 1)) / stds[i];
-		idx_r = clamp(idx_r, -base, base);
-		idx_r += base;
-
-		low += uint64_t(1) * freqs_resolution  * cdf_table[idx_l]/prob_sum* probs[i];
-		high+= uint64_t(1) * freqs_resolution  * cdf_table[idx_r]/prob_sum* probs[i];
-	
-	}
-	low/= y_bound;  // cdf
-	high/= y_bound;  // cdf
-
-	sym_low= low - l_bound + (x-low_bound);  // (x-0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
-	sym_high= high - l_bound + (x-low_bound+1);  // (x+0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
-	total_freqs= r_bound - l_bound + (high_bound-low_bound+1); // (high+0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
+  sym_low = low - l_bound +
+            (x - low_bound); // (x-0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
+  sym_high =
+      high - l_bound +
+      (x - low_bound + 1); // (x+0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
+  total_freqs = r_bound - l_bound +
+                (high_bound - low_bound +
+                 1); // (high+0.5) 到 （low-0.5) 的累加和   &  每个点的+1量
 }
 
-
-EncTable::~EncTable(){
-	delete[] exp_table;
-	delete[] cdf_table;
+EncTable::~EncTable() {
+  delete[] exp_table;
+  delete[] cdf_table;
 }
-
-
-
 
 void ArithmeticCoderBase::update(long long total, long long symlow,
                                  long long symhigh, char symbol) {
