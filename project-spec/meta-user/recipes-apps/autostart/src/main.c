@@ -189,12 +189,18 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
     // TODO: multithread
-    uint32_t low_bound = 0;
-    uint32_t high_bound = 65535;
-    data[k].len = coding(gmm, (uint16_t *)trans[k].addr, trans[k].len,
-                         data[k].addr, low_bound, high_bound);
+    uint32_t data_max = 0, data_min = 65535;
 
-    len += data[k].len;
+    for (size_t i =0 ; i < data[k].len; i++) {
+      if (data[k].addr[i] > data_max)
+        data_max = data[k].addr[i];
+      if (data[k].addr[i] < data_min)
+        data_min = data[k].addr[i];
+    }
+    uint32_t freqs_resolution=1000000;
+    data[k].len = coding(gmm, (uint16_t *)trans[k].addr, trans[k].len,
+                         data[k].addr, data_min, data_max,freqs_resolution); 
+    len += data[k].len;  
   }
   status &= ~TP_STATUS_ENTROPY_ENCODING;
   // combine 3 channels to one
