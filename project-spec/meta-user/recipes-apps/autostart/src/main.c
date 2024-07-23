@@ -197,17 +197,16 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     entropy_to_gmm((uint16_t *)entropy[k].addr, gmm, gmm_len);
 
     // TODO: multithread
-    uint32_t data_max = 0, data_min = 65535;
+    int16_t data_max = data[k].addr[0], data_min = data[k].addr[0];
 
-    for (size_t i = 0; i < data[k].len; i++) {
+    for (size_t i =0 ; i < data[k].len; i++) {
       if (data[k].addr[i] > data_max)
         data_max = data[k].addr[i];
       if (data[k].addr[i] < data_min)
         data_min = data[k].addr[i];
     }
-    uint32_t freqs_resolution = 1000000;
-    data[k].len = coding(gmm, trans[k].addr, trans[k].len, data[k].addr,
-                         data_min, data_max, freqs_resolution);
+    data[k].len = coding(gmm, (int16_t *)trans[k].addr, trans[k].len,
+                         data[k].addr, data_min, data_max); 
     len += data[k].len;
   }
   status &= ~TP_STATUS_ENTROPY_ENCODING;
