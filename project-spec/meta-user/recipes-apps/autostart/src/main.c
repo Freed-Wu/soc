@@ -20,6 +20,7 @@
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
+#define SCALE 0.00667200749740045
 
 extern const uint8_t tp_header[4];
 // status of program, not the status of every picture
@@ -28,7 +29,7 @@ status_t status;
 #define PICTURES_NUMBER_MAX 8
 // picture status: unreceived -> received (processing) -> processed
 // look up len to see if a picture have been processed
-data_t bit_streams[PICTURES_NUMBER_MAX];
+data8_t bit_streams[PICTURES_NUMBER_MAX];
 // look up len == total_len to see if a picture have been received
 data_frame_info_t data_frame_infos[PICTURES_NUMBER_MAX];
 
@@ -148,8 +149,14 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   // convert data frames to yuv
   ssize_t yuv_len = data_frame_to_data_len(input_data_frames, n_frame);
   data_t yuv[3] = {};
-  yuv[0].addr = ps_mmap(fd, yuv_len);
-  data_frames_to_data(input_data_frames, n_frame, yuv[0].addr);
+  uint8_t *addr = malloc(yuv_len);
+  data_frames_to_data(input_data_frames, n_frame, addr);
+  // uint8_t to uint16_t
+  yuv[0].addr = ps_mmap(fd, yuv_len * 2);
+  int16_t *p_yuv = yuv[0].addr;
+  for (total_data_len_t i = 0; i < yuv_len; ++i)
+    *p_yuv++ = addr[i];
+  free(addr);
   yuv[2].len = data_to_yuv420(yuv[0].addr, &yuv[1].addr, &yuv[2].addr, yuv_len);
   yuv[1].len = yuv[2].addr - yuv[1].addr;
   yuv[0].len = yuv[1].addr - yuv[0].addr;
@@ -160,9 +167,10 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   for (int k = 0; k < 3; k++) {
     syslog(LOG_NOTICE, "start to encode yuv channel %d", k);
     if (pl_write(fd, yuv[k].addr, reg.picture_addr = PICTURE_BASE_ADDR,
-                 reg.picture_size = yuv[k].len) == -1)
+                 yuv[k].len) == -1)
       err(errno, NULL);
-
+    // bytes to 16 bytes
+    reg.picture_size = yuv[k].len / 16;
     status |= TP_STATUS_NETWORK_ENCODING;
     pl_run(fd, &reg);
     status &= ~TP_STATUS_NETWORK_ENCODING;
@@ -170,7 +178,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     status |= TP_STATUS_NETWORK_ENCODING;
     // TODO: multithread
     syslog(LOG_NOTICE, "wait yuv channel %d to be encoded", k);
-    pl_get(fd, &reg, (uint16_t *)trans[k].addr, (uint16_t *)entropy[k].addr);
+    pl_get(fd, &reg, trans[k].addr, entropy[k].addr);
     status &= ~TP_STATUS_NETWORK_ENCODING;
 
     trans[k].len = reg.trans_size;
@@ -180,7 +188,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     err(errno, AXITX_DEV_PATH);
 
   // entropy encoding y', u', v'
-  data_t data[3] = {};
+  data8_t data[3] = {};
   size_t len = 0;
   status |= TP_STATUS_ENTROPY_ENCODING;
   for (int k = 0; k < 3; k++) {
@@ -198,8 +206,8 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
         data_min = data[k].addr[i];
     }
     uint32_t freqs_resolution = 1000000;
-    data[k].len = coding(gmm, (uint16_t *)trans[k].addr, trans[k].len,
-                         data[k].addr, data_min, data_max, freqs_resolution);
+    data[k].len = coding(gmm, trans[k].addr, trans[k].len, data[k].addr,
+                         data_min, data_max, freqs_resolution);
     len += data[k].len;
   }
   status &= ~TP_STATUS_ENTROPY_ENCODING;

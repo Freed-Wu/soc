@@ -21,10 +21,16 @@ typedef struct {
   unsigned int safe_time;
   unsigned int level : 3;
 } opt_t;
+// PL uses 16 bits
+typedef struct {
+  int16_t *addr;
+  size_t len;
+} data_t;
+// PS uses 8 bits
 typedef struct {
   uint8_t *addr;
   size_t len;
-} data_t;
+} data8_t;
 // when len == total_len, this pictures is received successfully
 typedef struct {
   data_frame_t *addr;

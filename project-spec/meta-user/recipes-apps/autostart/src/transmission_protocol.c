@@ -249,7 +249,7 @@ size_t data_frame_to_data_len(data_frame_t *data_frames, n_frame_t n_frame) {
 void data_frames_to_data(data_frame_t *data_frames, n_frame_t n_frame,
                          uint8_t *addr) {
   uint8_t *p = addr;
-  for (int i = 0; i < n_frame; i++) {
+  for (n_frame_t i = 0; i < n_frame; i++) {
     memcpy(p, data_frames[i].data, data_frames[i].data_len);
     p += data_frames[i].data_len;
   }
@@ -282,7 +282,7 @@ void fd_to_data_frames(int fd, data_frame_t *data_frames, n_frame_t n_frame) {
   memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
 }
 
-ssize_t data_to_yuv420(uint8_t *y, uint8_t **u, uint8_t **v, size_t yuv_len) {
+ssize_t data_to_yuv420(int16_t *y, int16_t **u, int16_t **v, size_t yuv_len) {
   size_t v_len = yuv_len / (4 + 1 + 1);
   *u = y + v_len * 4;
   *v = *u + v_len;

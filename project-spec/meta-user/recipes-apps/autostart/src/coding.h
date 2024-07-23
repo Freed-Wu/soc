@@ -1,5 +1,6 @@
 #ifndef CODING_H
 #define CODING_H 1
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -20,7 +21,7 @@ typedef struct {
   std_t std1, std2, std3;
 } gmm_t;
 
-extern size_t coding(gmm_t *gmm, uint16_t *trans_addr, size_t trans_len,
+extern size_t coding(gmm_t *gmm, int16_t *trans_addr, size_t trans_len,
                      uint8_t *data_addr, uint32_t low_bound,
                      uint32_t high_bound, uint32_t freqs_resolution);
 
