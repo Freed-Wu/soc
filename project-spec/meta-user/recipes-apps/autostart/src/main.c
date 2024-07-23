@@ -199,14 +199,14 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     // TODO: multithread
     int16_t data_max = data[k].addr[0], data_min = data[k].addr[0];
 
-    for (size_t i =0 ; i < data[k].len; i++) {
+    for (size_t i = 0; i < data[k].len; i++) {
       if (data[k].addr[i] > data_max)
         data_max = data[k].addr[i];
       if (data[k].addr[i] < data_min)
         data_min = data[k].addr[i];
     }
     data[k].len = coding(gmm, (int16_t *)trans[k].addr, trans[k].len,
-                         data[k].addr, data_min, data_max); 
+                         data[k].addr, data_min, data_max);
     len += data[k].len;
   }
   status &= ~TP_STATUS_ENTROPY_ENCODING;

@@ -17,7 +17,8 @@ typedef struct {
   std_t std1, std2, std3;
 } gmm_t;
 
-extern  size_t coding(gmm_t* gmm,int16_t* trans_addr,size_t trans_len,uint8_t* data_addr,int16_t low_bound,int16_t high_bound);
+extern size_t coding(gmm_t *gmm, int16_t *trans_addr, size_t trans_len,
+                     uint8_t *data_addr, int16_t low_bound, int16_t high_bound);
 
 __END_DECLS
 #endif /* coding.h */
