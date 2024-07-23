@@ -4,28 +4,6 @@
 
 #include "arithmetic_coding.h"
 
-void read_txt(const char *file_path, uint16_t *&data, size_t &size,
-              uint32_t &max, uint32_t &min) {
-  ifstream file(file_path);
-  if (!file.is_open()) {
-    cerr << "Error opening file: " << file_path << endl;
-    return;
-  }
-  // 读取数据到data数组
-  vector<uint16_t> vec;
-  uint32_t temp;
-  while (file >> temp) {
-    vec.push_back(temp);
-  }
-  file.close();
-  size = vec.size();
-  data = new uint16_t[size];
-  copy(vec.begin(), vec.end(), data);
-  // 获取最大最小值
-  max = *max_element(data, data + size);
-  min = *min_element(data, data + size);
-}
-
 void BitOutputStream::write(char b) {
   if (b != 0 and b != 1)
     throw "Argument must be 0 or 1";
