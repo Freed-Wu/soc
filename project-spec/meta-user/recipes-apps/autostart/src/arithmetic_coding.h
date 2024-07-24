@@ -93,34 +93,4 @@ public:
   void underflow() override;
 };
 
-// ****** 编码器：和解码器的统一，longlomg->uint64
-class ArithmeticCoderBase {
-protected:
-  int numStateBits;
-  uint64_t fullRange;
-  uint64_t halfRange;
-  uint64_t quarterRange;
-  uint64_t minimumRange;
-  uint64_t maximumTotal;
-  uint64_t stateMask;
-  uint64_t low;
-  uint64_t high;
 
-public:
-  explicit ArithmeticCoderBase(int numBits);
-  virtual ~ArithmeticCoderBase() = 0;
-  void update(uint32_t total, uint32_t symlow, uint32_t symhigh);
-  virtual void shift() = 0;
-  virtual void underflow() = 0;
-};
-
-class ArithmeticEncoder final : private ArithmeticCoderBase {
-public:
-  BitOutputStream &output;
-  unsigned long numUnderflow;
-  explicit ArithmeticEncoder(int numBits, BitOutputStream &out);
-  void write(uint32_t total, uint32_t symLow, uint32_t symHigh);
-  void finish();
-  void shift() override;
-  void underflow() override;
-};
