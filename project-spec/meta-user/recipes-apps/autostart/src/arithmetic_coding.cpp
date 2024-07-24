@@ -207,6 +207,4 @@ void ArithmeticEncoder::shift() {
     output.write(bit ^ 1);
 }
 
-void ArithmeticEncoder::underflow() {
-  numUnderflow++;
-}
+void ArithmeticEncoder::underflow() { numUnderflow++; }
