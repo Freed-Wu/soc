@@ -208,7 +208,5 @@ void ArithmeticEncoder::shift() {
 }
 
 void ArithmeticEncoder::underflow() {
-  if (numUnderflow == numeric_limits<decltype(numUnderflow)>::max())
-    throw overflow_error("Maximum underflow reached");
   numUnderflow++;
 }
