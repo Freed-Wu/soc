@@ -92,5 +92,3 @@ public:
   void shift() override;
   void underflow() override;
 };
-
-
