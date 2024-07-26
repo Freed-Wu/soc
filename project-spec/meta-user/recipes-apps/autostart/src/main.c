@@ -174,8 +174,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     if (munmap(yuv[k].addr, 2 * yuv[k].len) == -1)
       err(errno, AXITX_DEV_PATH);
     // uint16_t to uint8_t
-    // bytes to 16 bytes
-    reg.picture_size = 2 * yuv[k].len / 16;
+    reg.picture_size = 2 * yuv[k].len;
     status |= TP_STATUS_NETWORK_ENCODING;
     pl_run(fd, &reg);
     status &= ~TP_STATUS_NETWORK_ENCODING;
