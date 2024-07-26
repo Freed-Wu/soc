@@ -151,7 +151,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   data_t yuv[3] = {};
   uint8_t *addr = malloc(yuv_len);
   data_frames_to_data(input_data_frames, n_frame, addr);
-  // uint8_t to uint16_t
+  // uint16_t to uint8_t
   yuv[0].addr = ps_mmap(fd, yuv_len * 2);
   int16_t *p_yuv = yuv[0].addr;
   for (total_data_len_t i = 0; i < yuv_len; ++i)
@@ -167,10 +167,15 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   for (int k = 0; k < 3; k++) {
     syslog(LOG_NOTICE, "start to encode yuv channel %d", k);
     if (pl_write(fd, yuv[k].addr, reg.picture_addr = PICTURE_BASE_ADDR,
-                 yuv[k].len) == -1)
-      err(errno, NULL);
+                 // uint16_t to uint8_t
+                 2 * yuv[k].len) == -1)
+      err(errno, AXITX_DEV_PATH);
+    // uint16_t to uint8_t
+    if (munmap(yuv[k].addr, 2 * yuv[k].len) == -1)
+      err(errno, AXITX_DEV_PATH);
+    // uint16_t to uint8_t
     // bytes to 16 bytes
-    reg.picture_size = yuv[k].len / 16;
+    reg.picture_size = 2 * yuv[k].len / 16;
     status |= TP_STATUS_NETWORK_ENCODING;
     pl_run(fd, &reg);
     status &= ~TP_STATUS_NETWORK_ENCODING;
@@ -184,8 +189,6 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     trans[k].len = reg.trans_size;
     entropy[k].len = reg.entropy_size;
   }
-  if (munmap(yuv[0].addr, yuv_len) == -1)
-    err(errno, AXITX_DEV_PATH);
 
   // entropy encoding y', u', v'
   data8_t data[3] = {};
