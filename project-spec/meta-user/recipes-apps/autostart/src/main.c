@@ -171,6 +171,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
                  2 * yuv[k].len) == -1)
       err(errno, AXITX_DEV_PATH);
     // uint16_t to uint8_t
+    printf("before munmap\n");
     if (munmap(yuv[k].addr, 2 * yuv[k].len) == -1)
       err(errno, AXITX_DEV_PATH);
     // uint16_t to uint8_t

@@ -7,6 +7,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <stdio.h>
+
 #include "axitangxi.h"
 #include "axitangxi_ioctl.h"
 
@@ -142,10 +144,37 @@ ssize_t pl_config(int fd_dev, const char *filename, uint32_t pl_addr,
  * @param reg network accelerator register configuration
  */
 void pl_run(int fd_dev, struct network_acc_reg *reg) {
+  printf("before==================================================\n");
+  printf("reg->weight_addr = %#x, reg->weight_size = %#x\n", reg->weight_addr,
+         reg->weight_size);
+  printf("reg->picture_addr = %#x, reg->picture_size = %#x\n",
+         reg->picture_addr, reg->picture_size);
+  printf("reg->trans_addr = %#x, reg->trans_size = %#x\n", reg->trans_addr,
+         reg->trans_size);
+  printf("reg->entropy_addr = %#x, reg->entropy_size = %#x\n",
+         reg->entropy_addr, reg->entropy_size);
   if (ioctl(fd_dev, NETWORK_ACC_CONFIG, reg) == -1)
     err(errno, AXITX_DEV_PATH);
+  printf("config==================================================\n");
+  printf("reg->weight_addr = %#x, reg->weight_size = %#x\n", reg->weight_addr,
+         reg->weight_size);
+  printf("reg->picture_addr = %#x, reg->picture_size = %#x\n",
+         reg->picture_addr, reg->picture_size);
+  printf("reg->trans_addr = %#x, reg->trans_size = %#x\n", reg->trans_addr,
+         reg->trans_size);
+  printf("reg->entropy_addr = %#x, reg->entropy_size = %#x\n",
+         reg->entropy_addr, reg->entropy_size);
   if (ioctl(fd_dev, NETWORK_ACC_START) == -1)
     err(errno, AXITX_DEV_PATH);
+  printf("start==================================================\n");
+  printf("reg->weight_addr = %#x, reg->weight_size = %#x\n", reg->weight_addr,
+         reg->weight_size);
+  printf("reg->picture_addr = %#x, reg->picture_size = %#x\n",
+         reg->picture_addr, reg->picture_size);
+  printf("reg->trans_addr = %#x, reg->trans_size = %#x\n", reg->trans_addr,
+         reg->trans_size);
+  printf("reg->entropy_addr = %#x, reg->entropy_size = %#x\n",
+         reg->entropy_addr, reg->entropy_size);
 }
 
 /**
@@ -187,6 +216,15 @@ void pl_get(int fd_dev, struct network_acc_reg *reg, int16_t *trans_addr,
             int16_t *entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
     err(errno, AXITX_DEV_PATH);
+  printf("get==================================================\n");
+  printf("reg->weight_addr = %#x, reg->weight_size = %#x\n", reg->weight_addr,
+         reg->weight_size);
+  printf("reg->picture_addr = %#x, reg->picture_size = %#x\n",
+         reg->picture_addr, reg->picture_size);
+  printf("reg->trans_addr = %#x, reg->trans_size = %#x\n", reg->trans_addr,
+         reg->trans_size);
+  printf("reg->entropy_addr = %#x, reg->entropy_size = %#x\n",
+         reg->entropy_addr, reg->entropy_size);
   if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
     err(errno, AXITX_DEV_PATH);
   if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
