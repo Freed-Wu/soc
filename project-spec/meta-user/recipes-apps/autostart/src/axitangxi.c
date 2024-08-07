@@ -164,8 +164,6 @@ void pl_init(int fd_dev, struct network_acc_reg *reg,
   if (pl_config(fd_dev, weight_filename, reg->weight_addr = weight_addr,
                 &reg->weight_size) == -1)
     err(errno, "%s", weight_filename);
-  // bytes to 16 bytes
-  reg->weight_size /= 16;
   // TODO: use quantify_filename to config builtin quantization coefficience
   // if (pl_config(fd_dev, quantify_filename, reg->quantify_addr =
   // quantify_addr,
@@ -189,11 +187,8 @@ void pl_get(int fd_dev, struct network_acc_reg *reg, int16_t *trans_addr,
             int16_t *entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
     err(errno, AXITX_DEV_PATH);
-  // 16 bytes to bytes
-  if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size * 16) == -1)
+  if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
     err(errno, AXITX_DEV_PATH);
-  // 16 bytes to bytes
-  if (pl_read(fd_dev, entropy_addr, reg->entropy_addr,
-              reg->entropy_size * 16) == -1)
+  if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
 }
