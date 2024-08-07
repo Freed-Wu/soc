@@ -1,6 +1,5 @@
 #ifndef CODING_H
 #define CODING_H 1
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -8,11 +7,8 @@
 
 __BEGIN_DECLS
 
-#define LOW_BOUND 0
-#define HIGH_BOUND (1 << 16) - 1
-
-typedef uint16_t prob_t;
-typedef uint16_t mean_t;
+typedef int prob_t;
+typedef int mean_t;
 typedef mean_t std_t;
 
 typedef struct {
@@ -22,10 +18,7 @@ typedef struct {
 } gmm_t;
 
 extern size_t coding(gmm_t *gmm, int16_t *trans_addr, size_t trans_len,
-                     uint8_t *data_addr, uint32_t low_bound,
-                     uint32_t high_bound, uint32_t freqs_resolution);
-
-double test_one(char *input_path, char *bin_path, bool is_bin);
+                     uint8_t *data_addr, int16_t low_bound, int16_t high_bound);
 
 __END_DECLS
 #endif /* coding.h */
