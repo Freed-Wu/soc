@@ -10,15 +10,19 @@ __BEGIN_DECLS
 typedef int prob_t;
 typedef int mean_t;
 typedef mean_t std_t;
-
+#define SUB_CNT 39
 typedef struct {
   prob_t prob1, prob2, prob3;
   mean_t mean1, mean2, mean3;
   std_t std1, std2, std3;
 } gmm_t;
 
-extern size_t coding(gmm_t *gmm, int16_t *trans_addr, size_t trans_len,
-                     uint8_t *data_addr, int16_t low_bound, int16_t high_bound);
+typedef struct {
+    uint8_t* data;  // 编码后的数据指针
+    size_t length;  // 数据长度
+} CodingResult;
+
+extern CodingResult codings(gmm_t* gmms[13], int16_t* datas[13], size_t* lens,int gmm_scale);
 
 __END_DECLS
 #endif /* coding.h */
