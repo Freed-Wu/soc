@@ -13,7 +13,7 @@
 #include <stddef.h>
 #include <string>
 
-CodingResult codings(gmm_t* gmms[SUB_CNT], int16_t* datas[SUB_CNT], size_t* lens, int gmm_scale)
+extern "C" CodingResult codings(gmm_t* gmms[SUB_CNT], int16_t* datas[SUB_CNT], size_t* lens, int gmm_scale)
 {
     size_t sum_len = accumulate(lens, lens + SUB_CNT, 0);
     uint8_t* bins = (uint8_t*)malloc((sum_len*8)*sizeof(uint8_t));
