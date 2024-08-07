@@ -15,7 +15,7 @@
 using namespace std;
 
 class BitOutputStream final {
-private:
+public:
   int currentByte;
   int numBitsFilled;
 
@@ -82,7 +82,7 @@ public:
   virtual void underflow() = 0;
 };
 
-class ArithmeticEncoder final : private ArithmeticCoderBase {
+class ArithmeticEncoder final : public ArithmeticCoderBase {
 public:
   BitOutputStream &output;
   unsigned long numUnderflow;
