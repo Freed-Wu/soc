@@ -2,7 +2,7 @@
 set -e
 cd "$(dirname "$(dirname "$(readlink -f "$0")")")"
 
-config="$(grep CONFIG_SUBSYSTEM_SDROOT_DEV project-spec/configs/config)"
+config="$(grep CONFIG_SUBSYSTEM_SDROOT_DEV project-spec/configs/config || true)"
 config="${config#*\"}"
 config="${config%\"}"
 
