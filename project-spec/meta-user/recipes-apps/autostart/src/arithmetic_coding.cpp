@@ -50,26 +50,20 @@ inline int64_t clamp(int64_t x, int64_t l, int64_t r) {
     return x;
 }
 
-int softmax(int probs[3], uint16_t exp_table[], int scale = 1000,
-            int x_bound = -12) {
-  int mx = *max_element(probs, probs + 3);
-  int sum = 0;
-  int base = -x_bound * scale;
+int softmax(int probs[3],uint16_t scale_pred ,uint16_t exp_table[],int scale=1000,int x_bound=-12){
+    int mx=*max_element(probs,probs+3);
+    int sum=0;
+    int base=-x_bound*scale;
 
-  for (int i = 0; i < 3; i++) {
-    // 将idx 数值限定在[x_bound,0]
-    int idx = probs[i];
-    idx -= mx;
-    if (probs[i] < x_bound)
-      probs[i] = x_bound;
-
-    // 映射到exp
-    idx = idx * scale + base;
-    probs[i] = exp_table[idx];
-    sum += probs[i];
-  }
-  return sum;
+    for(int i=0;i<3;i++) {
+        long idx=probs[i]-mx;
+        idx= max(idx*scale/scale_pred +base,0l);
+        probs[i]= exp_table[idx];
+        sum+=probs[i];
+    }
+    return sum;
 }
+
 
 EncTable::EncTable(uint32_t _freqs_resolution, int _low_bound,
                    int _high_bound) {
@@ -80,69 +74,52 @@ EncTable::EncTable(uint32_t _freqs_resolution, int _low_bound,
   freqs_resolution = _freqs_resolution;
 }
 
-void EncTable::update(int m_probs[3], int m_means[3], int m_stds[3]) {
-  probs = m_probs;
-  means = m_means;
-  stds = m_stds;
-  prob_sum = softmax(m_probs, exp_table, exp_scale, exp_x_bound);
+void EncTable::update(int m_probs[3],int m_means[3],int m_stds[3]){
+	probs=m_probs;
+	means=m_means;
+	stds=m_stds;
+	prob_sum= softmax(m_probs,scale_pred,exp_table,exp_scale,exp_x_bound);
 }
 
 void EncTable::get_bound(int x) {
-  uint32_t y_bound = UINT32_MAX;
-  int base = -cdf_x_bound * cdf_scale;
+	uint32_t y_bound = UINT32_MAX;
+	int base = -cdf_x_bound * cdf_scale;
 
-  l_bound = 0, r_bound = 0;
-  for (int i = 0; i < 3; i++) {
-    int idx_l =
-        (long long)((low_bound * scale_pred - means[i]) - scale_pred / 2) *
-        cdf_scale / stds[i];
-    idx_l = clamp(idx_l, -base, base);
-    idx_l += base;
+	l_bound = 0, r_bound = 0;
+	for (int i = 0; i < 3; i++) {
+		int64_t idx_l = (long long)((low_bound * scale_pred - means[i]) - scale_pred / 2) * cdf_scale / stds[i];
+		idx_l = clamp(idx_l, -base, base);
+		idx_l += base;
 
-    int idx_r =
-        (long long)((high_bound * scale_pred - means[i]) + scale_pred / 2) *
-        cdf_scale / stds[i];
-    idx_r = clamp(idx_r, -base, base);
-    idx_r += base;
+		int64_t idx_r = (long long)((high_bound * scale_pred - means[i]) + scale_pred / 2) * cdf_scale / stds[i];
+		idx_r = clamp(idx_r, -base, base);
+		idx_r += base;
 
-    l_bound +=
-        uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
-    r_bound +=
-        uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
-  }
-  l_bound /= y_bound; // cdf
-  r_bound /= y_bound; // cdf
+		l_bound += uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
+		r_bound += uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
+	}
+	l_bound /= y_bound;  // cdf
+	r_bound /= y_bound;  // cdf
 
-  uint64_t low = 0, high = 0;
-  for (int i = 0; i < 3; i++) {
-    int idx_l = (long long)((x * scale_pred - means[i]) - scale_pred / 2) *
-                cdf_scale / stds[i];
-    idx_l = clamp(idx_l, -base, base);
-    idx_l += base;
+	uint64_t low = 0, high = 0;
+	for (int i = 0; i < 3; i++) {
+		int64_t idx_l = (long long)((x * scale_pred - means[i]) - scale_pred / 2) * cdf_scale / stds[i];
+		idx_l = clamp(idx_l, -base, base);
+		idx_l += base;
 
-    int idx_r = (long long)((x * scale_pred - means[i]) + scale_pred / 2) *
-                cdf_scale / stds[i];
-    idx_r = clamp(idx_r, -base, base);
-    idx_r += base;
+		int64_t idx_r = (long long)((x * scale_pred - means[i]) + scale_pred / 2) * cdf_scale / stds[i];
+		idx_r = clamp(idx_r, -base, base);
+		idx_r += base;
 
-    low +=
-        uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
-    high +=
-        uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
-  }
-  low /= y_bound;  // cdf
-  high /= y_bound; // cdf
+		low += uint64_t(1) * freqs_resolution * cdf_table[idx_l] / prob_sum * probs[i];
+		high += uint64_t(1) * freqs_resolution * cdf_table[idx_r] / prob_sum * probs[i];
+	}
+	low /= y_bound;  // cdf
+	high /= y_bound;  // cdf
 
-  sym_low = low - l_bound + (x - low_bound); // (x-0.5) to (low-0.5) cumulative
-                                             // sum & increment for each point
-  sym_high =
-      high - l_bound +
-      (x - low_bound +
-       1); // (x+0.5) to (low-0.5) cumulative sum & increment for each point
-  total_freqs =
-      r_bound - l_bound +
-      (high_bound - low_bound +
-       1); // (high+0.5) to (low-0.5) cumulative sum & increment for each point
+	sym_low = low - l_bound + (x - low_bound);  // (x-0.5) to (low-0.5) cumulative sum & increment for each point
+	sym_high = high - l_bound + (x - low_bound + 1);  // (x+0.5) to (low-0.5) cumulative sum & increment for each point
+	total_freqs = r_bound - l_bound + (high_bound - low_bound + 1); // (high+0.5) to (low-0.5) cumulative sum & increment for each point
 }
 
 EncTable::~EncTable() {
