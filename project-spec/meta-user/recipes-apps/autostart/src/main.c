@@ -148,18 +148,23 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
                                   uint8_t **p_addr) {
   // convert data frames to yuv
   ssize_t yuv_len = data_frame_to_data_len(input_data_frames, n_frame);
-  data_t yuv[3] = {};
   uint8_t *addr = malloc(yuv_len);
   data_frames_to_data(input_data_frames, n_frame, addr);
-  // uint16_t to uint8_t
-  yuv[0].addr = ps_mmap(fd, yuv_len * 2);
-  int16_t *p_yuv = yuv[0].addr;
-  for (total_data_len_t i = 0; i < yuv_len; ++i)
-    *p_yuv++ = addr[i];
+  ssize_t u_len = yuv_len / (4 + 1 + 1);
+  data_t yuv[3] = {
+      // uint16_t to uint8_t
+      // len to size
+      {.addr = ps_mmap(fd, u_len * 4 * 2), .len = u_len * 4},
+      {.addr = ps_mmap(fd, u_len * 2), .len = u_len},
+      {.addr = ps_mmap(fd, u_len * 2), .len = u_len},
+  };
+  uint8_t *p = addr;
+  for (int k = 0; k < 3; k++) {
+    int16_t *p_yuv = yuv[k].addr;
+    for (total_data_len_t i = 0; i < yuv[k].len; ++i)
+      *p_yuv++ = *p++;
+  }
   free(addr);
-  yuv[2].len = data_to_yuv420(yuv[0].addr, &yuv[1].addr, &yuv[2].addr, yuv_len);
-  yuv[1].len = yuv[2].addr - yuv[1].addr;
-  yuv[0].len = yuv[1].addr - yuv[0].addr;
 
   // neural encoding yuv to y', u', v'
   data_t trans[3] = {};
