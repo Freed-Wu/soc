@@ -224,7 +224,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     if (*p_addr == NULL)
       err(errno, NULL);
   }
-  uint8_t *p = *p_addr;
+  p = *p_addr;
   for (int k = 0; k < 3; k++) {
     memcpy(p, data[k].addr, data[k].len);
     p += data[k].len;
