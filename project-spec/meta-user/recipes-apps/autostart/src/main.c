@@ -193,6 +193,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     trans[k].len = reg.trans_size;
     entropy[k].len = reg.entropy_size;
   }
+  syslog(LOG_NOTICE, "all yuv channels are encoded");
 
   // entropy encoding y', u', v'
   data8_t data[3] = {};
@@ -213,10 +214,12 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
         data_min = data[k].addr[i];
     }
     uint32_t freqs_resolution = 1000000;
+    syslog(LOG_NOTICE, "wait yuv channel %d to be entropy encoded", k);
     data[k].len = coding(gmm, trans[k].addr, trans[k].len, data[k].addr,
                          data_min, data_max, freqs_resolution);
     len += data[k].len;
   }
+  syslog(LOG_NOTICE, "all yuv channels are entropy encoded");
   status &= ~TP_STATUS_ENTROPY_ENCODING;
   // combine 3 channels to one
   if (*p_addr == NULL) {
