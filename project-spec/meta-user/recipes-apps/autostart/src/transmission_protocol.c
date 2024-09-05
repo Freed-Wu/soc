@@ -297,15 +297,15 @@ ssize_t data_to_yuv420(int16_t *y, int16_t **u, int16_t **v, size_t yuv_len) {
 void entropy_to_gmm(int16_t *entropy_addr, gmm_t *gmm, size_t len) {
 
   for (gmm_t *p = gmm; gmm + len - p >= 0; p++) {
-    p->mean1 = entropy_addr[1];
-    p->mean2 = entropy_addr[2];
-    p->mean3 = entropy_addr[3];
-    p->std1 = entropy_addr[4];
-    p->std2 = entropy_addr[5];
-    p->std3 = entropy_addr[6];
-    p->prob1 = entropy_addr[7];
-    p->prob2 = entropy_addr[8];
-    p->prob3 = entropy_addr[9];
+    p->mean1 = entropy_addr[0];
+    p->mean2 = entropy_addr[1];
+    p->mean3 = entropy_addr[2];
+    p->std1 = entropy_addr[3];
+    p->std2 = entropy_addr[4];
+    p->std3 = entropy_addr[5];
+    p->prob1 = entropy_addr[6];
+    p->prob2 = entropy_addr[7];
+    p->prob3 = entropy_addr[8];
   }
 }
 
