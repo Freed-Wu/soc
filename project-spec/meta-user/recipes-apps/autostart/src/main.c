@@ -204,14 +204,14 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
       522240, 522240, 8160,    8160,    8160,    8160,   32640,  32640,
       32640,  130560, 130560,  130560,  522240,  522240, 522240};
   gmm_t *gmms[SUB_CNT];
-  int16_t *datas[SUB_CNT];
+  int16_t *data[SUB_CNT];
   for (int k = 0; k < 3; k++) {
     size_t gmm_len = reg.entropy_size / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
     entropy_to_gmm((int16_t *)entropy[k].addr, gmm, gmm_len);
     size_t ptr = 0;
     for (int i = 13 * k; i < 13 * (k + 1); i++) {
-      datas[i] = trans[k].addr + ptr;
+      data[i] = trans[k].addr + ptr;
       gmms[i] = gmm + ptr;
       ptr += lens[i];
     }
@@ -222,7 +222,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   // ******** gmm_scale由硬件给出
   int gmm_scale = 10000;
   // ********
-  CodingResult enc_res = codings(gmms, datas, lens, gmm_scale);
+  CodingResult enc_res = codings(gmms, data, lens, gmm_scale);
   uint8_t *enc_data = enc_res.data;
   size_t len = enc_res.length;
   status &= ~TP_STATUS_ENTROPY_ENCODING;

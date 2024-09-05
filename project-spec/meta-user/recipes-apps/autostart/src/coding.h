@@ -22,7 +22,7 @@ typedef struct {
   size_t length; // 数据长度
 } CodingResult;
 
-extern CodingResult codings(gmm_t *gmms[SUB_CNT], int16_t *datas[SUB_CNT],
+extern CodingResult codings(gmm_t *gmms[SUB_CNT], int16_t *data[SUB_CNT],
                             size_t *lens, int gmm_scale);
 
 __END_DECLS
