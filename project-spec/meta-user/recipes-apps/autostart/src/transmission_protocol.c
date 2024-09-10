@@ -282,13 +282,6 @@ void fd_to_data_frames(int fd, data_frame_t *data_frames, n_frame_t n_frame) {
   memset(data_frames[i].data + size, 0, TP_FRAME_DATA_LEN_MAX - size);
 }
 
-ssize_t data_to_yuv420(int16_t *y, int16_t **u, int16_t **v, size_t yuv_len) {
-  size_t v_len = yuv_len / (4 + 1 + 1);
-  *u = y + v_len * 4;
-  *v = *u + v_len;
-  return v_len;
-};
-
 /**
  * dequantize:
  *  output = input
