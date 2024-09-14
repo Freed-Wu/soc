@@ -208,34 +208,20 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   for (int k = 0; k < 3; k++) {
     size_t gmm_len = entropy[k].len / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
-    for (size_t i = 0; i < 5; i++) {
-      gmm[i].mean1 = 1;
-      syslog(LOG_NOTICE, "success for %zd mean", i);
-      int16_t x = entropy[k].addr[i * 9];
-      gmm[i].mean1 = x;
-      int16_t x2 = entropy[k].addr[i * 9 + 1];
-      gmm[i].mean2 = x2;
-      /*gmm[i].mean2 = entropy[k].addr[i * 9 + 1];*/
-      /*gmm[i].mean3 = entropy[k].addr[i * 9 + 2];*/
-      /*gmm[i].std1 = entropy[k].addr[i * 9 + 3];*/
-      /*gmm[i].std2 = entropy[k].addr[i * 9 + 4];*/
-      /*gmm[i].std3 = entropy[k].addr[i * 9 + 5];*/
-      /*gmm[i].prob1 = entropy[k].addr[i * 9 + 6];*/
-      /*gmm[i].prob2 = entropy[k].addr[i * 9 + 7];*/
-      /*gmm[i].prob3 = entropy[k].addr[i * 9 + 8];*/
-      syslog(LOG_NOTICE, "success for %zd", i);
-    }
-    int16_t x = entropy[k].addr[0];
-    syslog(LOG_NOTICE, "success for %zd mean1", 0);
-    gmm[0].mean1 = 1;
-    syslog(LOG_NOTICE, "success for %zd mean1", 0);
-    x = entropy[k].addr[1];
-    syslog(LOG_NOTICE, "success for %d ?", x);
-    gmm[0].mean2 = x;
-    syslog(LOG_NOTICE, "success for %zd mean2", 0);
-    gmm[0].mean3 = entropy[k].addr[2];
-    syslog(LOG_NOTICE, "success for %zd mean3", 0);
-    entropy_to_gmm(entropy[k].addr, gmm, gmm_len);
+    syslog(LOG_NOTICE,"gmm_len:%zd ddr_len:%zd",gmm_len,entropy[k].len);
+    // test1
+    syslog(LOG_NOTICE, "init k_ddr");
+    int16_t *k_addr = malloc(entropy[k].len*sizeof(int16_t));
+    if (k_addr != NULL)
+      syslog(LOG_NOTICE, "init k_ddr ok");
+    entropy_to_gmm(k_addr, gmm, gmm_len);
+    syslog(LOG_NOTICE, "test 1 ok");
+    // test2 
+    memcpy(k_addr, entropy[k].addr, entropy[k].len*sizeof(int16_t));
+    syslog(LOG_NOTICE, "cmp k_ddr");
+    entropy_to_gmm(k_addr, gmm, gmm_len);
+    syslog(LOG_NOTICE, "test2 ok");
+    
     size_t ptr = 0;
     for (int i = 13 * k; i < 13 * (k + 1); i++) {
       data[i] = trans[k].addr + ptr;
