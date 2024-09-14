@@ -143,6 +143,42 @@ static int parse(int argc, char *argv[], opt_t *opt) {
   return 0;
 }
 
+void write_to_file(const char *filename, const int16_t *data, size_t length) {
+  FILE *file = fopen(filename, "wb"); // 使用 "wb" 模式以二进制方式写入
+  if (file == NULL) {
+    perror("无法打开文件");
+    return;
+  }
+  fwrite(data, sizeof(int16_t), length, file); // 写入 int16_t 类型的数据
+  fclose(file);
+}
+
+void read_from_file(const char *filename, int16_t **data, size_t *length) {
+  FILE *file = fopen(filename, "rb");
+
+  if (file == NULL) {
+    perror("无法打开文件");
+    return;
+  }
+
+  fseek(file, 0, SEEK_END);
+  *length = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  // 计算需要分配的内存大小
+  size_t num_elements = *length / sizeof(int16_t);
+  *data = (int16_t *)malloc(num_elements * sizeof(int16_t));
+  if (*data == NULL) {
+    perror("内存分配失败");
+    fclose(file);
+    return;
+  }
+
+  // 读取文件内容到数组中
+  fread(*data, sizeof(int16_t), num_elements, file);
+  fclose(file);
+}
+
 static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
                                   n_frame_t n_frame, struct network_acc_reg reg,
                                   uint8_t **p_addr) {
@@ -206,9 +242,30 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   gmm_t *gmms[SUB_CNT];
   int16_t *data[SUB_CNT];
   for (int k = 0; k < 3; k++) {
-    size_t gmm_len = reg.entropy_size / 9;
+    size_t gmm_len = entropy[k].len / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
-    entropy_to_gmm((int16_t *)entropy[k].addr, gmm, gmm_len);
+    syslog(LOG_NOTICE, "gmm_len:%zd ddr_len:%zd", gmm_len, entropy[k].len);
+    // test1
+    syslog(LOG_NOTICE, "init k_ddr");
+    int16_t *k_addr = malloc(entropy[k].len * sizeof(int16_t));
+    if (k_addr != NULL)
+      syslog(LOG_NOTICE, "init k_ddr ok");
+    entropy_to_gmm(k_addr, gmm, gmm_len);
+    syslog(LOG_NOTICE, "test 1 ok");
+
+    char filename[100] = "k.bin";
+    filename[0] = '0' + k;
+    syslog(LOG_NOTICE, "beg write  ok");
+    write_to_file(filename, entropy[k].addr, entropy[k].len);
+    syslog(LOG_NOTICE, "end write  ok");
+    read_from_file(filename, &entropy[k].addr, &entropy[k].len);
+    syslog(LOG_NOTICE, "end read  ok");
+    // test2
+    memcpy(k_addr, entropy[k].addr, entropy[k].len * sizeof(int16_t));
+    syslog(LOG_NOTICE, "cmp k_ddr");
+    entropy_to_gmm(k_addr, gmm, gmm_len);
+    syslog(LOG_NOTICE, "test2 ok");
+
     size_t ptr = 0;
     for (int i = 13 * k; i < 13 * (k + 1); i++) {
       data[i] = trans[k].addr + ptr;

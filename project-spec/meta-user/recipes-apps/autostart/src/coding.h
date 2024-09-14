@@ -7,8 +7,8 @@
 
 __BEGIN_DECLS
 
-typedef int prob_t;
-typedef int mean_t;
+typedef int16_t prob_t;
+typedef int16_t mean_t;
 typedef mean_t std_t;
 #define SUB_CNT 39
 typedef struct {
