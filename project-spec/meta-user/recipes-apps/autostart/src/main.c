@@ -206,9 +206,36 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   gmm_t *gmms[SUB_CNT];
   int16_t *data[SUB_CNT];
   for (int k = 0; k < 3; k++) {
-    size_t gmm_len = reg.entropy_size / 9;
+    size_t gmm_len = entropy[k].len / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
-    entropy_to_gmm((int16_t *)entropy[k].addr, gmm, gmm_len);
+    for (size_t i = 0; i < 5; i++) {
+      gmm[i].mean1 = 1;
+      syslog(LOG_NOTICE, "success for %zd mean", i);
+      int16_t x = entropy[k].addr[i * 9];
+      gmm[i].mean1 = x;
+      int16_t x2 = entropy[k].addr[i * 9 + 1];
+      gmm[i].mean2 = x2;
+      /*gmm[i].mean2 = entropy[k].addr[i * 9 + 1];*/
+      /*gmm[i].mean3 = entropy[k].addr[i * 9 + 2];*/
+      /*gmm[i].std1 = entropy[k].addr[i * 9 + 3];*/
+      /*gmm[i].std2 = entropy[k].addr[i * 9 + 4];*/
+      /*gmm[i].std3 = entropy[k].addr[i * 9 + 5];*/
+      /*gmm[i].prob1 = entropy[k].addr[i * 9 + 6];*/
+      /*gmm[i].prob2 = entropy[k].addr[i * 9 + 7];*/
+      /*gmm[i].prob3 = entropy[k].addr[i * 9 + 8];*/
+      syslog(LOG_NOTICE, "success for %zd", i);
+    }
+    int16_t x = entropy[k].addr[0];
+    syslog(LOG_NOTICE, "success for %zd mean1", 0);
+    gmm[0].mean1 = 1;
+    syslog(LOG_NOTICE, "success for %zd mean1", 0);
+    x = entropy[k].addr[1];
+    syslog(LOG_NOTICE, "success for %d ?", x);
+    gmm[0].mean2 = x;
+    syslog(LOG_NOTICE, "success for %zd mean2", 0);
+    gmm[0].mean3 = entropy[k].addr[2];
+    syslog(LOG_NOTICE, "success for %zd mean3", 0);
+    entropy_to_gmm(entropy[k].addr, gmm, gmm_len);
     size_t ptr = 0;
     for (int i = 13 * k; i < 13 * (k + 1); i++) {
       data[i] = trans[k].addr + ptr;

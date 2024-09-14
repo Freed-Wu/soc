@@ -288,18 +288,29 @@ void fd_to_data_frames(int fd, data_frame_t *data_frames, n_frame_t n_frame) {
  *  bias = 0
  */
 void entropy_to_gmm(int16_t *entropy_addr, gmm_t *gmm, size_t len) {
-
-  for (gmm_t *p = gmm; gmm + len - p >= 0; p++) {
-    p->mean1 = entropy_addr[0];
-    p->mean2 = entropy_addr[1];
-    p->mean3 = entropy_addr[2];
-    p->std1 = entropy_addr[3];
-    p->std2 = entropy_addr[4];
-    p->std3 = entropy_addr[5];
-    p->prob1 = entropy_addr[6];
-    p->prob2 = entropy_addr[7];
-    p->prob3 = entropy_addr[8];
+  for (size_t i = 0; i < len; i++) {
+    int16_t x = entropy_addr[i * 9];
+    gmm[i].mean1 = 1;
+    syslog(LOG_NOTICE, "success for %zd mean1", i);
+    x = entropy_addr[i * 9 + 1];
+    gmm[i].mean2 = x;
+    syslog(LOG_NOTICE, "success for %zd mean2", i);
+    gmm[i].mean3 = entropy_addr[i * 9 + 2];
+    syslog(LOG_NOTICE, "success for %zd mean3", i);
+    gmm[i].std1 = entropy_addr[i * 9 + 3];
+    syslog(LOG_NOTICE, "success for %zd std1", i);
+    gmm[i].std2 = entropy_addr[i * 9 + 4];
+    syslog(LOG_NOTICE, "success for %zd std2", i);
+    gmm[i].std3 = entropy_addr[i * 9 + 5];
+    syslog(LOG_NOTICE, "success for %zd std3", i);
+    gmm[i].prob1 = entropy_addr[i * 9 + 6];
+    syslog(LOG_NOTICE, "success for %zd prob1", i);
+    gmm[i].prob2 = entropy_addr[i * 9 + 7];
+    syslog(LOG_NOTICE, "success for %zd prob2", i);
+    gmm[i].prob3 = entropy_addr[i * 9 + 8];
+    syslog(LOG_NOTICE, "success for %zd prob3", i);
   }
+  syslog(LOG_NOTICE, "success to convert entropy to gmm");
 }
 
 /**
