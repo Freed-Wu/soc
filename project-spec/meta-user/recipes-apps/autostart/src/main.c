@@ -216,6 +216,14 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
       syslog(LOG_NOTICE, "init k_ddr ok");
     entropy_to_gmm(k_addr, gmm, gmm_len);
     syslog(LOG_NOTICE, "test 1 ok");
+
+    char filename[100] = "k.bin";
+    filename[0] = '0' + k;
+    syslog(LOG_NOTICE, "beg write  ok");
+    write_to_file(filename, entropy[k].addr, entropy[k].len);
+    syslog(LOG_NOTICE, "end write  ok");
+    read_from_file(filename, entropy[k].addr, entropy[k].len);
+    syslog(LOG_NOTICE, "end read  ok");
     // test2 
     memcpy(k_addr, entropy[k].addr, entropy[k].len*sizeof(int16_t));
     syslog(LOG_NOTICE, "cmp k_ddr");
