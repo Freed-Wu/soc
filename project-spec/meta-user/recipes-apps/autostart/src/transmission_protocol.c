@@ -288,29 +288,56 @@ void fd_to_data_frames(int fd, data_frame_t *data_frames, n_frame_t n_frame) {
  *  bias = 0
  */
 void entropy_to_gmm(int16_t *entropy_addr, gmm_t *gmm, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    int16_t x = entropy_addr[i * 9];
-    gmm[i].mean1 = 1;
-    syslog(LOG_NOTICE, "success for %zd mean1", i);
-    x = entropy_addr[i * 9 + 1];
-    gmm[i].mean2 = x;
-    syslog(LOG_NOTICE, "success for %zd mean2", i);
-    gmm[i].mean3 = entropy_addr[i * 9 + 2];
-    syslog(LOG_NOTICE, "success for %zd mean3", i);
-    gmm[i].std1 = entropy_addr[i * 9 + 3];
-    syslog(LOG_NOTICE, "success for %zd std1", i);
-    gmm[i].std2 = entropy_addr[i * 9 + 4];
-    syslog(LOG_NOTICE, "success for %zd std2", i);
-    gmm[i].std3 = entropy_addr[i * 9 + 5];
-    syslog(LOG_NOTICE, "success for %zd std3", i);
-    gmm[i].prob1 = entropy_addr[i * 9 + 6];
-    syslog(LOG_NOTICE, "success for %zd prob1", i);
-    gmm[i].prob2 = entropy_addr[i * 9 + 7];
-    syslog(LOG_NOTICE, "success for %zd prob2", i);
-    gmm[i].prob3 = entropy_addr[i * 9 + 8];
-    syslog(LOG_NOTICE, "success for %zd prob3", i);
-  }
+	for (size_t i = 0; i < len; i++) {
+		gmm[i].mean1 = entropy_addr[i * 9];
+		gmm[i].mean2 = entropy_addr[i * 9 + 1];
+		gmm[i].mean3 = entropy_addr[i * 9 + 2];
+		gmm[i].std1 = entropy_addr[i * 9 + 3];
+		gmm[i].std2 = entropy_addr[i * 9 + 4];
+		gmm[i].std3 = entropy_addr[i * 9 + 5];
+		gmm[i].prob1 = entropy_addr[i * 9 + 6];
+		gmm[i].prob2 = entropy_addr[i * 9 + 7];
+		gmm[i].prob3 = entropy_addr[i * 9 + 8];
+	}
   syslog(LOG_NOTICE, "success to convert entropy to gmm");
+}
+
+#include <stdio.h>
+#include <stdio.h>
+void write_to_file(const char *filename, const int16_t *data, size_t length) {
+    FILE *file = fopen(filename, "wb"); // 使用 "wb" 模式以二进制方式写入
+    if (file == NULL) {
+        perror("无法打开文件");
+        return;
+    }
+    fwrite(data, sizeof(int16_t), length, file); // 写入 int16_t 类型的数据
+    fclose(file);
+}
+
+void read_from_file(const char *filename, int16_t **data, size_t *length) {
+    FILE *file = fopen(filename, "rb");
+
+    if (file == NULL) {
+        perror("无法打开文件");
+        return;
+    }
+
+    fseek(file, 0, SEEK_END);
+    *length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // 计算需要分配的内存大小
+    size_t num_elements = *length / sizeof(int16_t);
+    *data = (int16_t *)malloc(num_elements * sizeof(int16_t));
+    if (*data == NULL) {
+        perror("内存分配失败");
+        fclose(file);
+        return;
+    }
+
+    // 读取文件内容到数组中
+    fread(*data, sizeof(int16_t), num_elements, file);
+    fclose(file);
 }
 
 /**
