@@ -6,8 +6,12 @@
 #include <sys/stat.h>
 // https://stackoverflow.com/a/48521433/16027269
 #define termios asmtermios
+#define winsize asmwinsize
+#define termio asmtermio
 #include <asm/termios.h>
 #undef termios
+#undef winsize
+#undef termio
 #include <termios.h>
 
 #include "coding.h"
