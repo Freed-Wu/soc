@@ -65,14 +65,20 @@ int main(int argc, const char *argv[]) {
   int fd_trans = open("trans.bin", O_RDWR | O_CREAT | O_NONBLOCK, 0644);
   if (fd_trans == -1)
     err(errno, "trans.bin");
-  if (write(fd_trans, trans_addr, reg.trans_size * 2) != reg.trans_size * 2)
-    err(errno, "trans.bin");
+  int size = write(fd_trans, trans_addr, reg.trans_size * 2);
+  if (size != reg.trans_size * 2)
+    fprintf(stderr, "trans.bin: %x/%x data is written", size,
+            reg.trans_size * 2);
   if (close(fd_trans) == -1)
     err(errno, "trans.bin");
 
-  int fd_entropy = open("entropy.bin", O_RDWR | O_NONBLOCK);
+  int fd_entropy = open("entropy.bin", O_RDWR | O_CREAT | O_NONBLOCK, 0644);
   if (fd_entropy == -1)
     err(errno, "entropy.bin");
+  size = write(fd_entropy, entropy_addr, reg.entropy_size * 2);
+  if (size != reg.entropy_size * 2)
+    fprintf(stderr, "entropy.bin: %x/%x data is written", size,
+            reg.entropy_size * 2);
   if (write(fd_entropy, entropy_addr, reg.entropy_size * 2) !=
       reg.entropy_size * 2)
     err(errno, "entropy.bin");
