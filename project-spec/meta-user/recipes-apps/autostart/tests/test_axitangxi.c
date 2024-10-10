@@ -18,8 +18,6 @@
 #define SCALE 0.00667200749740045
 
 int main(int argc, const char *argv[]) {
-  assert(argc > 1);
-
   int ret = EXIT_SUCCESS;
   int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
   if (fd_dev == -1)
