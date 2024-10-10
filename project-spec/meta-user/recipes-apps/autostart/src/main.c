@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -194,8 +195,9 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     pl_get(fd, &reg, &trans[k].addr, &entropy[k].addr);
     status &= ~TP_STATUS_NETWORK_ENCODING;
 
-    trans[k].len = reg.trans_size;
-    entropy[k].len = reg.entropy_size;
+    // uint8_t to int16_t
+    trans[k].len = reg.trans_size / 2;
+    entropy[k].len = reg.entropy_size / 2;
   }
   syslog(LOG_NOTICE, "all yuv channels are encoded");
 
@@ -211,6 +213,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   int16_t *data[SUB_CNT];
   for (int k = 0; k < 3; k++) {
     size_t gmm_len = entropy[k].len / 9;
+    assert(gmm_len == trans[k].len);
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
     entropy_to_gmm(entropy[k].addr, gmm, gmm_len);
     size_t ptr = 0;
@@ -219,8 +222,9 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
       gmms[i] = gmm + ptr;
       ptr += lens[i];
     }
-    if (ptr != gmm_len || ptr != trans[k].len)
-      syslog(LOG_NOTICE, "yuv channel %d error", k);
+    /*assert(ptr == gmm_len);*/
+    if (ptr != gmm_len)
+      syslog(LOG_ERR, "yuv channel %d error", k);
   }
   syslog(LOG_NOTICE, "all yuv channels are entropy encoded");
   // ******** gmm_scale由硬件给出
