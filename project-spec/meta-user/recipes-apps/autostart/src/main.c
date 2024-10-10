@@ -150,6 +150,8 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   ssize_t yuv_len = data_frame_to_data_len(input_data_frames, n_frame);
   uint8_t *addr = malloc(yuv_len);
   data_frames_to_data(input_data_frames, n_frame, addr);
+  /*const ssize_t real_yuv_len = 3840 * (2160 / 64 + 1) * 64;*/
+  /*ssize_t u_len = real_yuv_len / (4 + 1 + 1);*/
   ssize_t u_len = yuv_len / (4 + 1 + 1);
   data_t yuv[3] = {
       // uint16_t to uint8_t
@@ -159,6 +161,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
       {.addr = ps_mmap(fd, u_len * 2), .len = u_len},
   };
   uint8_t *p = addr;
+  // FIXME: mirror padding
   for (int k = 0; k < 3; k++) {
     int16_t *p_yuv = yuv[k].addr;
     for (total_data_len_t i = 0; i < yuv[k].len; ++i)

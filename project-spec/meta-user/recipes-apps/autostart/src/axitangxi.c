@@ -51,14 +51,14 @@ static void init_trans(struct axitangxi_transaction *trans, void *ps_addr,
  * @param request read or write
  * @returns size of reading/writing data if positive, error code if negative
  */
-ssize_t pl_io(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size,
+ssize_t pl_io(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size,
               unsigned long request) {
-  if (ps_addr == NULL)
-    ps_addr = ps_mmap(fd_dev, size);
-  if (ps_addr == MAP_FAILED)
+  if (*ps_addr == NULL)
+    *ps_addr = ps_mmap(fd_dev, size);
+  if (*ps_addr == MAP_FAILED)
     return -1;
   struct axitangxi_transaction trans;
-  init_trans(&trans, ps_addr, pl_addr, size);
+  init_trans(&trans, *ps_addr, pl_addr, size);
   if (ioctl(fd_dev, request, &trans) == -1)
     return -1;
   return size;
@@ -73,8 +73,8 @@ ssize_t pl_io(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size,
  * @param size size of allocated bytes which FPGA uses
  * @returns size of reading/writing data if positive, error code if negative
  */
-ssize_t pl_write(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size) {
-  return pl_io(fd_dev, ps_addr, pl_addr, size, PSDDR_TO_PLDDR);
+ssize_t pl_write(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size) {
+  return pl_io(fd_dev, *ps_addr, pl_addr, size, PSDDR_TO_PLDDR);
 }
 
 /**
@@ -86,8 +86,8 @@ ssize_t pl_write(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size) {
  * @param size size of allocated bytes which FPGA uses
  * @returns size of reading/writing data if positive, error code if negative
  */
-ssize_t pl_read(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size) {
-  return pl_io(fd_dev, ps_addr, pl_addr, size, PLDDR_TO_PSDDR);
+ssize_t pl_read(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size) {
+  return pl_io(fd_dev, *ps_addr, pl_addr, size, PLDDR_TO_PSDDR);
 }
 
 /**
@@ -98,17 +98,17 @@ ssize_t pl_read(int fd_dev, void *ps_addr, uint32_t pl_addr, uint32_t size) {
  * @param addr memory address
  * @returns size of reading/writing data if positive, error code if negative
  */
-ssize_t ps_read_file(int fd_dev, const char *filename, void *addr) {
+ssize_t ps_read_file(int fd_dev, const char *filename, void **addr) {
   int fd = open(filename, O_RDWR);
   if (fd == -1)
     return -1;
   struct stat status;
   if (fstat(fd, &status) == -1)
     return -1;
-  addr = ps_mmap(fd_dev, status.st_size);
-  if (addr == MAP_FAILED)
+  *addr = ps_mmap(fd_dev, status.st_size);
+  if (*addr == MAP_FAILED)
     return -1;
-  ssize_t size = read(fd, addr, status.st_size);
+  ssize_t size = read(fd, *addr, status.st_size);
   if (close(fd) == -1)
     return -1;
   return size;
@@ -126,10 +126,10 @@ ssize_t ps_read_file(int fd_dev, const char *filename, void *addr) {
 ssize_t pl_config(int fd_dev, const char *filename, uint32_t pl_addr,
                   uint32_t *p_size) {
   void *ps_addr = NULL;
-  *p_size = ps_read_file(fd_dev, filename, ps_addr);
+  *p_size = ps_read_file(fd_dev, filename, &ps_addr);
   if (*p_size == -1)
     return -2;
-  ssize_t ssize = pl_write(fd_dev, ps_addr, pl_addr, *p_size);
+  ssize_t ssize = pl_write(fd_dev, &ps_addr, pl_addr, *p_size);
   if (munmap(ps_addr, *p_size) == -1)
     return -3;
   return ssize;
@@ -187,8 +187,10 @@ void pl_get(int fd_dev, struct network_acc_reg *reg, int16_t *trans_addr,
             int16_t *entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
     err(errno, AXITX_DEV_PATH);
-  if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
+  if (pl_read(fd_dev, (void **)&trans_addr, reg->trans_addr, reg->trans_size) ==
+      -1)
     err(errno, AXITX_DEV_PATH);
-  if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
+  if (pl_read(fd_dev, (void **)&entropy_addr, reg->entropy_addr,
+              reg->entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
 }
