@@ -44,8 +44,8 @@ if(BINARY)
     DESTINATION ${CMAKE_INSTALL_DATADIR}/autostart)
 endif()
 
-include(CTest)
-add_subdirectory(tests EXCLUDE_FORM_ALL)
+# include(CTest)
+# add_subdirectory(tests EXCLUDE_FORM_ALL)
 
 set(CPACK_PACKAGE_CONTACT
   https://github.com/Freed-Wu/deep-space-detection/issues)

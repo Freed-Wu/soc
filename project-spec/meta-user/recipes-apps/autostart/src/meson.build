@@ -36,4 +36,4 @@ executable(
   link_with: [lib_utils, lib_transmission_protocol],
   dependencies: thread_dep,
 )
-test('main', main, args: ['-d', meson.project_source_root() + '/meson.build'])
+test('smoke test', main, args: ['-d', meson.project_source_root() + '/meson.build'])

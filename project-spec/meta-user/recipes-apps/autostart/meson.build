@@ -4,6 +4,7 @@ project(
   default_options: ['debug=true'],
 )
 subdir('src')
+subdir('tests')
 if get_option('binary')
   bin = 'assets/bin/'
   install_data(

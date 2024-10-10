@@ -174,7 +174,8 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   data_t entropy[3] = {};
   for (int k = 0; k < 3; k++) {
     syslog(LOG_NOTICE, "start to encode yuv channel %d", k);
-    if (pl_write(fd, yuv[k].addr, reg.picture_addr = PICTURE_BASE_ADDR,
+    if (pl_write(fd, (void **)&yuv[k].addr,
+                 reg.picture_addr = PICTURE_BASE_ADDR,
                  // uint16_t to uint8_t
                  2 * yuv[k].len) == -1)
       err(errno, AXITX_DEV_PATH);
@@ -209,7 +210,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   gmm_t *gmms[SUB_CNT];
   int16_t *data[SUB_CNT];
   for (int k = 0; k < 3; k++) {
-    size_t gmm_len = reg.entropy_size / 9;
+    size_t gmm_len = entropy[k].len / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
     entropy_to_gmm(entropy[k].addr, gmm, gmm_len);
     size_t ptr = 0;
