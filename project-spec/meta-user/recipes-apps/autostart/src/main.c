@@ -190,7 +190,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
     status |= TP_STATUS_NETWORK_ENCODING;
     // TODO: multithread
     syslog(LOG_NOTICE, "wait yuv channel %d to be encoded", k);
-    pl_get(fd, &reg, trans[k].addr, entropy[k].addr);
+    pl_get(fd, &reg, &trans[k].addr, &entropy[k].addr);
     status &= ~TP_STATUS_NETWORK_ENCODING;
 
     trans[k].len = reg.trans_size;

@@ -74,7 +74,7 @@ ssize_t pl_io(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size,
  * @returns size of reading/writing data if positive, error code if negative
  */
 ssize_t pl_write(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size) {
-  return pl_io(fd_dev, *ps_addr, pl_addr, size, PSDDR_TO_PLDDR);
+  return pl_io(fd_dev, ps_addr, pl_addr, size, PSDDR_TO_PLDDR);
 }
 
 /**
@@ -87,7 +87,7 @@ ssize_t pl_write(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size) {
  * @returns size of reading/writing data if positive, error code if negative
  */
 ssize_t pl_read(int fd_dev, void **ps_addr, uint32_t pl_addr, uint32_t size) {
-  return pl_io(fd_dev, *ps_addr, pl_addr, size, PLDDR_TO_PSDDR);
+  return pl_io(fd_dev, ps_addr, pl_addr, size, PLDDR_TO_PSDDR);
 }
 
 /**
@@ -183,14 +183,12 @@ void pl_init(int fd_dev, struct network_acc_reg *reg,
  * @param entropy_addr entropy coefficience address of kernel space, pass NULL
  * to allocate it
  */
-void pl_get(int fd_dev, struct network_acc_reg *reg, int16_t *trans_addr,
-            int16_t *entropy_addr) {
+void pl_get(int fd_dev, struct network_acc_reg *reg, int16_t **trans_addr,
+            int16_t **entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
     err(errno, AXITX_DEV_PATH);
-  if (pl_read(fd_dev, (void **)&trans_addr, reg->trans_addr, reg->trans_size) ==
-      -1)
+  if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
     err(errno, AXITX_DEV_PATH);
-  if (pl_read(fd_dev, (void **)&entropy_addr, reg->entropy_addr,
-              reg->entropy_size) == -1)
+  if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
 }
