@@ -211,7 +211,7 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
   for (int k = 0; k < 3; k++) {
     size_t gmm_len = reg.entropy_size / 9;
     gmm_t *gmm = malloc(gmm_len * sizeof(gmm_t));
-    entropy_to_gmm((int16_t *)entropy[k].addr, gmm, gmm_len);
+    entropy_to_gmm(entropy[k].addr, gmm, gmm_len);
     size_t ptr = 0;
     for (int i = 13 * k; i < 13 * (k + 1); i++) {
       data[i] = trans[k].addr + ptr;
