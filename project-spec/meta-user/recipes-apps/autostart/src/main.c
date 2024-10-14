@@ -258,9 +258,9 @@ static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
       gmms[i] = gmm + ptr;
       ptr += lens[i];
     }
-    /*assert(ptr == gmm_len);*/
     if (ptr != gmm_len)
-      syslog(LOG_ERR, "yuv channel %d error", k);
+      syslog(LOG_ERR, "yuv channel %d: expect %#zx while got %#zx", k, ptr,
+             gmm_len);
   }
   syslog(LOG_NOTICE, "all yuv channels are entropy encoded");
   // ******** gmm_scale由硬件给出
