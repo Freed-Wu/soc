@@ -144,42 +144,6 @@ static int parse(int argc, char *argv[], opt_t *opt) {
   return 0;
 }
 
-void write_to_file(const char *filename, const int16_t *data, size_t length) {
-  FILE *file = fopen(filename, "wb"); // 使用 "wb" 模式以二进制方式写入
-  if (file == NULL) {
-    perror("无法打开文件");
-    return;
-  }
-  fwrite(data, sizeof(int16_t), length, file); // 写入 int16_t 类型的数据
-  fclose(file);
-}
-
-void read_from_file(const char *filename, int16_t **data, size_t *length) {
-  FILE *file = fopen(filename, "rb");
-
-  if (file == NULL) {
-    perror("无法打开文件");
-    return;
-  }
-
-  fseek(file, 0, SEEK_END);
-  *length = ftell(file);
-  fseek(file, 0, SEEK_SET);
-
-  // 计算需要分配的内存大小
-  size_t num_elements = *length / sizeof(int16_t);
-  *data = (int16_t *)malloc(num_elements * sizeof(int16_t));
-  if (*data == NULL) {
-    perror("内存分配失败");
-    fclose(file);
-    return;
-  }
-
-  // 读取文件内容到数组中
-  fread(*data, sizeof(int16_t), num_elements, file);
-  fclose(file);
-}
-
 static size_t process_data_frames(int fd, data_frame_t *input_data_frames,
                                   n_frame_t n_frame, struct network_acc_reg reg,
                                   uint8_t **p_addr) {
