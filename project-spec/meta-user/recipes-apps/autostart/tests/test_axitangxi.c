@@ -15,13 +15,13 @@
 #define WEIGHT_ADDR 0x10000000
 #define QUANTIFY_ADDR 0x10010000
 #define PICTURE_BASE_ADDR 0x20000000
-#define SCALE 0.00667200749740045
 
 int main(int argc, const char *argv[]) {
   int ret = EXIT_SUCCESS;
   int fd_dev = open(AXITX_DEV_PATH, O_RDWR);
   if (fd_dev == -1)
-    err(errno, AXITX_DEV_PATH);
+    // https://mesonbuild.com/Unit-tests.html#skipped-tests-and-hard-errors
+    err(77, AXITX_DEV_PATH);
   struct network_acc_reg reg;
   pl_init(fd_dev, &reg, "/usr/share/autostart/weight.bin", WEIGHT_ADDR, "",
           QUANTIFY_ADDR);
