@@ -187,8 +187,10 @@ void pl_get(int fd_dev, struct network_acc_reg *reg, int16_t **trans_addr,
             int16_t **entropy_addr) {
   if (ioctl(fd_dev, NETWORK_ACC_GET, reg) == -1)
     err(errno, AXITX_DEV_PATH);
-  if (pl_read(fd_dev, trans_addr, reg->trans_addr, reg->trans_size) == -1)
+  if (pl_read(fd_dev, (void **)trans_addr, reg->trans_addr, reg->trans_size) ==
+      -1)
     err(errno, AXITX_DEV_PATH);
-  if (pl_read(fd_dev, entropy_addr, reg->entropy_addr, reg->entropy_size) == -1)
+  if (pl_read(fd_dev, (void **)entropy_addr, reg->entropy_addr,
+              reg->entropy_size) == -1)
     err(errno, AXITX_DEV_PATH);
 }
