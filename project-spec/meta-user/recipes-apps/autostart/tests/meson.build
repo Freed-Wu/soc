@@ -6,3 +6,10 @@ test_axitangxi = executable(
   install: true,
 )
 test('test driver', test_axitangxi)
+
+test_utils = executable(
+  'test-utils',
+  meson.current_source_dir() + '/test_utils.c',
+  link_with: [lib_utils],
+)
+test('test utils', test_utils)

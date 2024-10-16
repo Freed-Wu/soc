@@ -1,9 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H 1
 #include <getopt.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
+#ifndef PROJECT_VERSION
 #include "config.h"
+#endif
 __BEGIN_DECLS
 
 #define TIMEOUT 600000
@@ -12,6 +16,8 @@ __BEGIN_DECLS
                   "Copyright (C) 2023\n"                                       \
                   "Written by Wu Zhenyu <wuzhenyu@ustc.edu>\n"
 
+uint8_t *mirror_padding(bool is_uv, ssize_t yuv_len, int16_t *dst, uint8_t *src,
+                        size_t len);
 int print_help(const struct option *longopts, const char *arg0);
 int mkdir_p(const char *path, mode_t mode);
 ssize_t dump_mem(char *filename, void *addr, size_t size);

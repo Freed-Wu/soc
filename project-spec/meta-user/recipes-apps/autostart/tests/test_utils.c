@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   uint8_t addr[3840 * 2160];
   for (int j = 0; j < 2160; j++) {
     for (int i = 0; i < 3840; i++) {
-      addr[i * 2160 + j] = (i + j) % 256;
+      addr[i * 2160 + j] = (i * 2160 + j) % 256;
     }
   }
   uint8_t *p = addr;
@@ -27,5 +27,7 @@ int main(int argc, char *argv[]) {
   for (int k = 0; k < 3; k++) {
     p = mirror_padding(k > 1, 3840 * 2160, yuv[k].addr, p, yuv[k].len);
   }
+  for (int k = 0; k < 3; k++)
+    free(yuv[k].addr);
   return EXIT_SUCCESS;
 }

@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,42 @@
 #include <unistd.h>
 
 #include "utils.h"
+
+uint8_t *mirror_padding(bool is_uv, ssize_t yuv_len, int16_t *dst, uint8_t *src,
+                        size_t len) {
+  // k yuv_len p dst
+  int16_t *p_yuv;
+  uint8_t *p = src;
+  int height = ((2160 / 64 + 1) * 64 - 2160) / 2, width = 3840;
+  if (is_uv) {
+    height /= 2;
+    width /= 2;
+  }
+  if (yuv_len == 3840 * 2160) {
+    p_yuv = dst + (height - 1) * width;
+    for (int i = height - 1; i >= 0; i--) {
+      for (int j = 0; j < width; j++) {
+        *p_yuv++ = *p++;
+      }
+      p_yuv -= 3840 * 2;
+    }
+  }
+  p_yuv = dst;
+  p = src;
+  for (int i = 0; i < len; ++i)
+    *p_yuv++ = *p++;
+  uint8_t *p_end = p;
+  if (yuv_len == 3840 * 2160) {
+    p_yuv = dst + (height - 1) * width;
+    for (int i = height - 1; i >= 0; i--) {
+      for (int j = 0; j < width; j++) {
+        *p_yuv++ = *p++;
+      }
+      p -= 3840 * 2;
+    }
+  }
+  return p_end;
+}
 
 int print_help(const struct option *longopts, const char *arg0) {
   unsigned int i = 0;
