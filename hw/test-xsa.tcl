@@ -7,26 +7,33 @@ cd build/workspace
 
 set platform platform
 set app app
-set hw ../project/system.xsa
+set hw ../../../project-spec/hw-description/system.xsa
+# if use example xsa, uncomment it
+# set hw ../project/system.xsa
 
 setws
 # `-out .` and `active` is unnecessary in most situations
 platform create -name $platform -hw $hw -out . -proc psu_cortexa53_0 -os standalone -arch 64-bit
 platform active $platform
 platform config -extra-compiler-flags fsbl {-MMD -MP -Wall -fmessage-length=0 -DARMA53_64 -DFSBL_DEBUG_INFO_VAL=1 -Os -flto -ffat-lto-objects}
+# #include <ff.h>
+bsp setlib -name xilffs
 # build fsbl.elf
 platform generate
 
 app create -name $app -template {Hello World} -lang c
+# if use example xsa, comment it
+eval exec rm -rf [glob $app/src/*.{c,h}]
 # -soft-link break `sysproj build`
-# exec cmake -Bbuild
-# importsources -name $app -path ../project-spec/meta-user/recipes-apps/autostart/src
-# build $app.elf, called by `sysproj build`
+# if use example xsa, comment it
+importsources -name $app -path ../../src
+# build $app.elf, called by `sysproj build` in some case
 # app build -name $app
 
 # after building fsbl.elf, build BOOT.BIN
-# please ignore:
-#   readelf: Error: 'platform/export/platform/sw/fsbl.elf': No such file
+# Ignore:
+# readelf: Error: 'platform/export/platform/sw/fsbl.elf': No such file
+# exec cp $platform/export/$platform/sw/$platform/boot/fsbl.elf $platform/export/$platform/sw
 sysproj build -name ${app}_system
 
 # must set encoding switch: 0000 (JTAG)
