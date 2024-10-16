@@ -1,7 +1,7 @@
 #!/usr/bin/env xsct
 # https://docs.xilinx.com/r/en-US/ug1400-vitis-embedded
 cd [file dirname [info script]]
-exec rm -r build/workspace
+exec rm -rf build/workspace
 exec mkdir -p build/workspace
 cd build/workspace
 
@@ -17,7 +17,7 @@ platform config -extra-compiler-flags fsbl {-MMD -MP -Wall -fmessage-length=0 -D
 # build fsbl.elf
 platform generate
 
-app create -name $app -template {Empty Application (C++)} -lang c++
+app create -name $app -template {Hello World} -lang c
 # -soft-link break `sysproj build`
 # exec cmake -Bbuild
 # importsources -name $app -path ../project-spec/meta-user/recipes-apps/autostart/src
