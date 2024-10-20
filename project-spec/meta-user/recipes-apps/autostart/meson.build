@@ -22,6 +22,10 @@ systemd_system_preset_dir = systemd_dep.get_variable(
   default_value: '/lib/systemd/system-preset',
 )
 install_data(
+  'assets/sysvinit/autostart',
+  install_dir: '/etc/init.d',
+)
+install_data(
   'assets/systemd/system/autostart.service',
   install_dir: systemd_system_unit_dir,
 )

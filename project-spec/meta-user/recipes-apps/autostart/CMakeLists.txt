@@ -31,6 +31,9 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/assets/systemd/system-preset/98-autostart.preset
   DESTINATION ${SYSTEMD_SYSTEM_PRESET_DIR})
 include(GNUInstallDirs)
+install(FILES
+  assets/sysvinit/autostart
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
 install(FILES scripts/post-burn-emmc.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
 if(BINARY)
   install(FILES

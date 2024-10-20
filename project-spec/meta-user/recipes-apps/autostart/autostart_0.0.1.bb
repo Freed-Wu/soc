@@ -10,7 +10,10 @@ LIC_FILES_CHKSUM = "file://${FILE_DIRNAME}/../../../../LICENSE;md5=1ebbd3e34237a
 SRC_URI = "file://${FILE_DIRNAME}"
 S = "${WORKDIR}/${FILE_DIRNAME}"
 
-inherit meson pkgconfig
+inherit meson pkgconfig update-rc.d
+
+INITSCRIPT_NAME = "autostart"
+INITSCRIPT_PARAMS = "start 99 S ."
 
 FILES:${PN} += "${systemd_unitdir}/* ${libdir}/*"
 # nooelint: oelint.var.filesoverride
