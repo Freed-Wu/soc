@@ -120,6 +120,8 @@ paths.
 install -Dm644 /the/path/of/system.xsa -t project-spec/hw-description
 install -Dm644 /the/path/of/{weight,cdf,exp}.bin -t project-spec/meta-user/recipes-apps/autostart/assets/bin
 # wait > 60 seconds
+# for initramfs
+scripts/config.sh assets/configs/config assets/configs/example/config
 # for SD
 scripts/config.sh assets/configs/config assets/configs/example/config assets/configs/sd/config
 # for eMMC
