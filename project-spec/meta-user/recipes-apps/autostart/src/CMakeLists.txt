@@ -10,6 +10,8 @@ install(TARGETS coding LIBRARY)
 add_library(crc crc.c)
 install(TARGETS crc LIBRARY)
 add_library(transmission_protocol transmission_protocol.c)
+set_target_properties(axitangxi utils coding crc transmission_protocol
+  PROPERTIES VERSION ${VERSION} SOVERSION ${SOVERSION})
 target_link_libraries(transmission_protocol crc)
 target_link_libraries(transmission_protocol utils)
 install(TARGETS transmission_protocol LIBRARY)

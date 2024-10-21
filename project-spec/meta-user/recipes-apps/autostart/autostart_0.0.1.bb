@@ -16,6 +16,4 @@ INITSCRIPT_NAME = "autostart"
 INITSCRIPT_PARAMS = "start 99 S ."
 
 FILES:${PN} += "${systemd_unitdir}/* ${libdir}/*"
-# nooelint: oelint.var.filesoverride
-FILES:${PN}-dev = ""
 BBCLASSEXTEND = ""

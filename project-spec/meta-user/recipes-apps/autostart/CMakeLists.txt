@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 if(DEFINED ENV{GITHUB_REF_NAME})
   set(VERSION $ENV{GITHUB_REF_NAME})
 else()
-  set(VERSION 0.0.0.0)
+  set(VERSION 0.0.0)
 endif()
+string(REPLACE ".*" "" SOVERSION "${VERSION}")
 project(
   deep-space-detection
   VERSION ${VERSION}
