@@ -76,20 +76,20 @@ repos:
     hooks:
       - id: perltidy
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.9.0-1
+    rev: v3.10.0-1
     hooks:
       - id: shfmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.7.0
     hooks:
       - id: ruff
       - id: ruff-format
   - repo: https://github.com/kumaraditya303/mirrors-pyright
-    rev: v1.1.384
+    rev: v1.1.385
     hooks:
       - id: pyright
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v19.1.1
+    rev: v19.1.2
     hooks:
       - id: clang-format
   - repo: https://github.com/cmake-lint/cmake-lint
@@ -97,11 +97,11 @@ repos:
     hooks:
       - id: cmakelint
   - repo: https://github.com/Decodetalkers/neocmakelsp
-    rev: v0.8.11
+    rev: v0.8.12
     hooks:
       - id: neocmakelsp-format
   - repo: https://github.com/priv-kweihmann/oelint-adv
-    rev: 6.5.1
+    rev: 6.5.2
     hooks:
       - id: oelint-adv
 
