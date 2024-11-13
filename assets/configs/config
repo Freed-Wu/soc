@@ -1,7 +1,17 @@
+# project-spec/configs/config {{{1 #
 CONFIG_SUBSYSTEM_COMPONENT_U__BOOT_NAME_U__BOOT__XLNX=n
 CONFIG_SUBSYSTEM_COMPONENT_U__BOOT_NAME_EXT__LOCAL__SRC=y
 CONFIG_SUBSYSTEM_COMPONENT_LINUX__KERNEL_NAME_LINUX__XLNX=n
 CONFIG_SUBSYSTEM_COMPONENT_LINUX__KERNEL_NAME_EXT__LOCAL__SRC=y
+# [ERROR]  : Section image.ub.0 offset of 0x100000 overlaps with prior section end address of 0xF6BB00
+# CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART0_NAME="qspi-boot"
+# CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART0_SIZE=0x100000
+CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART0_SIZE=0xF6BB00
+# [WARNING]: Partition system.dtb.0 range is overlapped with partition image.ub.0 memory range
+# [WARNING]: Partition image.ub.0 range is overlapped with partition boot.scr.0 memory range
+# 1}}} project-spec/configs/config #
+
+# project-spec/configs/rootfs_config {{{1 #
 CONFIG_can-utils=n
 CONFIG_nfs-utils=n
 CONFIG_mtd-utils=n
@@ -17,3 +27,5 @@ CONFIG_hellopm=n
 CONFIG_u-boot-tools=n
 CONFIG_imagefeature-hwcodecs=n
 CONFIG_imagefeature-serial-autologin-root=y
+# 1}}} project-spec/configs/rootfs_config #
+# ex: foldmethod=marker

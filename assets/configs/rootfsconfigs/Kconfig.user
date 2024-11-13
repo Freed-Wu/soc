@@ -1,3 +1,4 @@
+# project-spec/configs/rootfsconfigs/Kconfig.user
 config autostart-dbg
 	 bool "autostart-dbg"
 	 help
