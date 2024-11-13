@@ -3,6 +3,8 @@ set -e
 cd "$(dirname "$(dirname "$(readlink -f "$0")")")"
 
 petalinux-build
+
+# images/linux/bootgen.bif
 kernel=--kernel
 [[ -z "$(. scripts/get-root_dev.sh)" ]] || kernel=
 # by default: --fsbl

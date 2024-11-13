@@ -9,12 +9,13 @@
 !/project-spec/meta-user/recipes-apps/
 !/project-spec/meta-user/recipes-extended/
 !/project-spec/meta-user/recipes-modules/
-!/project-spec/meta-user/recipes-kernel/
 !/project-spec/meta-user/recipes-bsp/
 /project-spec/meta-user/recipes-bsp/*
 !/project-spec/meta-user/recipes-bsp/u-boot/
 /project-spec/meta-user/recipes-bsp/u-boot/*
-!/project-spec/meta-user/recipes-bsp/u-boot/*.bbappend
+!/project-spec/meta-user/recipes-bsp/u-boot/files/
+/project-spec/meta-user/recipes-bsp/u-boot/files/*
+!/project-spec/meta-user/recipes-bsp/u-boot/files/bsp.cfg
 !/project-spec/meta-user/recipes-bsp/device-tree/
 /project-spec/meta-user/recipes-bsp/device-tree/*
 !/project-spec/meta-user/recipes-bsp/device-tree/files/
