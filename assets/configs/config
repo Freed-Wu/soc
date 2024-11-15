@@ -10,8 +10,20 @@ CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART0_SIZE=0xF6BB00
 # CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART1_NAME="qspi-kernel"
 # CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART1_SIZE=0x1600000
 CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART1_SIZE=0x2900000
+# CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART2_NAME="qspi-bootenv"
+# CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART2_SIZE=0x40000
+CONFIG_SUBSYSTEM_FLASH_PSU_QSPI_0_BANKLESS_PART2_SIZE=0x614500
+# make sure:
+# components/yocto/layers/meta-xilinx/meta-xilinx-core/recipes-bsp/u-boot/u-boot-xlnx-scr.bb
+# images/linux/bootgen.bif
+# 0xF6BB00 + 0x2900000 + 0x614500
+# CONFIG_BOOT_SCRIPT_OFFSET=0x3E80000
+
 # [WARNING]: Partition system.dtb.0 range is overlapped with partition image.ub.0 memory range
 # [WARNING]: Partition image.ub.0 range is overlapped with partition boot.scr.0 memory range
+
+CONFIG_SUBSYSTEM_UBOOT_QSPI_KERNEL_OFFSET=0xF6BB00
+CONFIG_SUBSYSTEM_UBOOT_QSPI_KERNEL_SIZE=0x2900000
 # 1}}} project-spec/configs/config #
 
 # project-spec/configs/rootfs_config {{{1 #
