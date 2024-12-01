@@ -35,7 +35,7 @@ jobs:
           cd project-spec/meta-user/recipes-apps/autostart
           meson setup build -Dbinary=false
           meson dist -Cbuild
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v5
         with:
           gcov: true
       - uses: actions/upload-artifact@v4
