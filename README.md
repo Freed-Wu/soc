@@ -31,7 +31,7 @@ Dependencies:
   - [make](https://www.gnu.org/software/make)
   - [linux-headers](https://archlinux.org/packages/core/x86_64/linux-headers)
 - apps
-  - [meson](https://mesonbuild.com/) or [cmake](https://cmake.org)
+  - [meson](https://mesonbuild.com/)
   - [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/)
   - [google test](https://github.com/google/googletest): optional, for unit test
 
@@ -43,9 +43,6 @@ make
 # apps
 meson setup project-spec/meta-user/recipes-apps/autostart/build project-spec/meta-user/recipes-apps/autostart
 meson compile -Cproject-spec/meta-user/recipes-apps/autostart/build
-# or
-cmake -Bproject-spec/meta-user/recipes-apps/autostart/build
-cmake --build project-spec/meta-user/recipes-apps/autostart/build
 ```
 
 ## Cross Compile for Develop Board
