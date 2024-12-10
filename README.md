@@ -1,4 +1,4 @@
-# deep-space-detection
+# soc
 
 The repository contains:
 
@@ -66,7 +66,7 @@ Dependencies:
 petalinux-create -tproject -nsoc --template zynqMP
 cd soc
 # download source code to `soc/`
-git clone --depth=1 --bare https://github.com/ustc-ivclab/deep-space-detection .git
+git clone --depth=1 --bare https://github.com/ustc-ivclab/soc .git
 git config core.bare false
 git reset --hard
 ```
@@ -86,7 +86,7 @@ Then refer [Configure](#configure) to run `scripts/config.sh`.
 #### Binary files
 
 Before building, some required binary files can be downloaded from
-[Release](https://github.com/ustc-ivclab/deep-space-detection/releases):
+[Release](https://github.com/ustc-ivclab/soc/releases):
 
 - `system.xsa`: a zip file compressing FPGA's `*.bit` and some generated tcl/c
   files, which is called as hardware description file

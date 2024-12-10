@@ -1,4 +1,4 @@
-PROJECT_NAME           = deep-space-project
+PROJECT_NAME           = soc
 OUTPUT_DIRECTORY       = build
 USE_MDFILE_AS_MAINPAGE = README.md
 GENERATE_XML           = YES

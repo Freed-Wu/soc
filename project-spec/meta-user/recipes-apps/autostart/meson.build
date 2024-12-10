@@ -1,5 +1,5 @@
 project(
-  'deep-space-detection',
+  'soc',
   ['c', 'cpp'],
   default_options: ['debug=true'],
 )

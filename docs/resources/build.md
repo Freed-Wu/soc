@@ -50,7 +50,7 @@ petalinux-config --get-hw-description ../hardware/
 
 出现配置界面
 
-![image](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/5584640d-232f-4690-9c95-fd2fa3516a86)
+![image](https://github.com/ustc-ivclab/soc/assets/32936898/5584640d-232f-4690-9c95-fd2fa3516a86)
 
 - 配置本地u-boot和内核 (内核版本是5.4.0)
 
@@ -229,7 +229,7 @@ petalinux-build -c axi-tangxi
 
 - 新建Application，将include/所有文件放置头文件，examples/与lib/文件夹放入源文件
 
-![image-1](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/1c064002-aa04-4c2b-ba48-057b474d1042)
+![image-1](https://github.com/ustc-ivclab/soc/assets/32936898/1c064002-aa04-4c2b-ba48-057b474d1042)
 
 - axi_tangxi.pro
 
@@ -253,7 +253,7 @@ HEADERS  += \
 
 2. 添加远程设备，将网口接入开发板，配置域名为同一域，然后配置设备连接参数
 
-![image-2](https://github.com/ustc-ivclab/deep-space-detection/assets/32936898/2cf2f4f8-ec45-491e-b3a2-51143d6096fd)
+![image-2](https://github.com/ustc-ivclab/soc/assets/32936898/2cf2f4f8-ec45-491e-b3a2-51143d6096fd)
 
 如上述方式无法连接，使用gdbserver来实时调试：
 

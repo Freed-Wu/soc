@@ -60,7 +60,7 @@ DRAM 存放的起始地址及数据量大小。
 
 ![w](https://github.com/ustc-ivclab/.github/assets/32936898/f4d2aabb-a103-45d7-adea-9aaaae700304)
 
-![subband](https://github.com/Freed-Wu/soc/assets/32936898/74eb461c-e44b-4f5a-bc5b-e0e7bbf8f0f1)
+![subband](https://github.com/ustc-ivclab/soc/assets/32936898/74eb461c-e44b-4f5a-bc5b-e0e7bbf8f0f1)
 
 ### 说明
 

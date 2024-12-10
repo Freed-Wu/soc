@@ -11,7 +11,7 @@ if os.environ.get("READTHEDOCS") == "True":
 version = "rolling"
 author = "wzy"
 copyright = "2023"
-project = "deep-space-detection"
+project = "soc"
 
 # -- Path setup --------------------------------------------------------------
 
