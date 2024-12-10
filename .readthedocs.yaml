@@ -6,10 +6,6 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3"
-
-formats:
-  - htmlzip
-
-python:
-  install:
-    - requirements: docs/requirements.txt
+  commands:
+    - doxygen
+    - mv build/* $READTHEDOCS_OUTPUT
