@@ -1,4 +1,6 @@
+*.bin
 *.old
+_readthedocs/
 
 /.petalinux/
 /.Xil/
