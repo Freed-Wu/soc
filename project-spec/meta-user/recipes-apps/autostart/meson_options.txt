@@ -1,5 +1,1 @@
-option(
-  'binary',
-  type: 'boolean',
-  description: 'install external binary files',
-)
+meson.options
