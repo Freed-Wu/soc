@@ -8,4 +8,3 @@ build:
     python: "3"
   commands:
     - doxygen
-    - mv build/* $READTHEDOCS_OUTPUT
